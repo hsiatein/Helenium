@@ -9,7 +9,7 @@ services:
 - scheduler_service
 - heleny_service
 - task_service
-- frontend_service
+- frontend_service(签名验证)
 - network_service
 - http_service
 - shell_service

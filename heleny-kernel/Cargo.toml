@@ -7,3 +7,7 @@ edition = "2024"
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
+async-trait = { workspace = true }
+anyhow = { workspace = true }
+inventory = { workspace = true }
+heleny_macros = { path = "../heleny-macros" }
