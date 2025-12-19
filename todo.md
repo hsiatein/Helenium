@@ -14,3 +14,4 @@ services:
 - http_service
 - shell_service
 - memory_service
+- db_service
