@@ -31,7 +31,7 @@ pub trait Service: 'static + HasEndpoint + HasName {
     type MessageType: AnyMessage + Send + Sync;
     fn new(endpoint:Endpoint) -> Box<Self>;
     async fn handle(&mut self, msg: Box<Self::MessageType>) -> Result<()>;
-    fn dependencies(&self) -> Vec<&'static str> {
+    fn dependencies() -> Vec<&'static str> {
         Vec::new()
     }
     async fn start(endpoint:Endpoint) -> Result<ServiceHandle>{
@@ -71,6 +71,7 @@ pub trait HasName {
     fn name() -> &'static str;
 }
 
+/// 消息 struct，定义消息的字段
 pub struct Message {
     pub target: String,
     pub source: String,
@@ -93,20 +94,3 @@ impl<T: Any + Send + Sync> AnyMessage for T {
         self
     }
 }
-
-// pub trait DowncastMessage: AnyMessage {
-//     type MessageType;
-//     fn downcast(msg: Box<dyn AnyMessage>) -> Result<Box<Self::MessageType>>;
-// }
-
-// impl<T: Send + Sync + 'static> DowncastMessage for T {
-//     type MessageType = T;
-//     fn downcast(msg: Box<dyn AnyMessage>) -> Result<Box<T>> {
-//         msg.as_any().downcast::<T>()
-//         .map_err(|_| anyhow::anyhow!(
-//             "消息类型转换失败：期望类型为 {}, 但收到的是其他类型", 
-//             std::any::type_name::<T>()
-//         ))
-//     }
-// }
-

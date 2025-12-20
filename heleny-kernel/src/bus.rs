@@ -6,7 +6,7 @@ use anyhow::Result;
 pub struct Bus {
     to_kernel: mpsc::Sender<Box<Message>>,
     kernel_recv: mpsc::Receiver<Box<Message>>,
-    address_map: HashMap<String, mpsc::Sender<Box<Message>>>,
+    address_map: HashMap<&'static str, mpsc::Sender<Box<Message>>>,
 }
 
 pub struct Endpoint {
@@ -34,7 +34,7 @@ impl Bus {
         Self { to_kernel: tx_service, kernel_recv: rx, address_map: HashMap::new() }
     }
 
-    pub fn get_endpoint(&mut self, name:String, buffer: usize) -> Endpoint {
+    pub fn get_endpoint(&mut self, name: &'static str, buffer: usize) -> Endpoint {
         let (tx,rx)=mpsc::channel(buffer);
         let _=self.address_map.insert(name, tx);
         Endpoint::new(self.to_kernel.clone(),rx)
@@ -45,8 +45,8 @@ impl Bus {
     }
 
     pub async fn send(&self, msg: Box<Message>) -> Result<()> {
-        let service_name = msg.target.to_string();
-        if let Some(tx) = self.address_map.get(&service_name) {
+        let service_name = msg.target.clone();
+        if let Some(tx) = self.address_map.get::<str>(&service_name) {
             tx.send(msg).await.map_err(|e| anyhow::anyhow!("发送消息到服务 {} 失败: {}", service_name, e))
         } else {
             Err(anyhow::anyhow!("未找到服务: {}", service_name))

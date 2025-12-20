@@ -1,18 +1,25 @@
 use std::collections::HashMap;
 
 use crate::bus::{self, Bus};
-use crate::service::{ServiceHandle, Service};
+use crate::health::KernelHealth;
 use crate::kernel_service::KernelService;
+use crate::service::{HasName, Service, ServiceHandle};
 
 pub struct Kernel {
-    pub bus: Bus,
-    pub services:Vec<ServiceHandle>,
+    bus: Bus,
+    services: Vec<ServiceHandle>,
+
+    kernel_buffer: usize,
+    service_buffer: usize,
+    health: KernelHealth,
 }
 
 impl Kernel {
-    pub fn new() -> Self {
-        let bus = bus::Bus::new(64);
-        Self { bus, services: Vec::new() }
+    pub async fn new(kernel_buffer: usize, service_buffer: usize) -> Self {
+        let bus = bus::Bus::new(kernel_buffer);
+        let mut kernel=Self { bus, services: Vec::new(), kernel_buffer, service_buffer };
+        kernel.init_service();
+        kernel
     }
 
     pub async fn run(&mut self) {
@@ -23,7 +30,18 @@ impl Kernel {
         }
     }
 
-    pub fn init_service(&mut self) {
-        let mut dependencies_table:HashMap<&str, Vec<&str>>=HashMap::new();
+    async fn init_service(&mut self) {
+        let handle=KernelService::start(self.bus.get_endpoint(KernelService::name(), self.service_buffer)).await;
+        let handle = match handle {
+            Ok(handle) => handle,
+            Err(e) => 
+        };
+        let mut dependencies_table:HashMap<&'static str, Vec<&'static str>>=HashMap::new();
+        dependencies_table.insert(KernelService::name(), KernelService::dependencies());
+
+    }
+
+    fn add_service(&mut self) {
+
     }
 }
