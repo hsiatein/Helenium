@@ -15,3 +15,4 @@ services:
 - shell_service
 - memory_service
 - db_service
+- config_service

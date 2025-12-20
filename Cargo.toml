@@ -1,5 +1,5 @@
 [workspace]
-members = ["heleny-kernel", "heleny-macros", "heleny-server"]
+members = ["heleny-bus","heleny-kernel", "heleny-macros", "heleny-proto", "heleny-server", "heleny-service", "service-fs"]
 
 [workspace.dependencies]
 serde = "1.0.228"
@@ -10,3 +10,4 @@ inventory = "0.3.21"
 iced = "0.14.0"
 async-trait = "0.1.89"
 anyhow = "1.0.100"
+uuid = { version = "1.19.0", features = ["v4"] }

@@ -11,3 +11,7 @@ async-trait = { workspace = true }
 anyhow = { workspace = true }
 inventory = { workspace = true }
 heleny_macros = { path = "../heleny-macros" }
+heleny_service = { path = "../heleny-service" }
+heleny_bus ={ path = "../heleny-bus"}
+uuid ={ workspace = true }
+heleny_proto ={ path = "../heleny-proto"}
