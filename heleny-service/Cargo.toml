@@ -9,3 +9,4 @@ async-trait = { workspace = true }
 anyhow = { workspace = true }
 heleny_bus ={ path = "../heleny-bus"}
 heleny_proto ={ path = "../heleny-proto"}
+inventory ={ workspace = true}

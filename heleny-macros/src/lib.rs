@@ -1,26 +1,52 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput};
+use syn::{parse_macro_input,ItemStruct};
 
-#[proc_macro_derive(BaseService)]
-pub fn base_service(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
-    let name = input.ident;
+#[proc_macro_attribute]
+pub fn base_service(args: TokenStream, input: TokenStream) -> TokenStream {
+    let item_struct = parse_macro_input!(input as ItemStruct);
+    let name = &item_struct.ident;
     let name_str = name.to_string();
-    let expanded = quote! {
-        use heleny_service::HasEndpoint;
 
-        impl HasEndpoint for #name {
-            fn endpoint(&mut self) ->  &mut heleny_bus::Endpoint {
+    let mut deps = Vec::new();
+
+    // 使用更健壮的参数解析方式
+    let args_parser = syn::meta::parser(|meta| {
+        if meta.path.is_ident("deps") {
+            let value = meta.value()?; 
+            let array: syn::ExprArray = value.parse()?;
+            
+            for expr in array.elems {
+                if let syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Str(s), .. }) = expr {
+                    deps.push(s.value());
+                }
+            }
+        }
+        Ok(())
+    });
+
+    parse_macro_input!(args with args_parser);
+
+    let expanded = quote! {
+        #item_struct
+
+        impl heleny_service::HasEndpoint for #name {
+            fn endpoint(&mut self) -> &mut heleny_bus::Endpoint {
                 &mut self.endpoint
             }
         }
 
-        use heleny_service::HasName;
-
-        impl HasName for #name {
+        impl heleny_service::HasName for #name {
             fn name() -> &'static str {
                 #name_str
+            }
+        }
+
+        inventory::submit! {
+            heleny_service::ServiceFactory {
+                name: #name_str,
+                deps: vec![#(#deps),*],
+                launch: |ep| #name::start(ep)
             }
         }
     };

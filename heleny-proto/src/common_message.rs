@@ -1,3 +1,5 @@
+use tokio::sync::oneshot;
+
 pub enum CommonMessage {
-    Stop
+    Stop(oneshot::Sender<()>),
 }

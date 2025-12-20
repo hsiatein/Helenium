@@ -5,3 +5,5 @@ edition = "2024"
 
 [dependencies]
 uuid ={ workspace = true }
+tokio = { workspace = true }
+anyhow = { workspace = true }

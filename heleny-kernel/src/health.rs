@@ -1,18 +1,25 @@
+use std::collections::{HashMap};
+
+use heleny_service::{HasName, ServiceFactory};
+
+use crate::service::KernelService;
 
 
+#[derive(PartialEq)]
 pub enum HealthStatus {
     Starting,
     Healthy,
-    Unhealthy(String),
     Dead,
 }
 
 pub struct KernelHealth {
-    kernel: HealthStatus,
+    pub kernel: HealthStatus,
+    pub services: HashMap<&'static str,HealthStatus>,
 }
 
 impl KernelHealth {
     pub fn new()->Self{
-        Self { kernel: HealthStatus::Starting }
+        let services=inventory::iter::<ServiceFactory>.into_iter().filter(|f| f.name!=KernelService::name()).map(|ServiceFactory { name, deps:_, launch:_ }| (*name,HealthStatus::Starting)).collect();
+        Self { kernel: HealthStatus::Starting, services }
     }
 }

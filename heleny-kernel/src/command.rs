@@ -1,10 +1,14 @@
+use heleny_bus::Endpoint;
 use heleny_proto::message::AnyMessage;
 use heleny_service::ServiceHandle;
 use anyhow::Result;
+use tokio::sync::oneshot;
 
 pub enum KernelCommand{
     Shutdown,
     AddService(ServiceHandle),
+    DeleteService(&'static str),
+    NewEndpoint(&'static str, oneshot::Sender<Endpoint>),
 }
 
 impl KernelCommand {

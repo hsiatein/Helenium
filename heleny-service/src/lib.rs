@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use tokio::task::JoinHandle;
+use tokio::{task::JoinHandle};
 use anyhow::Result;
 use heleny_bus::Endpoint;
 use heleny_proto::{common_message::CommonMessage, message::AnyMessage};
@@ -15,7 +15,7 @@ impl ServiceHandle {
         Self { service_name, thread_handle }
     }
 
-    pub fn abort(&self) {
+    pub fn abort(&self) { 
         self.thread_handle.abort();
     }
 
@@ -27,14 +27,11 @@ impl ServiceHandle {
 
 /// 服务 trait，定义了服务的基本行为
 #[async_trait]
-pub trait Service: 'static + HasEndpoint + HasName {
+pub trait Service: 'static + HasEndpoint + HasName + Send {
     type MessageType: AnyMessage + Send + Sync;
     fn new(endpoint:Endpoint) -> Box<Self>;
     async fn handle(&mut self, msg: Box<Self::MessageType>) -> Result<()>;
-    fn dependencies() -> Vec<&'static str> {
-        Vec::new()
-    }
-    async fn start(endpoint:Endpoint) -> Result<ServiceHandle>{
+    fn start(endpoint:Endpoint) -> Result<ServiceHandle>{
         let mut service=Self::new(endpoint);
         let handle=tokio::spawn(async move {
             while let Some(msg)=service.endpoint().recv().await{
@@ -46,29 +43,40 @@ pub trait Service: 'static + HasEndpoint + HasName {
                         continue;
                     }
                 };
-                if let Err(e)=service.handle(payload).await{
-                    eprintln!("服务 {} 处理消息时出错: {}", Self::name(), e);
+                let common_message = match payload {
+                    Ok(message) => {
+                        if let Err(e)=service.handle(message).await{
+                            eprintln!("服务 {} 处理消息时出错: {}", Self::name(), e);
+                        }
+                        continue;
+                    },
+                    Err(common_message) => common_message,
+                };
+                match *common_message {
+                    CommonMessage::Stop(oneshot) => {
+                        service.stop().await;
+                        let _ = oneshot.send(());
+                        break;
+                    }
                 }
             }
         });
         Ok(ServiceHandle::new(Self::name(), handle))
     }
-    fn stop(&mut self) {
+    async fn stop(&mut self) {
 
     }
-    fn downcast(msg: Box<dyn AnyMessage>) -> Result<Box<Self::MessageType>> {
-        msg.as_any().downcast::<Self::MessageType>()
-            .map_err(|_| anyhow::anyhow!(
-                "消息类型转换失败：期望类型为 {}, 但收到的是其他类型", 
-                std::any::type_name::<Self::MessageType>()
-            ))
-    }
-
-    fn downcast_common(msg: Box<dyn AnyMessage>) -> Result<Box<CommonMessage>> {
-        msg.as_any().downcast::<CommonMessage>()
-            .map_err(|_| anyhow::anyhow!(
-                "消息类型转换失败：期望类型为 CommonMessage, 但收到的是其他类型"
-            ))
+    fn downcast(msg: Box<dyn AnyMessage>) -> Result<Result<Box<Self::MessageType>,Box<CommonMessage>>> {
+        let msg = match msg.as_any().downcast::<Self::MessageType>() {
+            Ok(msg) => return Ok(Ok(msg)),
+            Err(msg) => msg,
+        };
+        match msg.downcast::<CommonMessage>() {
+            Ok(msg) => Ok(Err(msg)),
+            Err(_) => Err(anyhow::anyhow!(
+                "消息类型转换失败：期望类型为 {} CommonMessage, 但收到的是其他类型",std::any::type_name::<Self::MessageType>()
+            )),
+        }
     }
 
 }
@@ -80,3 +88,11 @@ pub trait HasEndpoint {
 pub trait HasName {
     fn name() -> &'static str;
 }
+
+pub struct ServiceFactory {
+    pub name: &'static str,
+    pub deps: Vec<&'static str>,
+    pub launch: fn(heleny_bus::Endpoint) -> Result<ServiceHandle>,
+}
+
+inventory::collect!(ServiceFactory);

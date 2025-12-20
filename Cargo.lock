@@ -89,6 +89,8 @@ dependencies = [
 name = "heleny_proto"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "tokio",
  "uuid",
 ]
 
@@ -110,6 +112,7 @@ dependencies = [
  "async-trait",
  "heleny_bus",
  "heleny_proto",
+ "inventory",
  "tokio",
 ]
 
@@ -241,7 +244,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "service-fs"
+name = "service_config"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "heleny_macros",
+ "heleny_proto",
+ "heleny_service",
+]
+
+[[package]]
+name = "service_fs"
 version = "0.1.0"
 
 [[package]]
