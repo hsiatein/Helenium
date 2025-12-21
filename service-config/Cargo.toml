@@ -7,4 +7,9 @@ edition = "2024"
 heleny_service = {path = "../heleny-service"}
 heleny_proto = {path = "../heleny-proto"}
 heleny_macros = { path = "../heleny-macros" }
+heleny_bus = { path = "../heleny-bus" }
 async-trait = { workspace = true }
+inventory = { workspace = true }
+anyhow = {workspace = true}
+
+toml = {workspace = true}

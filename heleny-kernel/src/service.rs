@@ -12,12 +12,11 @@ use heleny_service::{HasName, Service, ServiceFactory};
 use inventory;
 use tokio::{sync::oneshot, time::timeout};
 
-use crate::{
-    command::AdminCommand,
-    health::{HealthStatus, KernelHealth},
-};
+use crate::{command::AdminCommand, health::new_kernel_health};
+use heleny_proto::health::HealthStatus;
+use heleny_proto::health::KernelHealth;
 
-pub enum KernelMessage {
+pub enum KernelServiceMessage {
     StopAll,
     Init,
     GetHealth(oneshot::Sender<KernelHealth>),
@@ -33,28 +32,28 @@ pub struct KernelService {
 
 #[async_trait]
 impl Service for KernelService {
-    type MessageType = KernelMessage;
-    fn new(endpoint: heleny_bus::Endpoint) -> Box<Self> {
+    type MessageType = KernelServiceMessage;
+    fn new(endpoint: heleny_bus::Endpoint) -> Result<Box<Self>> {
         let service_factories = inventory::iter::<ServiceFactory>
             .into_iter()
             .filter(|factory| factory.name != KernelService::name())
             .collect();
-        Box::new(Self {
+        Ok(Box::new(Self {
             endpoint,
             service_factories,
             order: None,
-            health: KernelHealth::new(),
-        })
+            health: new_kernel_health(),
+        }))
     }
-    async fn handle(&mut self, msg: Box<KernelMessage>) -> anyhow::Result<()> {
+    async fn handle(&mut self, msg: Box<KernelServiceMessage>) -> anyhow::Result<()> {
         match *msg {
-            KernelMessage::StopAll => {
+            KernelServiceMessage::StopAll => {
                 self.stop_all_services().await;
             }
-            KernelMessage::Init => {
+            KernelServiceMessage::Init => {
                 self.init_all_services().await;
             }
-            KernelMessage::GetHealth(sender) => {
+            KernelServiceMessage::GetHealth(sender) => {
                 let _ = sender.send(self.health.clone());
             }
         }

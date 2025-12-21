@@ -7,3 +7,4 @@ edition = "2024"
 uuid ={ workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }
+toml = {workspace = true}

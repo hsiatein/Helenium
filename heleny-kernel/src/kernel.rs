@@ -1,8 +1,9 @@
-use crate::command::{self, AdminCommand, KernelCommand, ShutdownStage};
-use crate::service::{KernelMessage, KernelService};
+use crate::command::{self, AdminCommand, ShutdownStage};
+use crate::service::{KernelService, KernelServiceMessage};
 use anyhow::{Result, anyhow};
 use heleny_bus::{self, Bus, Endpoint};
 use heleny_proto::common_message::CommonMessage;
+use heleny_proto::kernel_message::KernelMessage;
 use heleny_proto::message::Message;
 use heleny_proto::name::KERNEL_NAME;
 use heleny_service::{HasName, ServiceHandle, get_factory};
@@ -99,7 +100,7 @@ impl Kernel {
 
     /// 初始化所有服务
     async fn init_all_services(&mut self) -> Result<()> {
-        self.send_kernel_message(KernelMessage::Init).await;
+        self.send_kernel_message(KernelServiceMessage::Init).await;
         Ok(())
     }
 
@@ -151,7 +152,7 @@ impl Kernel {
     }
 
     /// 发送消息给 KernelService
-    async fn send_kernel_message(&self, payload: KernelMessage) {
+    async fn send_kernel_message(&self, payload: KernelServiceMessage) {
         let message = Message::new(KernelService::name(), None, Box::new(payload));
         let _ = self.bus.send(message).await;
     }
@@ -162,7 +163,7 @@ impl Kernel {
     }
 
     /// 发送消息给 Kernel(自己)
-    async fn send_kernel_command(&self, payload: KernelCommand) {
+    async fn send_kernel_command(&self, payload: KernelMessage) {
         let _ = self.endpoint.send(KERNEL_NAME, Box::new(payload)).await;
     }
 
@@ -176,7 +177,8 @@ impl Kernel {
             }
             ShutdownStage::StopAllService => {
                 println!("开始关闭所有服务");
-                self.send_kernel_message(KernelMessage::StopAll).await;
+                self.send_kernel_message(KernelServiceMessage::StopAll)
+                    .await;
             }
             ShutdownStage::StopKernel => {
                 println!("开始关闭内核");
@@ -214,14 +216,14 @@ impl Kernel {
     }
 
     /// 处理普通 Command
-    async fn handle(&mut self, command: KernelCommand) {
+    async fn handle(&mut self, command: KernelMessage) {
         match command {
-            KernelCommand::Shutdown => {
+            KernelMessage::Shutdown => {
                 self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::Start))
                     .await;
             }
-            KernelCommand::GetHealth(sender) => {
-                self.send_kernel_message(KernelMessage::GetHealth(sender))
+            KernelMessage::GetHealth(sender) => {
+                self.send_kernel_message(KernelServiceMessage::GetHealth(sender))
                     .await;
             }
         }
@@ -231,10 +233,11 @@ impl Kernel {
     async fn handle_tick(&mut self) {
         self.time_tick = self.time_tick + 1;
         if self.time_tick > 3 {
-            self.send_kernel_command(KernelCommand::Shutdown).await;
+            self.send_kernel_command(KernelMessage::Shutdown).await;
         }
         let (tx, rx) = oneshot::channel();
-        self.send_kernel_message(KernelMessage::GetHealth(tx)).await;
+        self.send_kernel_message(KernelServiceMessage::GetHealth(tx))
+            .await;
         match rx.await {
             Ok(health) => println!("{:?}", health),
             Err(e) => eprintln!("{}", e),

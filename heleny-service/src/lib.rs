@@ -32,12 +32,15 @@ impl ServiceHandle {
 pub trait Service: 'static + HasEndpoint + HasName + Send {
     type MessageType: AnyMessage + Send + Sync;
     // 需要实现
-    fn new(endpoint: Endpoint) -> Box<Self>;
+    fn new(endpoint: Endpoint) -> Result<Box<Self>>;
     async fn handle(&mut self, msg: Box<Self::MessageType>) -> Result<()>;
     async fn stop(&mut self);
     // 默认实现
     fn start(endpoint: Endpoint) -> Result<ServiceHandle> {
-        let mut service = Self::new(endpoint);
+        let mut service = match Self::new(endpoint) {
+            Ok(service) => service,
+            Err(e) => return Err(anyhow::anyhow!("新建服务实例失败, 无法开始: {}", e)),
+        };
         let handle = tokio::spawn(async move {
             while let Some(msg) = service.endpoint().recv().await {
                 let payload = Self::downcast(msg.payload);
