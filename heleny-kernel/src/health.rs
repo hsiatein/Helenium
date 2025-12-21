@@ -9,7 +9,8 @@ use crate::service::KernelService;
 pub enum HealthStatus {
     Starting,
     Healthy,
-    Dead,
+    Stopping,
+    Stopped,
 }
 
 pub struct KernelHealth {

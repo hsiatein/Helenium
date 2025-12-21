@@ -4,17 +4,31 @@ use heleny_service::ServiceHandle;
 use anyhow::Result;
 use tokio::sync::oneshot;
 
-pub enum KernelCommand{
-    Shutdown,
+pub enum AdminCommand{
     AddService(ServiceHandle),
     DeleteService(&'static str),
     NewEndpoint(&'static str, oneshot::Sender<Endpoint>),
+    Shutdown(ShutdownStage),
 }
 
-impl KernelCommand {
-    pub fn downcast(msg: Box<dyn AnyMessage>) -> Result<Box<KernelCommand>> {
-        msg.as_any().downcast::<KernelCommand>()
-            .map_err(|_| anyhow::anyhow!(
-                "消息类型转换失败：期望类型为 KernelCommand, 但收到的是其他类型"))
+pub enum KernelCommand{
+    Shutdown,
+    GetHealth,
+}
+
+pub enum ShutdownStage{
+    Start,
+    StopAllService,
+    StopKernel
+}
+
+pub fn downcast(msg: Box<dyn AnyMessage>) -> Result<Result<Box<AdminCommand>,Box<KernelCommand>>>{
+    let command=match msg.as_any().downcast::<AdminCommand>(){
+        Ok(command) => return Ok(Ok(command)),
+        Err(command) => command,
+    };
+    match command.downcast::<KernelCommand>() {
+        Ok(command) => Ok(Err(command)),
+        Err(_) => Err(anyhow::anyhow!("不是 KernelCommand 也不是 AdminCommand")),
     }
 }

@@ -1,0 +1,1 @@
+pub static KERNEL_NAME:&'static str="Kernel";

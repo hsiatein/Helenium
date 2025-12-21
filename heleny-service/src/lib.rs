@@ -22,7 +22,6 @@ impl ServiceHandle {
     pub fn name(&self) -> &'static str {
         self.service_name
     }
-
 }
 
 /// 服务 trait，定义了服务的基本行为

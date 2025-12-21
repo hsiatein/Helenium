@@ -2,16 +2,17 @@ use std::{collections::{HashMap, HashSet}, time::Duration};
 
 use anyhow::{Result};
 use heleny_bus::Endpoint;
-use heleny_service::{Service, ServiceFactory};
+use heleny_proto::{common_message::CommonMessage, name::KERNEL_NAME};
+use heleny_service::{HasName, Service, ServiceFactory};
 use async_trait::async_trait;
 use heleny_macros::{base_service};
 use inventory;
 use tokio::{sync::oneshot, time::timeout};
 
-use crate::{command::KernelCommand, health::{HealthStatus, KernelHealth}};
+use crate::{command::AdminCommand, health::{HealthStatus, KernelHealth}};
 
 pub enum KernelMessage {
-    Shutdown,
+    StopAll,
     Init,
 }
 
@@ -28,18 +29,17 @@ impl Service for KernelService {
     type MessageType = KernelMessage;
     fn new(endpoint:heleny_bus::Endpoint) -> Box<Self> {
         let service_factories=inventory::iter::<ServiceFactory>.into_iter().filter(|factory|{
-            factory.name!="KernelService"
+            factory.name!=KernelService::name()
         }).collect();
         Box::new(Self { endpoint, service_factories, order: None, health: KernelHealth::new() })
     }
     async fn handle(&mut self, msg: Box<KernelMessage>) -> anyhow::Result<()> {
         match msg.as_ref() {
-            KernelMessage::Shutdown => {
-                println!("KernelService 收到关闭指令，正在关闭...");
-                let _=self.endpoint.send("Kernel",Box::new(KernelCommand::Shutdown)).await;
+            KernelMessage::StopAll => {
+                self.stop_all_services().await;
             },
             KernelMessage::Init => {
-                self.init_service().await;
+                self.init_all_services().await;
             }
         }
         Ok(())
@@ -50,7 +50,7 @@ impl KernelService {
     /// 从内核获取 Endpoint
     async fn get_endpoint(&self, name: &'static str) -> Result<Endpoint> {
         let (tx,rx)=oneshot::channel();
-        let _=self.endpoint.send("Kernel", Box::new(KernelCommand::NewEndpoint(name, tx))).await;
+        self.send_admin_message(AdminCommand::NewEndpoint(name, tx)).await;
         match timeout(Duration::from_secs(5), rx).await {
             Ok(Ok(endpoint)) => Ok(endpoint),
             Ok(Err(e)) => Err(anyhow::anyhow!("获取 Endpoint 时错误: {}",e)),
@@ -59,12 +59,12 @@ impl KernelService {
     }
 
     /// 初始化各个服务
-    async fn init_service(&mut self) {
+    async fn init_all_services(&mut self) {
         let order=match self.get_order() {
             Ok(order) => order,
             Err(e) => {
                 eprintln!("无法获取Order, 初始化失败: {}",e);
-                self.health.services=self.health.services.iter().map(|(name,_)| (*name,HealthStatus::Dead)).collect();
+                self.health.services=self.health.services.iter().map(|(name,_)| (*name,HealthStatus::Stopped)).collect();
                 return ;
             }
         };
@@ -72,20 +72,20 @@ impl KernelService {
             let factory=match self.service_factories.iter().find(|f| f.name==name) {
                 Some(factory) => factory,
                 None => {
-                    self.health.services.insert(name, HealthStatus::Dead);
+                    self.health.services.insert(name, HealthStatus::Stopped);
                     continue;
                 }
             };
             if !self.is_deps_ready(&factory.deps) {
                 eprintln!("依赖未准备完成, 跳过初始化");
-                self.health.services.insert(name, HealthStatus::Dead);
+                self.health.services.insert(name, HealthStatus::Stopped);
                 continue;
             }
             let endpoint=match self.get_endpoint(name).await {
                 Ok(endpoint) => endpoint,
                 Err(e) => {
                     eprintln!("无法获取 Endpoint: {}",e);
-                    self.health.services.insert(name, HealthStatus::Dead);
+                    self.health.services.insert(name, HealthStatus::Stopped);
                     continue;
                 }
             };
@@ -93,15 +93,48 @@ impl KernelService {
                 Ok(handle) =>handle,
                 Err(e) => {
                     eprintln!("初始化服务失败: {}",e);
-                    self.health.services.insert(name, HealthStatus::Dead);
+                    self.health.services.insert(name, HealthStatus::Stopped);
                     continue;
                 }
             };
-            let _=self.endpoint.send("Kernel", Box::new(KernelCommand::AddService(handle))).await;
+            self.send_admin_message(AdminCommand::AddService(handle)).await;
             self.health.services.insert(name, HealthStatus::Healthy);
             println!("初始化服务成功: {}",name);
 
         }
+    }
+
+    /// 终止各个服务
+    async fn stop_all_services(&mut self){
+        let order = match &self.order {
+            Some(Ok(order))=>order,
+            _=> {
+                self.send_admin_message(AdminCommand::Shutdown(crate::command::ShutdownStage::StopKernel)).await;
+                return ;
+            }
+        };
+        for &name in order.iter().rev(){
+            match self.health.services.get(name){
+                Some(HealthStatus::Healthy) => self.health.services.insert(name, HealthStatus::Stopping),
+                _ => continue,
+            };
+            let (tx,rx)=oneshot::channel();
+            let _=self.endpoint.send(name, Box::new(CommonMessage::Stop(tx))).await;
+            match rx.await {
+                Ok(_)=> {
+                    self.send_admin_message(AdminCommand::DeleteService(name)).await;
+                }
+                Err(e)=> {
+                    eprintln!("获取关闭 {} 服务反馈失败: {}",name,e);
+                }
+            }
+            self.health.services.insert(name, HealthStatus::Stopped);
+        }
+    }
+
+    /// 向内核发送管理员消息
+    async fn send_admin_message(&self,payload:AdminCommand){
+        let _=self.endpoint.send(KERNEL_NAME, Box::new(payload)).await;
     }
 
     /// 获取初始化顺序
@@ -113,8 +146,7 @@ impl KernelService {
             let order=cal_order(dag_map);
             self.order=Some(order);
         }
-        let result=&self.order;
-        match result {
+        match &self.order {
             None => Err(anyhow::anyhow!("计算初始化顺序失败")),
             Some(Ok(order)) => {
                 Ok(order.clone())
@@ -131,6 +163,7 @@ impl KernelService {
     }
 }
 
+/// 计算依赖顺序
 fn cal_order(mut dag_map: HashMap<&'static str,HashSet<&'static str>>)->Result<Vec<&'static str>>{
     let mut order=Vec::new();
     let mut last_len=0;
