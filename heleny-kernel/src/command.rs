@@ -1,29 +1,29 @@
+use anyhow::Result;
 use heleny_bus::Endpoint;
 use heleny_proto::message::AnyMessage;
 use heleny_service::ServiceHandle;
-use anyhow::Result;
 use tokio::sync::oneshot;
 
-pub enum AdminCommand{
+pub enum AdminCommand {
     AddService(ServiceHandle),
     DeleteService(&'static str),
     NewEndpoint(&'static str, oneshot::Sender<Endpoint>),
     Shutdown(ShutdownStage),
 }
 
-pub enum KernelCommand{
+pub enum KernelCommand {
     Shutdown,
     GetHealth,
 }
 
-pub enum ShutdownStage{
+pub enum ShutdownStage {
     Start,
     StopAllService,
-    StopKernel
+    StopKernel,
 }
 
-pub fn downcast(msg: Box<dyn AnyMessage>) -> Result<Result<Box<AdminCommand>,Box<KernelCommand>>>{
-    let command=match msg.as_any().downcast::<AdminCommand>(){
+pub fn downcast(msg: Box<dyn AnyMessage>) -> Result<Result<Box<AdminCommand>, Box<KernelCommand>>> {
+    let command = match msg.as_any().downcast::<AdminCommand>() {
         Ok(command) => return Ok(Ok(command)),
         Err(command) => command,
     };

@@ -15,7 +15,7 @@ fn test_linear_dependency() {
     dag.insert("db", set(vec![]));
 
     let result = cal_order(dag).unwrap();
-    println!("{:?}",result);
+    println!("{:?}", result);
     // 检查绝对顺序
     assert_eq!(result.len(), 3);
     assert_eq!(result[0], "db");
@@ -34,10 +34,10 @@ fn test_parallel_dependency() {
     dag.insert("D", set(vec![]));
 
     let result = cal_order(dag).unwrap();
-    println!("{:?}",result);
+    println!("{:?}", result);
     // 验证相对位置
     let pos = |name| result.iter().position(|&x| x == name).unwrap();
-    
+
     assert!(pos("D") < pos("B"));
     assert!(pos("D") < pos("C"));
     assert!(pos("B") < pos("A"));
@@ -67,7 +67,7 @@ fn test_complex_mixed() {
     dag.insert("S4", set(vec!["S3"]));
 
     let result = cal_order(dag).unwrap();
-    println!("{:?}",result);
+    println!("{:?}", result);
     let pos = |name| result.iter().position(|&x| x == name).unwrap();
     assert!(pos("S1") < pos("S3"));
     assert!(pos("S2") < pos("S3"));
@@ -84,14 +84,18 @@ fn test_fail_case_cross_generational_dependency() {
     // L2: Top  (同时依赖 Mid 和 Base) -> 重点在这里！
 
     dag.insert("Base", set(vec![]));
-    dag.insert("Mid",  set(vec!["Base"]));
-    dag.insert("Top",  set(vec!["Mid", "Base"]));
+    dag.insert("Mid", set(vec!["Base"]));
+    dag.insert("Top", set(vec!["Mid", "Base"]));
 
     let result = cal_order(dag);
-    println!("{:?}",result);
+    println!("{:?}", result);
     // 你的当前实现在这里可能会返回 Err，或者 Top 的顺序不对
     // 理想结果应该是 ["Base", "Mid", "Top"]
-    assert!(result.is_ok(), "应该能处理跨级依赖，但失败了: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "应该能处理跨级依赖，但失败了: {:?}",
+        result.err()
+    );
 
     let order = result.unwrap();
     assert_eq!(order, vec!["Base", "Mid", "Top"]);
@@ -100,13 +104,13 @@ fn test_fail_case_cross_generational_dependency() {
 #[test]
 fn test_fail_case_missing_dependency() {
     let mut dag = HashMap::new();
-    
+
     // S1 依赖了一个不存在的服务 "Ghost"
     // 按照逻辑，S1 永远不应该启动，最后应该报错输出 "S1"
-    dag.insert("S1", set(vec!["Ghost"])); 
+    dag.insert("S1", set(vec!["Ghost"]));
 
     let result = cal_order(dag);
-    
+
     // 如果你的代码处理不当，可能会陷入死循环，或者返回空的 Ok
     assert!(result.is_err());
     let err_msg = result.unwrap_err().to_string();

@@ -10,7 +10,11 @@ pub struct Message {
 
 impl Message {
     pub fn new(target: &'static str, token: Option<Uuid>, payload: Box<dyn AnyMessage>) -> Self {
-        Self { target, token, payload }
+        Self {
+            target,
+            token,
+            payload,
+        }
     }
 }
 

@@ -1,19 +1,21 @@
-use std::collections::{HashMap, HashSet};
+use crate::command::{self, AdminCommand, KernelCommand, ShutdownStage};
+use crate::service::{KernelMessage, KernelService};
 use anyhow::{Result, anyhow};
 use heleny_bus::{self, Bus, Endpoint};
 use heleny_proto::common_message::CommonMessage;
 use heleny_proto::message::Message;
-use heleny_proto::name::{KERNEL_NAME};
-use tokio::sync::oneshot;
-use crate::command::{self, AdminCommand, KernelCommand, ShutdownStage};
-use crate::service::{KernelMessage, KernelService};
+use heleny_proto::name::KERNEL_NAME;
 use heleny_service::{HasName, Service, ServiceHandle};
+use std::collections::{HashMap, HashSet};
+use std::time::Duration;
+use tokio::sync::oneshot;
+use tokio::time::{MissedTickBehavior, interval};
 use uuid::Uuid;
 
 pub struct Kernel {
     bus: Bus,
     endpoint: Endpoint,
-    services: HashMap<&'static str,ServiceHandle>,
+    services: HashMap<&'static str, ServiceHandle>,
     admin_tokens: HashSet<Uuid>,
 
     service_buffer: usize,
@@ -23,13 +25,20 @@ pub struct Kernel {
 impl Kernel {
     pub async fn new(kernel_buffer: usize, service_buffer: usize) -> Result<Self> {
         let mut bus = Bus::new(kernel_buffer);
-        let token=Uuid::new_v4();
-        let endpoint=bus.get_token_endpoint(KERNEL_NAME, service_buffer, token);
-        let mut kernel=Self { bus, endpoint, services: HashMap::new(), admin_tokens: HashSet::from([token]),service_buffer , run: true };
+        let token = Uuid::new_v4();
+        let endpoint = bus.get_token_endpoint(KERNEL_NAME, service_buffer, token);
+        let mut kernel = Self {
+            bus,
+            endpoint,
+            services: HashMap::new(),
+            admin_tokens: HashSet::from([token]),
+            service_buffer,
+            run: true,
+        };
         match kernel.init_necessary_service().await {
             Ok(_) => (),
             Err(e) => {
-                return Err(anyhow!("创建 Kernel 失败, 因为必要服务启动失败: {}",e));
+                return Err(anyhow!("创建 Kernel 失败, 因为必要服务启动失败: {}", e));
             }
         }
         Ok(kernel)
@@ -37,69 +46,81 @@ impl Kernel {
 
     /// 运行内核
     pub async fn run(&mut self) {
-        let _=self.init_all_service().await;
-        while let Some(msg) = self.bus.recv().await{
-            if !self.run {break;}
-            if msg.target == KernelService::name(){
-                eprintln!("拒绝外部对私有服务 KernelService 的访问");
-            }
-            else if msg.target == KERNEL_NAME {
-                let command=match command::downcast(msg.payload) {
-                    Ok(command) => command,
-                    Err(e) => {
-                        eprintln!("解析失败, 忽略命令: {}",e);
-                        continue;
+        // 开始初始化服务
+        let _ = self.init_all_service().await;
+        // 计时器
+        let mut tick_interval = interval(Duration::from_secs(1));
+        tick_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
+        while self.run {
+            tokio::select! {
+                Some(msg) = self.bus.recv() => {
+                    if msg.target == KernelService::name(){
+                        eprintln!("拒绝外部对私有服务 KernelService 的访问");
                     }
-                };
-                match command {
-                    Ok(command) => {
-                        if !self.verify_admin_token(msg.token) {
-                            eprintln!("无管理员权限, 忽略命令");
-                            continue;
+                    else if msg.target == KERNEL_NAME {
+                        let command=match command::downcast(msg.payload) {
+                            Ok(command) => command,
+                            Err(e) => {
+                                eprintln!("解析失败, 忽略命令: {}",e);
+                                continue;
+                            }
+                        };
+                        match command {
+                            Ok(command) => {
+                                if !self.verify_admin_token(msg.token) {
+                                    eprintln!("无管理员权限, 忽略命令");
+                                    continue;
+                                }
+                                self.handle_admin(*command).await;
+                            }
+                            Err(command) => self.handle(*command).await,
+                        };
+                    }
+                    else {
+                        if let Err(e) = self.bus.send(msg).await {
+                            eprintln!("Kernel 发送消息时出错: {}", e);
                         }
-                        self.handle_admin(*command).await;
                     }
-                    Err(command) => self.handle(*command).await,
-                };
-            }
-            else {
-                if let Err(e) = self.bus.send(msg).await {
-                    eprintln!("Kernel 发送消息时出错: {}", e);
+                }
+                _ = tick_interval.tick() => {
+                    self.handle_tick().await;
                 }
             }
         }
     }
 
     /// 初始化必要的服务
-    async fn init_necessary_service(&mut self)->Result<()> {
-        let token=self.generate_admin_token();
-        let endpoint=self.bus.get_token_endpoint(KernelService::name(), self.service_buffer, token);
+    async fn init_necessary_service(&mut self) -> Result<()> {
+        let token = self.generate_admin_token();
+        let endpoint =
+            self.bus
+                .get_token_endpoint(KernelService::name(), self.service_buffer, token);
         let handle = match KernelService::start(endpoint) {
             Ok(handle) => handle,
             Err(e) => {
-                return Err(anyhow::anyhow!("KernelService 内核服务初始化失败: {}",e));
+                return Err(anyhow::anyhow!("KernelService 内核服务初始化失败: {}", e));
             }
         };
-        self.services.insert(handle.name(),handle);
+        self.services.insert(handle.name(), handle);
         Ok(())
     }
 
     /// 初始化所有服务
-    async fn init_all_service(&mut self)->Result<()> {
+    async fn init_all_service(&mut self) -> Result<()> {
         self.send_kernel_message(KernelMessage::Init).await;
         Ok(())
     }
 
     /// 生成管理员 token
-    fn generate_admin_token(&mut self)-> Uuid {
-        let token=Uuid::new_v4();
+    fn generate_admin_token(&mut self) -> Uuid {
+        let token = Uuid::new_v4();
         self.admin_tokens.insert(token);
         token
     }
 
     /// 验证管理员 token
-    fn verify_admin_token(&self, token:Option<Uuid>)-> bool {
-        let token=match token {
+    fn verify_admin_token(&self, token: Option<Uuid>) -> bool {
+        let token = match token {
             Some(token) => token,
             None => return false,
         };
@@ -107,66 +128,70 @@ impl Kernel {
     }
 
     /// 发送消息给 KernelService
-    async fn send_kernel_message(&self,payload: KernelMessage){
-        let message=Message::new(KernelService::name(), None, Box::new(payload));
-        let _=self.bus.send(message).await;
+    async fn send_kernel_message(&self, payload: KernelMessage) {
+        let message = Message::new(KernelService::name(), None, Box::new(payload));
+        let _ = self.bus.send(message).await;
     }
 
     /// 发送 Admin 消息给 Kernel(自己)
-    async fn send_admin_command(&self,payload: AdminCommand){
-        let _=self.endpoint.send(KERNEL_NAME,Box::new(payload)).await;
+    async fn send_admin_command(&self, payload: AdminCommand) {
+        let _ = self.endpoint.send(KERNEL_NAME, Box::new(payload)).await;
     }
 
     // 关机
-    async fn shutdown(&mut self, stage:ShutdownStage) {
+    async fn shutdown(&mut self, stage: ShutdownStage) {
         match stage {
-            ShutdownStage::Start=>{
-                self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::StopAllService)).await;
+            ShutdownStage::Start => {
+                self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::StopAllService))
+                    .await;
             }
-            ShutdownStage::StopAllService=>{
+            ShutdownStage::StopAllService => {
                 self.send_kernel_message(KernelMessage::StopAll).await;
             }
-            ShutdownStage::StopKernel=>{
-                let (tx,rx)=oneshot::channel();
-                let _=self.bus.send_common_message(KernelService::name(),CommonMessage::Stop(tx)).await;
+            ShutdownStage::StopKernel => {
+                let (tx, rx) = oneshot::channel();
+                let _ = self
+                    .bus
+                    .send_common_message(KernelService::name(), CommonMessage::Stop(tx))
+                    .await;
                 match rx.await {
                     Ok(_) => (),
-                    Err(e) => eprintln!("关闭 KernelService 时发生错误: {}",e),
+                    Err(e) => eprintln!("关闭 KernelService 时发生错误: {}", e),
                 };
-                self.run=false;
+                self.run = false;
             }
         }
-        
     }
 
     /// 处理管理员 Command
-    async fn handle_admin(&mut self, command: AdminCommand){
+    async fn handle_admin(&mut self, command: AdminCommand) {
         match command {
-            AdminCommand::AddService(handle) =>{
+            AdminCommand::AddService(handle) => {
                 self.services.insert(handle.name(), handle);
             }
-            AdminCommand::DeleteService(name) =>{
+            AdminCommand::DeleteService(name) => {
                 self.services.remove(name);
             }
-            AdminCommand::NewEndpoint(name, sender) =>{
-                let endpoint=self.bus.get_endpoint(name, self.service_buffer);
-                let _=sender.send(endpoint);
+            AdminCommand::NewEndpoint(name, sender) => {
+                let endpoint = self.bus.get_endpoint(name, self.service_buffer);
+                let _ = sender.send(endpoint);
             }
-            AdminCommand::Shutdown(stage) =>{
+            AdminCommand::Shutdown(stage) => {
                 self.shutdown(stage).await;
             }
         }
     }
 
     /// 处理普通Command
-    async fn handle(&mut self, command: KernelCommand){
+    async fn handle(&mut self, command: KernelCommand) {
         match command {
-            KernelCommand::Shutdown =>{
-                self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::Start)).await;
+            KernelCommand::Shutdown => {
+                self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::Start))
+                    .await;
             }
-            KernelCommand::GetHealth =>{
-
-            }
+            KernelCommand::GetHealth => {}
         }
     }
+
+    async fn handle_tick(&self) {}
 }

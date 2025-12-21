@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input,ItemStruct};
+use syn::{ItemStruct, parse_macro_input};
 
 #[proc_macro_attribute]
 pub fn base_service(args: TokenStream, input: TokenStream) -> TokenStream {
@@ -13,11 +13,15 @@ pub fn base_service(args: TokenStream, input: TokenStream) -> TokenStream {
     // 使用更健壮的参数解析方式
     let args_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("deps") {
-            let value = meta.value()?; 
+            let value = meta.value()?;
             let array: syn::ExprArray = value.parse()?;
-            
+
             for expr in array.elems {
-                if let syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Str(s), .. }) = expr {
+                if let syn::Expr::Lit(syn::ExprLit {
+                    lit: syn::Lit::Str(s),
+                    ..
+                }) = expr
+                {
                     deps.push(s.value());
                 }
             }
