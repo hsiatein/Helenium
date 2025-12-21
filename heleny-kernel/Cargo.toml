@@ -15,3 +15,4 @@ heleny_service = { path = "../heleny-service" }
 heleny_bus ={ path = "../heleny-bus"}
 uuid ={ workspace = true }
 heleny_proto ={ path = "../heleny-proto"}
+service_config ={ path = "../service-config"}

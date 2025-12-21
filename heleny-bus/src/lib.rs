@@ -13,6 +13,7 @@ pub struct Bus {
     address_map: HashMap<&'static str, mpsc::Sender<Message>>,
 }
 
+#[derive(Debug)]
 pub struct Endpoint {
     token: Option<Uuid>,
     to_kernel: mpsc::Sender<Message>,

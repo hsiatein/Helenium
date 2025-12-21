@@ -6,6 +6,7 @@ use tokio::sync::oneshot;
 
 use heleny_proto::kernel_message::KernelMessage;
 
+#[derive(Debug)]
 pub enum AdminCommand {
     AddService(ServiceHandle),
     DeleteService(&'static str),
@@ -13,6 +14,7 @@ pub enum AdminCommand {
     Shutdown(ShutdownStage),
 }
 
+#[derive(Debug)]
 pub enum ShutdownStage {
     Start,
     StopAllService,

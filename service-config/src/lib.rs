@@ -16,7 +16,7 @@ pub struct ConfigService {
 #[async_trait]
 impl Service for ConfigService {
     type MessageType = ConfigServiceMessage;
-    fn new(endpoint: Endpoint) -> Result<Box<Self>> {
+    async fn new(endpoint: Endpoint) -> Result<Box<Self>> {
         let config_path = match std::env::var("HELENIUM_CONFIG") {
             Ok(path) => PathBuf::from(path),
             Err(e) => {
@@ -40,8 +40,8 @@ impl Service for ConfigService {
     }
     async fn handle(&mut self, msg: Box<Self::MessageType>) -> Result<()> {
         match *msg {
-            ConfigServiceMessage::Get { key, sender } => {}
-            ConfigServiceMessage::Set { key, value } => {}
+            ConfigServiceMessage::Get { path, sender } => {}
+            ConfigServiceMessage::Set { path, value } => {}
             ConfigServiceMessage::Update => {}
             ConfigServiceMessage::Persist => {}
         }

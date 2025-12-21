@@ -16,3 +16,7 @@ services:
 - memory_service
 - db_service
 - config_service
+- auth_service
+
+1.token换成每人都有，权限不同
+2.中转时token换name

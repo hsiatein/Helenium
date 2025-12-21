@@ -7,8 +7,8 @@ use tokio;
 async fn main() {
     // 读取环境变量
     dotenv().ok();
-    if let Ok(val) = env::var("MUGI") {
-        println!("MUGI: {}", val);
+    if let Ok(val) = env::var("HELENIUM_CONFIG") {
+        println!("HELENIUM_CONFIG: {}", val);
     }
     let mut kernel = match heleny_kernel::kernel::Kernel::new(128, 64).await {
         Ok(kernel) => kernel,

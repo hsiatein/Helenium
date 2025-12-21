@@ -1,12 +1,14 @@
 use tokio::sync::oneshot;
 
+/// path的各个键用.分割, 如data["a"]["b"]["c"] => path="a.b.c"
+#[derive(Debug)]
 pub enum ConfigServiceMessage {
     Get {
-        key: &'static str,
-        sender: oneshot::Sender<toml::Value>,
+        path: String,
+        sender: oneshot::Sender<Option<toml::Value>>,
     },
     Set {
-        key: &'static str,
+        path: String,
         value: toml::Value,
     },
     Update,

@@ -5,13 +5,17 @@ use heleny_proto::{common_message::CommonMessage, message::AnyMessage};
 use tokio::task::JoinHandle;
 
 /// 服务句柄，用于管理服务的生命周期
+#[derive(Debug)]
 pub struct ServiceHandle {
     service_name: &'static str,
-    thread_handle: JoinHandle<()>,
+    thread_handle: JoinHandle<Result<(), anyhow::Error>>,
 }
 
 impl ServiceHandle {
-    pub fn new(service_name: &'static str, thread_handle: JoinHandle<()>) -> Self {
+    pub fn new(
+        service_name: &'static str,
+        thread_handle: JoinHandle<Result<(), anyhow::Error>>,
+    ) -> Self {
         Self {
             service_name,
             thread_handle,
@@ -32,16 +36,20 @@ impl ServiceHandle {
 pub trait Service: 'static + HasEndpoint + HasName + Send {
     type MessageType: AnyMessage + Send + Sync;
     // 需要实现
-    fn new(endpoint: Endpoint) -> Result<Box<Self>>;
+    async fn new(endpoint: Endpoint) -> Result<Box<Self>>;
     async fn handle(&mut self, msg: Box<Self::MessageType>) -> Result<()>;
     async fn stop(&mut self);
     // 默认实现
     fn start(endpoint: Endpoint) -> Result<ServiceHandle> {
-        let mut service = match Self::new(endpoint) {
-            Ok(service) => service,
-            Err(e) => return Err(anyhow::anyhow!("新建服务实例失败, 无法开始: {}", e)),
-        };
         let handle = tokio::spawn(async move {
+            let mut service = match Self::new(endpoint).await {
+                Ok(service) => service,
+                Err(e) => {
+                    println!("新建服务实例失败, 无法开始: {}", e);
+                    return Err(anyhow::anyhow!("新建服务实例失败, 无法开始: {}", e));
+                    // return Err(anyhow::anyhow!("新建服务实例失败, 无法开始: {}", e));
+                }
+            };
             while let Some(msg) = service.endpoint().recv().await {
                 let payload = Self::downcast(msg.payload);
                 let payload = match payload {
@@ -68,6 +76,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                     }
                 }
             }
+            Ok(())
         });
         Ok(ServiceHandle::new(Self::name(), handle))
     }

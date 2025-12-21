@@ -84,6 +84,7 @@ dependencies = [
  "inventory",
  "serde",
  "serde_json",
+ "service_config",
  "tokio",
  "uuid",
 ]

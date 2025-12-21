@@ -1,13 +1,16 @@
 use crate::command::{self, AdminCommand, ShutdownStage};
+use crate::health::new_kernel_health;
 use crate::service::{KernelService, KernelServiceMessage};
 use anyhow::{Result, anyhow};
 use heleny_bus::{self, Bus, Endpoint};
 use heleny_proto::common_message::CommonMessage;
+use heleny_proto::health::KernelHealth;
 use heleny_proto::kernel_message::KernelMessage;
 use heleny_proto::message::Message;
 use heleny_proto::name::KERNEL_NAME;
 use heleny_service::{HasName, ServiceHandle, get_factory};
 use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::oneshot;
 use tokio::time::{MissedTickBehavior, interval};
@@ -17,6 +20,7 @@ pub struct Kernel {
     bus: Bus,
     endpoint: Endpoint,
     services: HashMap<&'static str, ServiceHandle>,
+    health: Arc<Mutex<KernelHealth>>,
     admin_tokens: HashSet<Uuid>,
 
     service_buffer: usize,
@@ -33,6 +37,7 @@ impl Kernel {
             bus,
             endpoint,
             services: HashMap::new(),
+            health: Arc::new(Mutex::new(new_kernel_health())),
             admin_tokens: HashSet::from([token]),
             service_buffer,
             run: true,
@@ -57,6 +62,7 @@ impl Kernel {
         while self.run {
             tokio::select! {
                 Some(msg) = self.bus.recv() => {
+                    println!("{:?}",msg);
                     if msg.target == KernelService::name(){
                         eprintln!("拒绝外部对私有服务 KernelService 的访问");
                     }
@@ -94,7 +100,17 @@ impl Kernel {
 
     /// 初始化必要的服务
     async fn init_necessary_services(&mut self) -> Result<()> {
-        let _ = self.init_service(KernelService::name(), true).await;
+        let _ = self
+            .init_service(
+                KernelService::name(),
+                true,
+                Some(Message::new(
+                    KernelService::name(),
+                    None,
+                    Box::new(KernelServiceMessage::PutHealth(self.health.clone())),
+                )),
+            )
+            .await;
         Ok(())
     }
 
@@ -105,7 +121,12 @@ impl Kernel {
     }
 
     /// 初始化一个服务
-    async fn init_service(&mut self, name: &'static str, admin: bool) {
+    async fn init_service(
+        &mut self,
+        name: &'static str,
+        admin: bool,
+        init_message: Option<Message>,
+    ) {
         let endpoint = match admin {
             true => {
                 let token = self.generate_admin_token();
@@ -114,6 +135,9 @@ impl Kernel {
             }
             false => self.bus.get_endpoint(name, self.service_buffer),
         };
+        if let Some(msg) = init_message {
+            let _ = self.bus.send(msg).await;
+        }
         let f = match get_factory(name) {
             Some(f) if f.deps.len() == 0 => f,
             Some(_) => {
@@ -223,8 +247,7 @@ impl Kernel {
                     .await;
             }
             KernelMessage::GetHealth(sender) => {
-                self.send_kernel_message(KernelServiceMessage::GetHealth(sender))
-                    .await;
+                let _ = sender.send(KernelHealth::get_mut(&self.health).to_owned());
             }
         }
     }
@@ -232,15 +255,9 @@ impl Kernel {
     /// 处理 Tick
     async fn handle_tick(&mut self) {
         self.time_tick = self.time_tick + 1;
-        if self.time_tick > 3 {
+        if self.time_tick > 1 {
             self.send_kernel_command(KernelMessage::Shutdown).await;
         }
-        let (tx, rx) = oneshot::channel();
-        self.send_kernel_message(KernelServiceMessage::GetHealth(tx))
-            .await;
-        match rx.await {
-            Ok(health) => println!("{:?}", health),
-            Err(e) => eprintln!("{}", e),
-        }
+        println!("{:?}", KernelHealth::get_mut(&self.health))
     }
 }
