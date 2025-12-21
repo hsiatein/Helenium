@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use heleny_bus::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::{common_message::CommonMessage, message::Message, name::KERNEL_NAME};
-use heleny_service::{HasName, Service, ServiceFactory};
+use heleny_service::{HasName, Service, ServiceFactory, ServiceHandle};
 use inventory;
 use tokio::{sync::oneshot, time::timeout};
 
@@ -21,7 +21,10 @@ use heleny_proto::health::KernelHealth;
 pub enum KernelServiceMessage {
     StopAll,
     Init,
-    PutHealth(Arc<Mutex<KernelHealth>>),
+    InitParams(
+        Arc<Mutex<KernelHealth>>,
+        Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
+    ),
 }
 
 #[base_service(deps=[])]
@@ -29,6 +32,7 @@ pub struct KernelService {
     endpoint: heleny_bus::Endpoint,
     service_factories: Vec<&'static ServiceFactory>,
     order: Option<Result<Vec<&'static str>>>,
+    services: Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
     health: Arc<Mutex<KernelHealth>>,
 }
 
@@ -37,14 +41,14 @@ impl Service for KernelService {
     type MessageType = KernelServiceMessage;
     async fn new(mut endpoint: heleny_bus::Endpoint) -> Result<Box<Self>> {
         let service_factories = inventory::iter::<ServiceFactory>.into_iter().collect();
-        let health = match endpoint.recv().await {
+        let (health, services) = match endpoint.recv().await {
             Some(Message {
                 target: _,
                 token: _,
                 payload,
             }) => match Self::downcast(payload) {
                 Ok(Ok(health)) => match *health {
-                    KernelServiceMessage::PutHealth(health) => health,
+                    KernelServiceMessage::InitParams(health, services) => (health, services),
                     _ => {
                         return Err(anyhow::anyhow!(
                             "初始化 KernelService 时未带所需 Arc<Mutex<KernelHealth>>"
@@ -70,6 +74,7 @@ impl Service for KernelService {
             endpoint,
             service_factories,
             order: None,
+            services,
             health,
         }))
     }
@@ -81,9 +86,7 @@ impl Service for KernelService {
             KernelServiceMessage::Init => {
                 self.init_all_services().await;
             }
-            KernelServiceMessage::PutHealth(health) => {
-                self.health = health;
-            }
+            KernelServiceMessage::InitParams(_, _) => {}
         }
         Ok(())
     }
@@ -162,8 +165,11 @@ impl KernelService {
                     continue;
                 }
             };
-            self.send_admin_message(AdminCommand::AddService(handle))
-                .await;
+            self.services
+                .as_ref()
+                .lock()
+                .expect("获取 services 锁失败")
+                .insert(handle.name(), handle);
             KernelHealth::get_mut(&self.health)
                 .services
                 .insert(name, HealthStatus::Healthy);
@@ -204,8 +210,11 @@ impl KernelService {
             match timeout(Duration::from_secs(5), rx).await {
                 Ok(_) => {
                     println!("清理 {} 句柄", name);
-                    self.send_admin_message(AdminCommand::DeleteService(name))
-                        .await;
+                    self.services
+                        .as_ref()
+                        .lock()
+                        .expect("获取 services 锁失败")
+                        .remove(name);
                 }
                 Err(e) => {
                     eprintln!("获取 {} 关闭反馈失败: {}", name, e);

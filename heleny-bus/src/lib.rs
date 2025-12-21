@@ -3,12 +3,12 @@ use heleny_proto::{
     common_message::CommonMessage,
     message::{AnyMessage, Message},
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, mem::replace};
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
 pub struct Bus {
-    to_kernel: mpsc::Sender<Message>,
+    endpoint_kernel: mpsc::Sender<Message>,
     kernel_recv: mpsc::Receiver<Message>,
     address_map: HashMap<&'static str, mpsc::Sender<Message>>,
 }
@@ -16,19 +16,37 @@ pub struct Bus {
 #[derive(Debug)]
 pub struct Endpoint {
     token: Option<Uuid>,
-    to_kernel: mpsc::Sender<Message>,
+    endpoint_kernel: mpsc::Sender<Message>,
     service_recv: mpsc::Receiver<Message>,
+}
+
+#[derive(Debug)]
+pub struct Midware {
+    tx: mpsc::Sender<Message>,
+    rx: mpsc::Receiver<Message>,
+}
+
+impl Midware {
+    pub fn new(tx: mpsc::Sender<Message>, rx: mpsc::Receiver<Message>) -> Self {
+        Self { tx, rx }
+    }
+    pub async fn recv(&mut self) -> Option<Message> {
+        self.rx.recv().await
+    }
+    pub async fn send(&mut self, msg: Message) {
+        let _ = self.tx.send(msg).await;
+    }
 }
 
 impl Endpoint {
     pub fn new(
         token: Option<Uuid>,
-        to_kernel: mpsc::Sender<Message>,
+        endpoint_kernel: mpsc::Sender<Message>,
         service_recv: mpsc::Receiver<Message>,
     ) -> Self {
         Self {
             token,
-            to_kernel,
+            endpoint_kernel,
             service_recv,
         }
     }
@@ -39,7 +57,7 @@ impl Endpoint {
         payload: Box<dyn AnyMessage + 'static>,
     ) -> Result<()> {
         let msg = Message::new(target, self.token, payload);
-        self.to_kernel
+        self.endpoint_kernel
             .send(msg)
             .await
             .map_err(|e| anyhow::anyhow!("发送消息到 Kernel 失败: {}", e))
@@ -54,7 +72,7 @@ impl Bus {
     pub fn new(buffer: usize) -> Self {
         let (tx_service, rx) = mpsc::channel(buffer);
         Self {
-            to_kernel: tx_service,
+            endpoint_kernel: tx_service,
             kernel_recv: rx,
             address_map: HashMap::new(),
         }
@@ -68,13 +86,19 @@ impl Bus {
     ) -> Endpoint {
         let (tx, rx) = mpsc::channel(buffer);
         let _ = self.address_map.insert(name, tx);
-        Endpoint::new(Some(token), self.to_kernel.clone(), rx)
+        Endpoint::new(Some(token), self.endpoint_kernel.clone(), rx)
     }
 
     pub fn get_endpoint(&mut self, name: &'static str, buffer: usize) -> Endpoint {
         let (tx, rx) = mpsc::channel(buffer);
         let _ = self.address_map.insert(name, tx);
-        Endpoint::new(None, self.to_kernel.clone(), rx)
+        Endpoint::new(None, self.endpoint_kernel.clone(), rx)
+    }
+
+    pub fn get_midware(&mut self, buffer: usize) -> Midware {
+        let (tx, rx) = mpsc::channel(buffer);
+        let old_rx = replace(&mut self.kernel_recv, rx);
+        Midware::new(tx, old_rx)
     }
 
     pub async fn recv(&mut self) -> Option<Message> {

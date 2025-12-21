@@ -19,7 +19,7 @@ use uuid::Uuid;
 pub struct Kernel {
     bus: Bus,
     endpoint: Endpoint,
-    services: HashMap<&'static str, ServiceHandle>,
+    services: Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
     health: Arc<Mutex<KernelHealth>>,
     admin_tokens: HashSet<Uuid>,
 
@@ -36,7 +36,7 @@ impl Kernel {
         let mut kernel = Self {
             bus,
             endpoint,
-            services: HashMap::new(),
+            services: Arc::new(Mutex::new(HashMap::new())),
             health: Arc::new(Mutex::new(new_kernel_health())),
             admin_tokens: HashSet::from([token]),
             service_buffer,
@@ -107,10 +107,13 @@ impl Kernel {
                 Some(Message::new(
                     KernelService::name(),
                     None,
-                    Box::new(KernelServiceMessage::PutHealth(self.health.clone())),
+                    Box::new(KernelServiceMessage::InitParams(
+                        self.health.clone(),
+                        self.services.clone(),
+                    )),
                 )),
             )
-            .await;
+            .await?;
         Ok(())
     }
 
@@ -126,7 +129,7 @@ impl Kernel {
         name: &'static str,
         admin: bool,
         init_message: Option<Message>,
-    ) {
+    ) -> Result<()> {
         let endpoint = match admin {
             true => {
                 let token = self.generate_admin_token();
@@ -141,22 +144,24 @@ impl Kernel {
         let f = match get_factory(name) {
             Some(f) if f.deps.len() == 0 => f,
             Some(_) => {
-                eprintln!("内核不能直接初始化有依赖的服务: {}", name);
-                return;
+                return Err(anyhow::anyhow!("内核不能直接初始化有依赖的服务: {}", name));
             }
             None => {
-                eprintln!("未找到此服务: {}", name);
-                return;
+                return Err(anyhow::anyhow!("未找到此服务: {}", name));
             }
         };
         let handle = match (f.launch)(endpoint) {
             Ok(handle) => handle,
             Err(e) => {
-                eprintln!("{} 服务初始化失败: {}", name, e);
-                return;
+                return Err(anyhow::anyhow!("{} 服务初始化失败: {}", name, e));
             }
         };
-        self.services.insert(handle.name(), handle);
+        self.services
+            .as_ref()
+            .lock()
+            .expect("获取 services 锁失败")
+            .insert(handle.name(), handle);
+        Ok(())
     }
 
     /// 生成管理员 token
@@ -223,12 +228,6 @@ impl Kernel {
     /// 处理管理员 Command
     async fn handle_admin(&mut self, command: AdminCommand) {
         match command {
-            AdminCommand::AddService(handle) => {
-                self.services.insert(handle.name(), handle);
-            }
-            AdminCommand::DeleteService(name) => {
-                self.services.remove(name);
-            }
             AdminCommand::NewEndpoint(name, sender) => {
                 let endpoint = self.bus.get_endpoint(name, self.service_buffer);
                 let _ = sender.send(endpoint);

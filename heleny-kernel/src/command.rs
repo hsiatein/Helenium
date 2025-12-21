@@ -1,15 +1,12 @@
 use anyhow::Result;
 use heleny_bus::Endpoint;
 use heleny_proto::message::AnyMessage;
-use heleny_service::ServiceHandle;
 use tokio::sync::oneshot;
 
 use heleny_proto::kernel_message::KernelMessage;
 
 #[derive(Debug)]
 pub enum AdminCommand {
-    AddService(ServiceHandle),
-    DeleteService(&'static str),
     NewEndpoint(&'static str, oneshot::Sender<Endpoint>),
     Shutdown(ShutdownStage),
 }

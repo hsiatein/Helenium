@@ -1,8 +1,11 @@
+use std::time::Duration;
+
 use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::Endpoint;
 use heleny_proto::{common_message::CommonMessage, message::AnyMessage};
 use tokio::task::JoinHandle;
+use tokio::time::{MissedTickBehavior, interval};
 
 /// 服务句柄，用于管理服务的生命周期
 #[derive(Debug)]
@@ -47,32 +50,40 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                 Err(e) => {
                     println!("新建服务实例失败, 无法开始: {}", e);
                     return Err(anyhow::anyhow!("新建服务实例失败, 无法开始: {}", e));
-                    // return Err(anyhow::anyhow!("新建服务实例失败, 无法开始: {}", e));
                 }
             };
-            while let Some(msg) = service.endpoint().recv().await {
-                let payload = Self::downcast(msg.payload);
-                let payload = match payload {
-                    Ok(payload) => payload,
-                    Err(e) => {
-                        eprintln!("服务 {} 收到未知消息类型: {}", Self::name(), e);
-                        continue;
-                    }
-                };
-                let common_message = match payload {
-                    Ok(message) => {
-                        if let Err(e) = service.handle(message).await {
-                            eprintln!("服务 {} 处理消息时出错: {}", Self::name(), e);
+            let mut tick_interval = interval(Duration::from_secs(1));
+            tick_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
+            loop {
+                tokio::select! {
+                    Some(msg) = service.endpoint().recv()=>{
+                        let payload = Self::downcast(msg.payload);
+                        let payload = match payload {
+                            Ok(payload) => payload,
+                            Err(e) => {
+                                eprintln!("服务 {} 收到未知消息类型: {}", Self::name(), e);
+                                continue;
+                            }
+                        };
+                        let common_message = match payload {
+                            Ok(message) => {
+                                if let Err(e) = service.handle(message).await {
+                                    eprintln!("服务 {} 处理消息时出错: {}", Self::name(), e);
+                                }
+                                continue;
+                            }
+                            Err(common_message) => common_message,
+                        };
+                        match *common_message {
+                            CommonMessage::Stop(oneshot) => {
+                                service.stop().await;
+                                let _ = oneshot.send(());
+                                break;
+                            }
                         }
-                        continue;
                     }
-                    Err(common_message) => common_message,
-                };
-                match *common_message {
-                    CommonMessage::Stop(oneshot) => {
-                        service.stop().await;
-                        let _ = oneshot.send(());
-                        break;
+                    _ = tick_interval.tick()=>{
+
                     }
                 }
             }
