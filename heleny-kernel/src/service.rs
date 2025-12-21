@@ -20,6 +20,7 @@ use crate::{
 pub enum KernelMessage {
     StopAll,
     Init,
+    GetHealth(oneshot::Sender<KernelHealth>),
 }
 
 #[base_service(deps=[])]
@@ -46,15 +47,21 @@ impl Service for KernelService {
         })
     }
     async fn handle(&mut self, msg: Box<KernelMessage>) -> anyhow::Result<()> {
-        match msg.as_ref() {
+        match *msg {
             KernelMessage::StopAll => {
                 self.stop_all_services().await;
             }
             KernelMessage::Init => {
                 self.init_all_services().await;
             }
+            KernelMessage::GetHealth(sender) => {
+                let _ = sender.send(self.health.clone());
+            }
         }
         Ok(())
+    }
+    async fn stop(&mut self) {
+        println!("{} 已关闭", Self::name())
     }
 }
 
@@ -86,6 +93,7 @@ impl KernelService {
                 return;
             }
         };
+        self.health.kernel = HealthStatus::Healthy;
         for name in order {
             let factory = match self.service_factories.iter().find(|f| f.name == name) {
                 Some(factory) => factory,
@@ -157,6 +165,10 @@ impl KernelService {
             }
             self.health.services.insert(name, HealthStatus::Stopped);
         }
+        self.send_admin_message(AdminCommand::Shutdown(
+            crate::command::ShutdownStage::StopKernel,
+        ))
+        .await;
     }
 
     /// 向内核发送管理员消息

@@ -31,8 +31,11 @@ impl ServiceHandle {
 #[async_trait]
 pub trait Service: 'static + HasEndpoint + HasName + Send {
     type MessageType: AnyMessage + Send + Sync;
+    // 需要实现
     fn new(endpoint: Endpoint) -> Box<Self>;
     async fn handle(&mut self, msg: Box<Self::MessageType>) -> Result<()>;
+    async fn stop(&mut self);
+    // 默认实现
     fn start(endpoint: Endpoint) -> Result<ServiceHandle> {
         let mut service = Self::new(endpoint);
         let handle = tokio::spawn(async move {
@@ -65,7 +68,6 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
         });
         Ok(ServiceHandle::new(Self::name(), handle))
     }
-    async fn stop(&mut self) {}
     fn downcast(
         msg: Box<dyn AnyMessage>,
     ) -> Result<Result<Box<Self::MessageType>, Box<CommonMessage>>> {
@@ -98,3 +100,9 @@ pub struct ServiceFactory {
 }
 
 inventory::collect!(ServiceFactory);
+
+pub fn get_factory(name: &'static str) -> Option<&'static ServiceFactory> {
+    inventory::iter::<ServiceFactory>
+        .into_iter()
+        .find(|&f| f.name == name)
+}

@@ -4,6 +4,8 @@ use heleny_proto::message::AnyMessage;
 use heleny_service::ServiceHandle;
 use tokio::sync::oneshot;
 
+use crate::health::KernelHealth;
+
 pub enum AdminCommand {
     AddService(ServiceHandle),
     DeleteService(&'static str),
@@ -13,7 +15,7 @@ pub enum AdminCommand {
 
 pub enum KernelCommand {
     Shutdown,
-    GetHealth,
+    GetHealth(oneshot::Sender<KernelHealth>),
 }
 
 pub enum ShutdownStage {

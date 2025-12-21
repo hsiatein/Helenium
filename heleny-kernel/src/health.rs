@@ -4,7 +4,7 @@ use heleny_service::{HasName, ServiceFactory};
 
 use crate::service::KernelService;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum HealthStatus {
     Starting,
     Healthy,
@@ -12,6 +12,7 @@ pub enum HealthStatus {
     Stopped,
 }
 
+#[derive(Clone, Debug)]
 pub struct KernelHealth {
     pub kernel: HealthStatus,
     pub services: HashMap<&'static str, HealthStatus>,
@@ -31,7 +32,7 @@ impl KernelHealth {
             )
             .collect();
         Self {
-            kernel: HealthStatus::Starting,
+            kernel: HealthStatus::Healthy,
             services,
         }
     }
