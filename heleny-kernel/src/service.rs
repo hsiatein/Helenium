@@ -14,10 +14,12 @@ use heleny_service::{Service, ServiceFactory, ServiceHandle};
 use inventory;
 use tokio::{sync::oneshot, time::timeout};
 
-use crate::command::AdminCommand;
+use crate::{command::AdminCommand, service::cal_deps::deps_exist};
 use heleny_proto::health::HealthStatus;
 use heleny_proto::health::KernelHealth;
 use tracing::{info, warn};
+
+mod cal_deps;
 
 #[derive(Debug)]
 pub enum KernelServiceMessage {
@@ -35,7 +37,7 @@ pub enum KernelServiceMessage {
 #[base_service(deps=[])]
 pub struct KernelService {
     endpoint: heleny_bus::Endpoint,
-    service_factories: Vec<&'static ServiceFactory>,
+    service_factories: Vec<ServiceFactory>,
     order: Option<Result<Vec<&'static str>>>,
     services: Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
     health: Arc<Mutex<KernelHealth>>,
@@ -45,7 +47,36 @@ pub struct KernelService {
 impl Service for KernelService {
     type MessageType = KernelServiceMessage;
     async fn new(mut endpoint: heleny_bus::Endpoint) -> Result<Box<Self>> {
-        let service_factories = inventory::iter::<ServiceFactory>.into_iter().collect();
+        // 初始化服务工厂
+        let service_factories: Vec<ServiceFactory> = inventory::iter::<ServiceFactory>
+            .into_iter()
+            .map(|ServiceFactory { name, deps, launch }| {
+                let mut deps = deps.clone();
+                if *name != KernelService::name() && !deps.contains(&KernelService::name()) {
+                    deps.push(KernelService::name());
+                }
+                ServiceFactory {
+                    name,
+                    deps,
+                    launch: launch.clone(),
+                }
+            })
+            .collect();
+        // 计算服务依赖
+        let dag_map = service_factories
+            .iter()
+            .filter(|f| f.name != Self::name())
+            .map(|f| {
+                (
+                    f.name,
+                    f.deps.iter().copied().collect::<HashSet<&'static str>>(),
+                )
+            })
+            .collect::<HashMap<&'static str, HashSet<&'static str>>>();
+        if deps_exist(&dag_map) {
+            return Err(anyhow::anyhow!("服务依赖里含有未知服务名"));
+        }
+        // 构建健康表
         let (health, services) = match endpoint.recv().await {
             Some(Message {
                 target: _,
@@ -76,7 +107,8 @@ impl Service for KernelService {
         };
         KernelHealth::get_mut(&health)
             .services
-            .insert(Self::name(), (HealthStatus::Healthy,Some(Local::now())));
+            .insert(Self::name(), (HealthStatus::Healthy, Some(Local::now())));
+        // 构建完成
         Ok(Box::new(Self {
             endpoint,
             service_factories,
@@ -134,7 +166,7 @@ impl KernelService {
                 KernelHealth::get_mut(&self.health).services = KernelHealth::get_mut(&self.health)
                     .services
                     .iter()
-                    .map(|(name, _)| (*name, (HealthStatus::Stopped,Some(Local::now()))))
+                    .map(|(name, _)| (*name, (HealthStatus::Stopped, Some(Local::now()))))
                     .collect();
                 return;
             }
@@ -145,19 +177,22 @@ impl KernelService {
                     warn!("未找到 {}, 忽略", name);
                     continue;
                 }
-                Some((HealthStatus::Healthy,_)) => {
+                Some((HealthStatus::Healthy, _)) => {
                     info!("{} 已经是健康状态, 跳过初始化", name);
                     continue;
                 }
                 _ => info!("开始代理启动 {}", name),
             }
+            KernelHealth::get_mut(&self.health)
+                .services
+                .insert(name, (HealthStatus::Starting, Some(Local::now())));
             let factory = match self.service_factories.iter().find(|f| f.name == name) {
                 Some(factory) => factory,
                 None => {
                     warn!("未找到 {} 的工厂函数, 忽略", name);
                     KernelHealth::get_mut(&self.health)
                         .services
-                        .insert(name, (HealthStatus::Stopped,Some(Local::now())));
+                        .insert(name, (HealthStatus::Stopped, Some(Local::now())));
                     continue;
                 }
             };
@@ -165,7 +200,7 @@ impl KernelService {
                 warn!("{} 依赖未准备完成, 跳过初始化", name);
                 KernelHealth::get_mut(&self.health)
                     .services
-                    .insert(name, (HealthStatus::Stopped,Some(Local::now())));
+                    .insert(name, (HealthStatus::Stopped, Some(Local::now())));
                 continue;
             }
             let endpoint = match self.get_endpoint(name).await {
@@ -174,7 +209,7 @@ impl KernelService {
                     warn!("无法获取 Endpoint, {} 启动失败: {}", name, e);
                     KernelHealth::get_mut(&self.health)
                         .services
-                        .insert(name, (HealthStatus::Stopped,Some(Local::now())));
+                        .insert(name, (HealthStatus::Stopped, Some(Local::now())));
                     continue;
                 }
             };
@@ -184,7 +219,7 @@ impl KernelService {
                     warn!("初始化 {} 失败: {}", name, e);
                     KernelHealth::get_mut(&self.health)
                         .services
-                        .insert(name, (HealthStatus::Stopped,Some(Local::now())));
+                        .insert(name, (HealthStatus::Stopped, Some(Local::now())));
                     continue;
                 }
             };
@@ -213,13 +248,16 @@ impl KernelService {
             }
         };
         for &name in order.iter().rev() {
+            if name == KernelService::name() {
+                continue;
+            }
             info!("开始代理关闭 {}", name);
             {
                 let mut health = KernelHealth::get_mut(&self.health);
                 match health.services.get(name) {
-                    Some((HealthStatus::Healthy,_)) => {
-                        health.services.insert(name, (HealthStatus::Stopping,Some(Local::now())))
-                    }
+                    Some((HealthStatus::Healthy, _)) => health
+                        .services
+                        .insert(name, (HealthStatus::Stopping, Some(Local::now()))),
                     _ => {
                         warn!("{} 非健康状态, 强制杀死", name);
                         match self
@@ -231,7 +269,9 @@ impl KernelService {
                         {
                             Some(handle) => {
                                 handle.abort();
-                                health.services.insert(name, (HealthStatus::Stopped,Some(Local::now())));
+                                health
+                                    .services
+                                    .insert(name, (HealthStatus::Stopped, Some(Local::now())));
                                 info!("强制终止 {} 句柄", name);
                             }
                             None => (),
@@ -273,7 +313,7 @@ impl KernelService {
             }
             KernelHealth::get_mut(&self.health)
                 .services
-                .insert(name, (HealthStatus::Stopped,Some(Local::now())));
+                .insert(name, (HealthStatus::Stopped, Some(Local::now())));
         }
         self.send_admin_message(AdminCommand::Shutdown(
             crate::command::ShutdownStage::StopKernel,
@@ -292,7 +332,6 @@ impl KernelService {
             let dag_map = self
                 .service_factories
                 .iter()
-                .filter(|f| f.name != Self::name())
                 .map(|f| {
                     (
                         f.name,
@@ -313,7 +352,10 @@ impl KernelService {
     /// 检测前置服务是否准备好
     fn is_deps_ready(&self, deps: &Vec<&'static str>) -> bool {
         deps.iter().all(|&name| {
-            KernelHealth::get_mut(&self.health).services.get(name).is_some_and(|(status,_)| *status==HealthStatus::Healthy)
+            KernelHealth::get_mut(&self.health)
+                .services
+                .get(name)
+                .is_some_and(|(status, _)| *status == HealthStatus::Healthy)
         })
     }
 }

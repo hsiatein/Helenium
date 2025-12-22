@@ -56,6 +56,11 @@ impl Endpoint {
         let _ = self.send(KERNEL_NAME, Box::new(KernelMessage::Alive)).await;
     }
 
+    pub fn send_init_fail(&self) -> (mpsc::Sender<Message>, Message) {
+        let msg = Message::new(KERNEL_NAME, self.token, Box::new(KernelMessage::InitFail));
+        (self.endpoint_kernel.clone(), msg)
+    }
+
     pub async fn recv(&mut self) -> Option<Message> {
         self.service_recv.recv().await
     }

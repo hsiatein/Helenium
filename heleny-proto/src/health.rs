@@ -1,8 +1,9 @@
 use std::{
-    collections::HashMap, sync::{Arc, Mutex, MutexGuard}
+    collections::HashMap,
+    sync::{Arc, Mutex, MutexGuard},
 };
 
-use chrono::{Local};
+use chrono::Local;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum HealthStatus {
@@ -24,37 +25,35 @@ impl KernelHealth {
         health.as_ref().lock().expect("无法获取 health 锁")
     }
 
-    pub fn update(&mut self){
-        let now=Local::now();
-        for (_, (status,last_signal)) in &mut self.services {
+    pub fn update(&mut self) {
+        let now = Local::now();
+        for (_, (status, last_signal)) in &mut self.services {
             match last_signal {
-                Some(time) =>{
-                    if (now-*time).as_seconds_f32() > 5.0 && *status==HealthStatus::Healthy {
-                        *status=HealthStatus::Unhealthy
+                Some(time) => {
+                    if (now - *time).as_seconds_f32() > 5.0 && *status == HealthStatus::Healthy {
+                        *status = HealthStatus::Unhealthy
                     }
                 }
-                None => {
-                    *status=HealthStatus::Starting
-                }
+                None => *status = HealthStatus::Starting,
             }
         }
     }
 
-    pub fn set_alive(&mut self,name:&'static str){
-        let (status,time)=match self.services.get_mut(name) {
-            Some(s)=>s,
-            None=>return,
+    pub fn set_alive(&mut self, name: &'static str) {
+        let (status, time) = match self.services.get_mut(name) {
+            Some(s) => s,
+            None => return,
         };
-        *status=HealthStatus::Healthy;
-        *time=Some(Local::now());
+        *status = HealthStatus::Healthy;
+        *time = Some(Local::now());
     }
 
-    pub fn set_dead(&mut self,name:&'static str){
-        let (status,time)=match self.services.get_mut(name) {
-            Some(s)=>s,
-            None=>return,
+    pub fn set_dead(&mut self, name: &'static str) {
+        let (status, time) = match self.services.get_mut(name) {
+            Some(s) => s,
+            None => return,
         };
-        *status=HealthStatus::Stopped;
-        *time=Some(Local::now());
+        *status = HealthStatus::Stopped;
+        *time = Some(Local::now());
     }
 }

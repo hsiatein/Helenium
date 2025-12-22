@@ -49,10 +49,12 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
         let span = info_span!("", Name = %Self::name());
         let handle = tokio::spawn(
             async move {
+                let (sender, fail_msg) = endpoint.send_init_fail();
                 let mut service = match Self::new(endpoint).await {
                     Ok(service) => service,
                     Err(e) => {
                         error!("新建服务实例失败, 无法开始: {}", e);
+                        let _ = sender.send(fail_msg).await;
                         return Err(anyhow::anyhow!("新建服务实例失败, 无法开始: {}", e));
                     }
                 };

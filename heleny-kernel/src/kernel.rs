@@ -257,30 +257,30 @@ impl Kernel {
     /// 处理普通 Command
     async fn handle(&mut self, command: KernelMessage, source: &'static str, role: ServiceRole) {
         match command {
-            KernelMessage::Shutdown => {
-                match role {
-                    ServiceRole::User => {
-                        self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::Start))
-                            .await;
-                    }
-                    ServiceRole::System => {
-                        self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::Start))
-                            .await;
-                    }
-                    _ => {
-                        warn!("{} 的身份为 {:?}, 无关机权限",source,role)
-                    }
+            KernelMessage::Shutdown => match role {
+                ServiceRole::User => {
+                    self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::Start))
+                        .await;
                 }
-                
-            }
+                ServiceRole::System => {
+                    self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::Start))
+                        .await;
+                }
+                _ => {
+                    warn!("{} 的身份为 {:?}, 无关机权限", source, role)
+                }
+            },
             KernelMessage::GetHealth(sender) => {
-                self.send_kernel_message(KernelServiceMessage::GetHealth(sender)).await;
+                self.send_kernel_message(KernelServiceMessage::GetHealth(sender))
+                    .await;
             }
             KernelMessage::Alive => {
-                self.send_kernel_message(KernelServiceMessage::Alive(source)).await;
+                self.send_kernel_message(KernelServiceMessage::Alive(source))
+                    .await;
             }
             KernelMessage::InitFail => {
-                self.send_kernel_message(KernelServiceMessage::InitFail(source)).await;
+                self.send_kernel_message(KernelServiceMessage::InitFail(source))
+                    .await;
             }
         }
     }

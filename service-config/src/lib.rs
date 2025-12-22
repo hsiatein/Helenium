@@ -21,7 +21,10 @@ impl Service for ConfigService {
         let config_path = match std::env::var("HELENIUM_CONFIG") {
             Ok(path) => PathBuf::from(path),
             Err(e) => {
-                warn!("没有设置 HELENIUM_CONFIG 环境变量: {}, 尝试寻找./Config.toml", e);
+                warn!(
+                    "没有设置 HELENIUM_CONFIG 环境变量: {}, 尝试寻找./Config.toml",
+                    e
+                );
                 match std::env::current_dir() {
                     Ok(path) => path.join("Config.toml"),
                     Err(e) => return Err(anyhow::anyhow!("获取当前目录失败: {}", e)),
