@@ -6,6 +6,7 @@ use heleny_bus::Endpoint;
 use heleny_proto::{common_message::CommonMessage, message::AnyMessage};
 use tokio::task::JoinHandle;
 use tokio::time::{MissedTickBehavior, interval};
+use tracing::{Instrument, error, info_span, warn};
 
 /// 服务句柄，用于管理服务的生命周期
 #[derive(Debug)]
@@ -44,11 +45,12 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
     async fn stop(&mut self);
     // 默认实现
     fn start(endpoint: Endpoint) -> Result<ServiceHandle> {
+        let span =info_span!("", Name = %Self::name());
         let handle = tokio::spawn(async move {
             let mut service = match Self::new(endpoint).await {
                 Ok(service) => service,
                 Err(e) => {
-                    println!("新建服务实例失败, 无法开始: {}", e);
+                    error!("新建服务实例失败, 无法开始: {}", e);
                     return Err(anyhow::anyhow!("新建服务实例失败, 无法开始: {}", e));
                 }
             };
@@ -61,14 +63,14 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                         let payload = match payload {
                             Ok(payload) => payload,
                             Err(e) => {
-                                eprintln!("服务 {} 收到未知消息类型: {}", Self::name(), e);
+                                warn!("收到未知消息类型: {}", e);
                                 continue;
                             }
                         };
                         let common_message = match payload {
                             Ok(message) => {
                                 if let Err(e) = service.handle(message).await {
-                                    eprintln!("服务 {} 处理消息时出错: {}", Self::name(), e);
+                                    warn!("处理消息时出错: {}", e);
                                 }
                                 continue;
                             }
@@ -88,7 +90,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                 }
             }
             Ok(())
-        });
+        }.instrument(span));
         Ok(ServiceHandle::new(Self::name(), handle))
     }
     fn downcast(

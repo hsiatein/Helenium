@@ -52,7 +52,6 @@ fn test_circular_dependency() {
     dag.insert("B", set(vec!["A"]));
 
     let result = cal_order(dag);
-    // println!("{:?}",result);
     assert!(result.is_err());
     assert!(result.unwrap_err().to_string().contains("有循环依赖"));
 }

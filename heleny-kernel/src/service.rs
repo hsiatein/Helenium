@@ -9,13 +9,14 @@ use async_trait::async_trait;
 use heleny_bus::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::{common_message::CommonMessage, message::Message, name::KERNEL_NAME};
-use heleny_service::{HasName, Service, ServiceFactory, ServiceHandle};
+use heleny_service::{Service, ServiceFactory, ServiceHandle};
 use inventory;
 use tokio::{sync::oneshot, time::timeout};
 
 use crate::command::AdminCommand;
 use heleny_proto::health::HealthStatus;
 use heleny_proto::health::KernelHealth;
+use tracing::{info, warn};
 
 #[derive(Debug)]
 pub enum KernelServiceMessage {
@@ -91,7 +92,7 @@ impl Service for KernelService {
         Ok(())
     }
     async fn stop(&mut self) {
-        println!("{} 已关闭", Self::name())
+        info!("{} 已关闭", Self::name())
     }
 }
 
@@ -110,11 +111,11 @@ impl KernelService {
 
     /// 初始化各个服务
     async fn init_all_services(&mut self) {
-        println!("KernelService 代理开始启动各个服务");
+        info!("开始代理启动各个服务");
         let order = match self.get_order() {
             Ok(order) => order,
             Err(e) => {
-                eprintln!("无法获取Order, 初始化失败: {}", e);
+                warn!("无法获取Order, 初始化失败: {}", e);
                 KernelHealth::get_mut(&self.health).services = KernelHealth::get_mut(&self.health)
                     .services
                     .iter()
@@ -125,13 +126,20 @@ impl KernelService {
         };
         for name in order {
             match KernelHealth::get_mut(&self.health).services.get(name) {
-                None => continue,
-                Some(HealthStatus::Healthy) => continue,
-                _ => (),
+                None => {
+                    warn!("未找到 {}, 忽略", name);
+                    continue;
+                }
+                Some(HealthStatus::Healthy) => {
+                    info!("{} 已经是健康状态, 跳过初始化", name);
+                    continue;
+                }
+                _ => info!("开始代理启动 {}", name),
             }
             let factory = match self.service_factories.iter().find(|f| f.name == name) {
                 Some(factory) => factory,
                 None => {
+                    warn!("未找到 {} 的工厂函数, 忽略", name);
                     KernelHealth::get_mut(&self.health)
                         .services
                         .insert(name, HealthStatus::Stopped);
@@ -139,7 +147,7 @@ impl KernelService {
                 }
             };
             if !self.is_deps_ready(&factory.deps) {
-                eprintln!("依赖未准备完成, 跳过初始化");
+                warn!("{} 依赖未准备完成, 跳过初始化",name);
                 KernelHealth::get_mut(&self.health)
                     .services
                     .insert(name, HealthStatus::Stopped);
@@ -148,7 +156,7 @@ impl KernelService {
             let endpoint = match self.get_endpoint(name).await {
                 Ok(endpoint) => endpoint,
                 Err(e) => {
-                    eprintln!("无法获取 Endpoint: {}", e);
+                    warn!("无法获取 Endpoint, {} 启动失败: {}",name, e);
                     KernelHealth::get_mut(&self.health)
                         .services
                         .insert(name, HealthStatus::Stopped);
@@ -158,7 +166,7 @@ impl KernelService {
             let handle = match (factory.launch)(endpoint) {
                 Ok(handle) => handle,
                 Err(e) => {
-                    eprintln!("初始化服务失败: {}", e);
+                    warn!("初始化 {} 失败: {}",name, e);
                     KernelHealth::get_mut(&self.health)
                         .services
                         .insert(name, HealthStatus::Stopped);
@@ -173,17 +181,18 @@ impl KernelService {
             KernelHealth::get_mut(&self.health)
                 .services
                 .insert(name, HealthStatus::Healthy);
-            println!("初始化服务成功: {}", name);
+            info!("初始化 {} 成功", name);
         }
-        println!("初始化服务成功");
+        info!("初始化服务完成");
     }
 
     /// 终止各个服务
     async fn stop_all_services(&mut self) {
-        println!("KernelService 开始代理关闭所有服务");
+        info!("开始代理关闭所有服务");
         let order = match &self.order {
             Some(Ok(order)) => order,
             _ => {
+                warn!("无法获取 Order, 直接关闭 Kernel");
                 self.send_admin_message(AdminCommand::Shutdown(
                     crate::command::ShutdownStage::StopKernel,
                 ))
@@ -192,14 +201,28 @@ impl KernelService {
             }
         };
         for &name in order.iter().rev() {
-            println!("KernelService 开始代理关闭 {}", name);
+            info!("开始代理关闭 {}", name);
             {
                 let mut health = KernelHealth::get_mut(&self.health);
                 match health.services.get(name) {
                     Some(HealthStatus::Healthy) => {
                         health.services.insert(name, HealthStatus::Stopping)
                     }
-                    _ => continue,
+                    _ => {
+                        warn!("{} 非健康状态, 强制杀死", name);
+                        match self.services
+                        .as_ref()
+                        .lock()
+                        .expect("获取 services 锁失败")
+                        .remove(name){
+                        Some(handle) => {
+                            handle.abort();
+                            info!("强制终止 {} 句柄", name);
+                        }
+                        None => (),
+                        };
+                        continue;
+                    }
                 };
             }
             let (tx, rx) = oneshot::channel();
@@ -209,7 +232,7 @@ impl KernelService {
                 .await;
             match timeout(Duration::from_secs(5), rx).await {
                 Ok(_) => {
-                    println!("清理 {} 句柄", name);
+                    info!("清理 {} 句柄", name);
                     self.services
                         .as_ref()
                         .lock()
@@ -217,7 +240,18 @@ impl KernelService {
                         .remove(name);
                 }
                 Err(e) => {
-                    eprintln!("获取 {} 关闭反馈失败: {}", name, e);
+                    warn!("获取 {} 关闭反馈失败: {}", name, e);
+                    match self.services
+                        .as_ref()
+                        .lock()
+                        .expect("获取 services 锁失败")
+                        .remove(name){
+                        Some(handle) => {
+                            handle.abort();
+                            info!("强制终止 {} 句柄", name);
+                        }
+                        None => continue,
+                        };
                 }
             }
             KernelHealth::get_mut(&self.health)

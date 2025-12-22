@@ -4,6 +4,7 @@ use heleny_bus::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::config_service_message::ConfigServiceMessage;
 use heleny_service::Service;
+use tracing::info;
 use std::path::PathBuf;
 
 #[base_service(deps=[])]
@@ -47,5 +48,11 @@ impl Service for ConfigService {
         }
         Ok(())
     }
-    async fn stop(&mut self) {}
+    async fn stop(&mut self) {
+        info!("{} 正在停止...", Self::name());
+    }
+}
+
+impl ConfigService {
+
 }

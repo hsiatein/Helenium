@@ -1,0 +1,44 @@
+[2m2025-12-22T01:47:51.579925Z[0m [32m INFO[0m [2mheleny_server[0m[2m:[0m 启动 Heleny 内核...
+[2m2025-12-22T01:47:51.579997Z[0m [32m INFO[0m [2mheleny_server[0m[2m:[0m Heleny 内核启动成功, 开始运行...
+[2m2025-12-22T02:25:37.028208Z[0m [32m INFO[0m [2mheleny_server[0m[2m:[0m 启动 Heleny 内核...
+[2m2025-12-22T02:25:37.028291Z[0m [32m INFO[0m [2mheleny_server[0m[2m:[0m Heleny 内核启动成功, 开始运行...
+[2m2025-12-22T02:25:37.028395Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m 开始代理启动各个服务
+[2m2025-12-22T02:25:37.028434Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m 开始代理启动 ConfigService
+[2m2025-12-22T02:25:37.028465Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m Message { target: "Kernel", token: Some(bfa8d956-cbce-4b3f-8d1f-4210e81ee127), payload: NewEndpoint("ConfigService", Sender { inner: Some(Inner { state: State { is_complete: false, is_closed: false, is_rx_task_set: true, is_tx_task_set: false } }) }) }
+[2m2025-12-22T02:25:37.028511Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m 初始化 ConfigService 成功
+[2m2025-12-22T02:25:37.028528Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m 初始化服务完成
+[2m2025-12-22T02:25:37.029416Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m KernelHealth { kernel: Healthy, services: {"KernelService": Healthy, "ConfigService": Healthy} }
+[2m2025-12-22T02:25:38.029717Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m KernelHealth { kernel: Healthy, services: {"KernelService": Healthy, "ConfigService": Healthy} }
+[2m2025-12-22T02:25:38.029749Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m Message { target: "Kernel", token: Some(c5f4874b-ce1d-4ef8-b3a8-773b3b39d62e), payload: Shutdown }
+[2m2025-12-22T02:25:38.029762Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m Message { target: "Kernel", token: Some(c5f4874b-ce1d-4ef8-b3a8-773b3b39d62e), payload: Shutdown(Start) }
+[2m2025-12-22T02:25:38.029777Z[0m [32m INFO[0m [2mheleny_kernel::kernel[0m[2m:[0m 开始关机
+[2m2025-12-22T02:25:38.029785Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m Message { target: "Kernel", token: Some(c5f4874b-ce1d-4ef8-b3a8-773b3b39d62e), payload: Shutdown(StopAllService) }
+[2m2025-12-22T02:25:38.029792Z[0m [32m INFO[0m [2mheleny_kernel::kernel[0m[2m:[0m 开始关闭所有服务
+[2m2025-12-22T02:25:38.029843Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m 开始代理关闭所有服务
+[2m2025-12-22T02:25:38.029857Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m 开始代理关闭 ConfigService
+[2m2025-12-22T02:25:38.029877Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m Message { target: "ConfigService", token: Some(bfa8d956-cbce-4b3f-8d1f-4210e81ee127), payload: Stop(Sender { inner: Some(Inner { state: State { is_complete: false, is_closed: false, is_rx_task_set: true, is_tx_task_set: false } }) }) }
+[2m2025-12-22T02:25:38.029906Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m 清理 ConfigService 句柄
+[2m2025-12-22T02:25:38.029921Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m Message { target: "Kernel", token: Some(bfa8d956-cbce-4b3f-8d1f-4210e81ee127), payload: Shutdown(StopKernel) }
+[2m2025-12-22T02:25:38.029928Z[0m [32m INFO[0m [2mheleny_kernel::kernel[0m[2m:[0m 开始关闭内核
+[2m2025-12-22T02:25:38.029940Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m KernelService 已关闭
+[2m2025-12-22T02:25:57.372352Z[0m [32m INFO[0m [2mheleny_server[0m[2m:[0m 启动 Heleny 内核...
+[2m2025-12-22T02:25:57.372453Z[0m [32m INFO[0m [2mheleny_server[0m[2m:[0m Heleny 内核启动成功, 开始运行...
+[2m2025-12-22T02:25:57.372569Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m 开始代理启动各个服务
+[2m2025-12-22T02:25:57.372611Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m 开始代理启动 ConfigService
+[2m2025-12-22T02:25:57.372663Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m Message { target: "Kernel", token: Some(4cf98a98-1250-41cf-abe9-03d405a48b2f), payload: NewEndpoint("ConfigService", Sender { inner: Some(Inner { state: State { is_complete: false, is_closed: false, is_rx_task_set: true, is_tx_task_set: false } }) }) }
+[2m2025-12-22T02:25:57.372724Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m 初始化 ConfigService 成功
+[2m2025-12-22T02:25:57.372741Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m 初始化服务完成
+[2m2025-12-22T02:25:57.373602Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m KernelHealth { kernel: Healthy, services: {"ConfigService": Healthy, "KernelService": Healthy} }
+[2m2025-12-22T02:25:58.375357Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m KernelHealth { kernel: Healthy, services: {"ConfigService": Healthy, "KernelService": Healthy} }
+[2m2025-12-22T02:25:58.375411Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m Message { target: "Kernel", token: Some(55feb429-4047-4a36-bfd1-78eeba97729a), payload: Shutdown }
+[2m2025-12-22T02:25:58.375432Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m Message { target: "Kernel", token: Some(55feb429-4047-4a36-bfd1-78eeba97729a), payload: Shutdown(Start) }
+[2m2025-12-22T02:25:58.375456Z[0m [32m INFO[0m [2mheleny_kernel::kernel[0m[2m:[0m 开始关机
+[2m2025-12-22T02:25:58.375469Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m Message { target: "Kernel", token: Some(55feb429-4047-4a36-bfd1-78eeba97729a), payload: Shutdown(StopAllService) }
+[2m2025-12-22T02:25:58.375481Z[0m [32m INFO[0m [2mheleny_kernel::kernel[0m[2m:[0m 开始关闭所有服务
+[2m2025-12-22T02:25:58.375558Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m 开始代理关闭所有服务
+[2m2025-12-22T02:25:58.375576Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m 开始代理关闭 ConfigService
+[2m2025-12-22T02:25:58.375634Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m Message { target: "ConfigService", token: Some(4cf98a98-1250-41cf-abe9-03d405a48b2f), payload: Stop(Sender { inner: Some(Inner { state: State { is_complete: false, is_closed: false, is_rx_task_set: true, is_tx_task_set: false } }) }) }
+[2m2025-12-22T02:25:58.375739Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m 清理 ConfigService 句柄
+[2m2025-12-22T02:25:58.375804Z[0m [34mDEBUG[0m [2mheleny_kernel::kernel[0m[2m:[0m Message { target: "Kernel", token: Some(4cf98a98-1250-41cf-abe9-03d405a48b2f), payload: Shutdown(StopKernel) }
+[2m2025-12-22T02:25:58.375836Z[0m [32m INFO[0m [2mheleny_kernel::kernel[0m[2m:[0m 开始关闭内核
+[2m2025-12-22T02:25:58.375884Z[0m [32m INFO[0m [2mheleny_kernel::service[0m[2m:[0m KernelService 已关闭

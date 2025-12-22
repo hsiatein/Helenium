@@ -34,13 +34,15 @@ pub fn base_service(args: TokenStream, input: TokenStream) -> TokenStream {
     let expanded = quote! {
         #item_struct
 
-        impl heleny_service::HasEndpoint for #name {
+        use heleny_service::HasEndpoint;
+        impl HasEndpoint for #name {
             fn endpoint(&mut self) -> &mut heleny_bus::Endpoint {
                 &mut self.endpoint
             }
         }
 
-        impl heleny_service::HasName for #name {
+        use heleny_service::HasName;
+        impl HasName for #name {
             fn name() -> &'static str {
                 #name_str
             }

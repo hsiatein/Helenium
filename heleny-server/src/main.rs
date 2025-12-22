@@ -1,21 +1,30 @@
 use dotenvy::dotenv;
 use heleny_kernel;
+use tracing::{error, info, info_span};
 use std::env;
 use tokio;
+use heleny_utils::init_tracing;
 
 #[tokio::main]
 async fn main() {
     // 读取环境变量
     dotenv().ok();
     if let Ok(val) = env::var("HELENIUM_CONFIG") {
-        println!("HELENIUM_CONFIG: {}", val);
+        info!("HELENIUM_CONFIG: {}", val);
     }
+    // 初始化日志
+    let _=init_tracing("./logs".into());
+    let span=info_span!("Kernel");
+    let _guard = span.enter();
+    // 启动内核
+    info!("启动 Heleny 内核...");
     let mut kernel = match heleny_kernel::kernel::Kernel::new(128, 64).await {
         Ok(kernel) => kernel,
         Err(e) => {
-            eprintln!("内核启动失败: {}", e);
+            error!("内核启动失败: {}", e);
             return;
         }
     };
+    info!("Heleny 内核启动成功, 开始运行...");
     kernel.run().await;
 }

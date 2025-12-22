@@ -15,6 +15,7 @@ use std::time::Duration;
 use tokio::sync::oneshot;
 use tokio::time::{MissedTickBehavior, interval};
 use uuid::Uuid;
+use tracing::{debug, info, warn};
 
 pub struct Kernel {
     bus: Bus,
@@ -62,22 +63,22 @@ impl Kernel {
         while self.run {
             tokio::select! {
                 Some(msg) = self.bus.recv() => {
-                    println!("{:?}",msg);
+                    debug!("{:?}",msg);
                     if msg.target == KernelService::name(){
-                        eprintln!("拒绝外部对私有服务 KernelService 的访问");
+                        warn!("拒绝外部对私有服务 KernelService 的访问");
                     }
                     else if msg.target == KERNEL_NAME {
                         let command=match command::downcast(msg.payload) {
                             Ok(command) => command,
                             Err(e) => {
-                                eprintln!("解析失败, 忽略命令: {}",e);
+                                warn!("解析失败, 忽略命令: {}",e);
                                 continue;
                             }
                         };
                         match command {
                             Ok(command) => {
                                 if !self.verify_admin_token(msg.token) {
-                                    eprintln!("无管理员权限, 忽略命令");
+                                    warn!("无管理员权限, 忽略命令");
                                     continue;
                                 }
                                 self.handle_admin(*command).await;
@@ -87,7 +88,7 @@ impl Kernel {
                     }
                     else {
                         if let Err(e) = self.bus.send(msg).await {
-                            eprintln!("Kernel 发送消息时出错: {}", e);
+                            warn!("Kernel 发送消息时出错: {}", e);
                         }
                     }
                 }
@@ -200,17 +201,17 @@ impl Kernel {
     async fn shutdown(&mut self, stage: ShutdownStage) {
         match stage {
             ShutdownStage::Start => {
-                println!("开始关机");
+                info!("开始关机");
                 self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::StopAllService))
                     .await;
             }
             ShutdownStage::StopAllService => {
-                println!("开始关闭所有服务");
+                info!("开始关闭所有服务");
                 self.send_kernel_message(KernelServiceMessage::StopAll)
                     .await;
             }
             ShutdownStage::StopKernel => {
-                println!("开始关闭内核");
+                info!("开始关闭内核");
                 let (tx, rx) = oneshot::channel();
                 let _ = self
                     .bus
@@ -218,7 +219,7 @@ impl Kernel {
                     .await;
                 match rx.await {
                     Ok(_) => (),
-                    Err(e) => eprintln!("关闭 KernelService 时发生错误: {}", e),
+                    Err(e) => warn!("关闭 KernelService 时发生错误: {}", e),
                 };
                 self.run = false;
             }
@@ -257,6 +258,6 @@ impl Kernel {
         if self.time_tick > 1 {
             self.send_kernel_command(KernelMessage::Shutdown).await;
         }
-        println!("{:?}", KernelHealth::get_mut(&self.health))
+        debug!("{:?}", KernelHealth::get_mut(&self.health))
     }
 }
