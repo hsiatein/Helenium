@@ -6,6 +6,7 @@ use uuid::Uuid;
 pub struct Message {
     pub target: &'static str,
     pub token: Option<Uuid>,
+    pub name: Option<&'static str>,
     pub payload: Box<dyn AnyMessage>,
 }
 
@@ -14,8 +15,15 @@ impl Message {
         Self {
             target,
             token,
+            name: None,
             payload,
         }
+    }
+
+    pub fn sign(mut self,name:&'static str) -> Self {
+        self.name = Some(name);
+        self.token = None;
+        self
     }
 }
 
