@@ -74,7 +74,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                     self.handle_msg(msg, &mut run).await;
                 }
                 _ = tick_interval.tick()=>{
-
+                    self.endpoint().send_alive().await;
                 }
             }
         }

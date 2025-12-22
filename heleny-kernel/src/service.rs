@@ -22,7 +22,8 @@ use tracing::{info, warn};
 pub enum KernelServiceMessage {
     StopAll,
     Init,
-
+    GetHealth(oneshot::Sender<KernelHealth>),
+    Alive(&'static str),
     InitParams(
         Arc<Mutex<KernelHealth>>,
         Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
@@ -89,6 +90,12 @@ impl Service for KernelService {
             }
             KernelServiceMessage::Init => {
                 self.init_all_services().await;
+            }
+            KernelServiceMessage::GetHealth(sender) => {
+                let _ = sender.send(KernelHealth::get_mut(&self.health).to_owned());
+            }
+            KernelServiceMessage::Alive(source) => {
+                
             }
             KernelServiceMessage::InitParams(_, _) => {}
         }

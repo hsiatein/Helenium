@@ -258,13 +258,27 @@ impl Kernel {
     async fn handle(&mut self, command: KernelMessage, source: &'static str, role: ServiceRole) {
         match command {
             KernelMessage::Shutdown => {
-                self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::Start))
-                    .await;
+                match role {
+                    ServiceRole::User => {
+                        self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::Start))
+                            .await;
+                    }
+                    ServiceRole::System => {
+                        self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::Start))
+                            .await;
+                    }
+                    _ => {
+                        warn!("{} 的身份为 {:?}, 无关机权限",source,role)
+                    }
+                }
+                
             }
             KernelMessage::GetHealth(sender) => {
-                let _ = sender.send(KernelHealth::get_mut(&self.health).to_owned());
+                self.send_kernel_message(KernelServiceMessage::GetHealth(sender)).await;
             }
-            KernelMessage::Alive => {}
+            KernelMessage::Alive => {
+                self.send_kernel_message(KernelServiceMessage::Alive(source)).await;
+            }
         }
     }
 

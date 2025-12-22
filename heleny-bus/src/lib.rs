@@ -52,7 +52,7 @@ impl Endpoint {
             .map_err(|e| anyhow::anyhow!("发送消息到 Kernel 失败: {}", e))
     }
 
-    pub async fn send_ready(&self) {
+    pub async fn send_alive(&self) {
         let _ = self.send(KERNEL_NAME, Box::new(KernelMessage::Alive)).await;
     }
 

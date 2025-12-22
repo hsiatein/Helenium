@@ -5,7 +5,7 @@ use heleny_macros::base_service;
 use heleny_proto::config_service_message::ConfigServiceMessage;
 use heleny_service::Service;
 use std::path::PathBuf;
-use tracing::info;
+use tracing::{info, warn};
 
 #[base_service(deps=[])]
 pub struct ConfigService {
@@ -21,7 +21,11 @@ impl Service for ConfigService {
         let config_path = match std::env::var("HELENIUM_CONFIG") {
             Ok(path) => PathBuf::from(path),
             Err(e) => {
-                return Err(anyhow::anyhow!("没有设置 HELENIUM_CONFIG 环境变量: {}", e));
+                warn!("没有设置 HELENIUM_CONFIG 环境变量: {}, 尝试寻找./Config.toml", e);
+                match std::env::current_dir() {
+                    Ok(path) => path.join("Config.toml"),
+                    Err(e) => return Err(anyhow::anyhow!("获取当前目录失败: {}", e)),
+                }
             }
         };
         let config_string = match std::fs::read_to_string(&config_path) {

@@ -17,3 +17,4 @@ uuid ={ workspace = true }
 heleny_proto ={ path = "../heleny-proto"}
 service_config ={ path = "../service-config"}
 tracing = { workspace = true }
+chrono = {workspace = true}
