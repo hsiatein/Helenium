@@ -8,21 +8,23 @@ use heleny_proto::health::KernelHealth;
 use heleny_proto::kernel_message::KernelMessage;
 use heleny_proto::message::Message;
 use heleny_proto::name::KERNEL_NAME;
+use heleny_proto::role::ServiceRole;
 use heleny_service::{HasName, ServiceHandle, get_factory};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::oneshot;
 use tokio::time::{MissedTickBehavior, interval};
-use uuid::Uuid;
 use tracing::{debug, info, warn};
+use uuid::Uuid;
 
 pub struct Kernel {
     bus: Bus,
     endpoint: Endpoint,
     services: Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
     health: Arc<Mutex<KernelHealth>>,
-    admin_tokens: HashSet<Uuid>,
+    tokens: HashMap<Uuid, (&'static str, ServiceRole)>,
+    system_components: HashSet<&'static str>,
 
     service_buffer: usize,
     run: bool,
@@ -39,7 +41,8 @@ impl Kernel {
             endpoint,
             services: Arc::new(Mutex::new(HashMap::new())),
             health: Arc::new(Mutex::new(new_kernel_health())),
-            admin_tokens: HashSet::from([token]),
+            tokens: HashMap::from([(token, (KERNEL_NAME, ServiceRole::System))]),
+            system_components: HashSet::from([KernelService::name()]),
             service_buffer,
             run: true,
             time_tick: 0,
@@ -63,34 +66,7 @@ impl Kernel {
         while self.run {
             tokio::select! {
                 Some(msg) = self.bus.recv() => {
-                    debug!("{:?}",msg);
-                    if msg.target == KernelService::name(){
-                        warn!("拒绝外部对私有服务 KernelService 的访问");
-                    }
-                    else if msg.target == KERNEL_NAME {
-                        let command=match command::downcast(msg.payload) {
-                            Ok(command) => command,
-                            Err(e) => {
-                                warn!("解析失败, 忽略命令: {}",e);
-                                continue;
-                            }
-                        };
-                        match command {
-                            Ok(command) => {
-                                if !self.verify_admin_token(msg.token) {
-                                    warn!("无管理员权限, 忽略命令");
-                                    continue;
-                                }
-                                self.handle_admin(*command).await;
-                            }
-                            Err(command) => self.handle(*command).await,
-                        };
-                    }
-                    else {
-                        if let Err(e) = self.bus.send(msg).await {
-                            warn!("Kernel 发送消息时出错: {}", e);
-                        }
-                    }
+                    self.handle_msg(msg).await;
                 }
                 _ = tick_interval.tick() => {
                     self.handle_tick().await;
@@ -99,12 +75,61 @@ impl Kernel {
         }
     }
 
+    ///
+    async fn handle_msg(&mut self, mut msg: Message) {
+        debug!("未清洗消息: {:?}", msg);
+        let token = match msg.token.take() {
+            Some(token) => token,
+            None => {
+                warn!("消息未携带 token, 忽略");
+                return;
+            }
+        };
+        let (name, role) = match self.tokens.get(&token) {
+            Some(&identity) => identity,
+            None => {
+                warn!("消息携带未知 token, 忽略");
+                return;
+            }
+        };
+        msg.sign(name, role);
+        debug!("已清洗消息: {:?}", msg);
+        if self.system_components.contains(msg.target) {
+            match msg.role {
+                Some(ServiceRole::System) => (),
+                _ => {
+                    warn!("拒绝外部对私有服务 KernelService 的访问");
+                    return;
+                }
+            }
+        } else if msg.target == KERNEL_NAME {
+            let command = match command::downcast(msg.payload) {
+                Ok(command) => command,
+                Err(e) => {
+                    warn!("解析失败, 忽略命令: {}", e);
+                    return;
+                }
+            };
+            match command {
+                Ok(command) => match msg.role {
+                    Some(ServiceRole::System) => self.handle_admin(*command, name, role).await,
+                    _ => warn!("无 System 权限, 忽略命令"),
+                },
+                Err(command) => self.handle(*command, name, role).await,
+            };
+            return;
+        }
+        if let Err(e) = self.bus.send(msg).await {
+            warn!("Kernel 发送消息时出错: {}", e);
+        }
+    }
+
     /// 初始化必要的服务
     async fn init_necessary_services(&mut self) -> Result<()> {
         let _ = self
             .init_service(
                 KernelService::name(),
-                true,
+                ServiceRole::System,
                 Some(Message::new(
                     KernelService::name(),
                     None,
@@ -128,17 +153,13 @@ impl Kernel {
     async fn init_service(
         &mut self,
         name: &'static str,
-        admin: bool,
+        role: ServiceRole,
         init_message: Option<Message>,
     ) -> Result<()> {
-        let endpoint = match admin {
-            true => {
-                let token = self.generate_admin_token();
-                self.bus
-                    .get_token_endpoint(name, self.service_buffer, token)
-            }
-            false => self.bus.get_endpoint(name, self.service_buffer),
-        };
+        let token = self.generate_token(name, role);
+        let endpoint = self
+            .bus
+            .get_token_endpoint(name, self.service_buffer, token);
         if let Some(msg) = init_message {
             let _ = self.bus.send(msg).await;
         }
@@ -148,7 +169,7 @@ impl Kernel {
                 return Err(anyhow::anyhow!("内核不能直接初始化有依赖的服务: {}", name));
             }
             None => {
-                return Err(anyhow::anyhow!("未找到此服务: {}", name));
+                return Err(anyhow::anyhow!("未找到此服务的工厂函数: {}", name));
             }
         };
         let handle = match (f.launch)(endpoint) {
@@ -166,19 +187,10 @@ impl Kernel {
     }
 
     /// 生成管理员 token
-    fn generate_admin_token(&mut self) -> Uuid {
+    fn generate_token(&mut self, name: &'static str, role: ServiceRole) -> Uuid {
         let token = Uuid::new_v4();
-        self.admin_tokens.insert(token);
+        self.tokens.insert(token, (name, role));
         token
-    }
-
-    /// 验证管理员 token
-    fn verify_admin_token(&self, token: Option<Uuid>) -> bool {
-        let token = match token {
-            Some(token) => token,
-            None => return false,
-        };
-        self.admin_tokens.contains(&token)
     }
 
     /// 发送消息给 KernelService
@@ -227,10 +239,13 @@ impl Kernel {
     }
 
     /// 处理管理员 Command
-    async fn handle_admin(&mut self, command: AdminCommand) {
+    async fn handle_admin(&mut self, command: AdminCommand, _: &'static str, _: ServiceRole) {
         match command {
             AdminCommand::NewEndpoint(name, sender) => {
-                let endpoint = self.bus.get_endpoint(name, self.service_buffer);
+                let token = self.generate_token(name, ServiceRole::Standard);
+                let endpoint = self
+                    .bus
+                    .get_token_endpoint(name, self.service_buffer, token);
                 let _ = sender.send(endpoint);
             }
             AdminCommand::Shutdown(stage) => {
@@ -240,7 +255,7 @@ impl Kernel {
     }
 
     /// 处理普通 Command
-    async fn handle(&mut self, command: KernelMessage) {
+    async fn handle(&mut self, command: KernelMessage, source: &'static str, role: ServiceRole) {
         match command {
             KernelMessage::Shutdown => {
                 self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::Start))
@@ -249,6 +264,7 @@ impl Kernel {
             KernelMessage::GetHealth(sender) => {
                 let _ = sender.send(KernelHealth::get_mut(&self.health).to_owned());
             }
+            KernelMessage::Alive => {}
         }
     }
 

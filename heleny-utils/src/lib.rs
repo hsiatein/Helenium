@@ -1,12 +1,11 @@
-use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 use std::path::PathBuf;
+use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 /// 初始化 tracing 订阅者
 /// 返回一个 guard，必须在 main 函数中一直持有它，否则日志无法写入文件
 pub fn init_tracing(log_dir: PathBuf) -> tracing_appender::non_blocking::WorkerGuard {
     // 1. 设置过滤规则：默认显示 info 级别及以上的日志
-    let env_filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("debug"));
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("debug"));
 
     // 2. 配置控制台打印 (stdout)
     let formatting_layer = fmt::layer()

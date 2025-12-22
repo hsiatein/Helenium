@@ -1,9 +1,9 @@
 use dotenvy::dotenv;
 use heleny_kernel;
-use tracing::{error, info, info_span};
+use heleny_utils::init_tracing;
 use std::env;
 use tokio;
-use heleny_utils::init_tracing;
+use tracing::{error, info, info_span};
 
 #[tokio::main]
 async fn main() {
@@ -13,8 +13,8 @@ async fn main() {
         info!("HELENIUM_CONFIG: {}", val);
     }
     // 初始化日志
-    let _=init_tracing("./logs".into());
-    let span=info_span!("Kernel");
+    let _ = init_tracing("./logs".into());
+    let span = info_span!("Kernel");
     let _guard = span.enter();
     // 启动内核
     info!("启动 Heleny 内核...");

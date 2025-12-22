@@ -6,4 +6,5 @@ use crate::health::KernelHealth;
 pub enum KernelMessage {
     Shutdown,
     GetHealth(oneshot::Sender<KernelHealth>),
+    Alive,
 }

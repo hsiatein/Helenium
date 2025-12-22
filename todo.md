@@ -19,8 +19,14 @@ services:
 - [ ] auth_service
 
 todo:
-- [ ] 1.token换成每人都有，权限不同
-- [ ] 2.中转时token换name
+- [x] 1.token换成每人都有，权限不同
+- [x] 2.中转时token换name
 - [ ] 3.汇报是否存活
 - [x] 4.内核和内核代行者共享字段
 - [x] 5.tracing日志
+- [ ] 6.获取health找kernelservice <-
+- [ ] 7.内核允许初始化有依赖的服务
+- [ ] 8.内核嘱托kernelservice计算依赖关系
+- [ ] 9.收集心跳 <-
+- [ ] 10.初始化改成service非阻塞渐进式，每一个初始化好了，则发消息给kernel，检查剩下的有没有能初始化的
+- [ ] 11.服务available检测

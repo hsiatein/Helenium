@@ -4,3 +4,4 @@ pub mod health;
 pub mod kernel_message;
 pub mod message;
 pub mod name;
+pub mod role;

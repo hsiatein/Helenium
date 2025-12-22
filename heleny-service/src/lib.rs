@@ -3,9 +3,10 @@ use std::time::Duration;
 use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::Endpoint;
+use heleny_proto::message::Message;
 use heleny_proto::{common_message::CommonMessage, message::AnyMessage};
 use tokio::task::JoinHandle;
-use tokio::time::{MissedTickBehavior, interval};
+use tokio::time::{Interval, MissedTickBehavior, interval};
 use tracing::{Instrument, error, info_span, warn};
 
 /// 服务句柄，用于管理服务的生命周期
@@ -45,53 +46,66 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
     async fn stop(&mut self);
     // 默认实现
     fn start(endpoint: Endpoint) -> Result<ServiceHandle> {
-        let span =info_span!("", Name = %Self::name());
-        let handle = tokio::spawn(async move {
-            let mut service = match Self::new(endpoint).await {
-                Ok(service) => service,
-                Err(e) => {
-                    error!("新建服务实例失败, 无法开始: {}", e);
-                    return Err(anyhow::anyhow!("新建服务实例失败, 无法开始: {}", e));
+        let span = info_span!("", Name = %Self::name());
+        let handle = tokio::spawn(
+            async move {
+                let mut service = match Self::new(endpoint).await {
+                    Ok(service) => service,
+                    Err(e) => {
+                        error!("新建服务实例失败, 无法开始: {}", e);
+                        return Err(anyhow::anyhow!("新建服务实例失败, 无法开始: {}", e));
+                    }
+                };
+                let mut tick_interval = interval(Duration::from_secs(1));
+                tick_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
+                service.launch(tick_interval).await;
+                Ok(())
+            }
+            .instrument(span),
+        );
+        Ok(ServiceHandle::new(Self::name(), handle))
+    }
+    /// 控制 tokio::select! 的 loop 循环
+    async fn launch(&mut self, mut tick_interval: Interval) {
+        let mut run = true;
+        while run {
+            tokio::select! {
+                Some(msg) = self.endpoint().recv()=>{
+                    self.handle_msg(msg, &mut run).await;
                 }
-            };
-            let mut tick_interval = interval(Duration::from_secs(1));
-            tick_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
-            loop {
-                tokio::select! {
-                    Some(msg) = service.endpoint().recv()=>{
-                        let payload = Self::downcast(msg.payload);
-                        let payload = match payload {
-                            Ok(payload) => payload,
-                            Err(e) => {
-                                warn!("收到未知消息类型: {}", e);
-                                continue;
-                            }
-                        };
-                        let common_message = match payload {
-                            Ok(message) => {
-                                if let Err(e) = service.handle(message).await {
-                                    warn!("处理消息时出错: {}", e);
-                                }
-                                continue;
-                            }
-                            Err(common_message) => common_message,
-                        };
-                        match *common_message {
-                            CommonMessage::Stop(oneshot) => {
-                                service.stop().await;
-                                let _ = oneshot.send(());
-                                break;
-                            }
-                        }
-                    }
-                    _ = tick_interval.tick()=>{
+                _ = tick_interval.tick()=>{
 
-                    }
                 }
             }
-            Ok(())
-        }.instrument(span));
-        Ok(ServiceHandle::new(Self::name(), handle))
+        }
+    }
+    /// 处理收到的所有信息
+    async fn handle_msg(&mut self, msg: Message, run: &mut bool) {
+        let payload = match Self::downcast(msg.payload) {
+            Ok(payload) => payload,
+            Err(e) => {
+                warn!("收到未知消息类型: {}", e);
+                return;
+            }
+        };
+        match payload {
+            Ok(message) => {
+                if let Err(e) = self.handle(message).await {
+                    warn!("处理消息时出错: {}", e);
+                }
+            }
+            Err(common_message) => self.handle_common_message(common_message, run).await,
+        };
+    }
+    /// 处理通用信息
+    async fn handle_common_message(&mut self, message: Box<CommonMessage>, run: &mut bool) {
+        match *message {
+            CommonMessage::Stop(oneshot) => {
+                self.stop().await;
+                let _ = oneshot.send(());
+                *run = false;
+            }
+        }
     }
     fn downcast(
         msg: Box<dyn AnyMessage>,

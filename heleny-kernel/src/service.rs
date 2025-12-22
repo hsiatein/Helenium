@@ -22,6 +22,7 @@ use tracing::{info, warn};
 pub enum KernelServiceMessage {
     StopAll,
     Init,
+
     InitParams(
         Arc<Mutex<KernelHealth>>,
         Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
@@ -46,6 +47,8 @@ impl Service for KernelService {
             Some(Message {
                 target: _,
                 token: _,
+                name: _,
+                role: _,
                 payload,
             }) => match Self::downcast(payload) {
                 Ok(Ok(health)) => match *health {
@@ -115,7 +118,7 @@ impl KernelService {
         let order = match self.get_order() {
             Ok(order) => order,
             Err(e) => {
-                warn!("无法获取Order, 初始化失败: {}", e);
+                warn!("无法获取依赖顺序, 初始化失败: {}", e);
                 KernelHealth::get_mut(&self.health).services = KernelHealth::get_mut(&self.health)
                     .services
                     .iter()
@@ -147,7 +150,7 @@ impl KernelService {
                 }
             };
             if !self.is_deps_ready(&factory.deps) {
-                warn!("{} 依赖未准备完成, 跳过初始化",name);
+                warn!("{} 依赖未准备完成, 跳过初始化", name);
                 KernelHealth::get_mut(&self.health)
                     .services
                     .insert(name, HealthStatus::Stopped);
@@ -156,7 +159,7 @@ impl KernelService {
             let endpoint = match self.get_endpoint(name).await {
                 Ok(endpoint) => endpoint,
                 Err(e) => {
-                    warn!("无法获取 Endpoint, {} 启动失败: {}",name, e);
+                    warn!("无法获取 Endpoint, {} 启动失败: {}", name, e);
                     KernelHealth::get_mut(&self.health)
                         .services
                         .insert(name, HealthStatus::Stopped);
@@ -166,7 +169,7 @@ impl KernelService {
             let handle = match (factory.launch)(endpoint) {
                 Ok(handle) => handle,
                 Err(e) => {
-                    warn!("初始化 {} 失败: {}",name, e);
+                    warn!("初始化 {} 失败: {}", name, e);
                     KernelHealth::get_mut(&self.health)
                         .services
                         .insert(name, HealthStatus::Stopped);
@@ -178,9 +181,6 @@ impl KernelService {
                 .lock()
                 .expect("获取 services 锁失败")
                 .insert(handle.name(), handle);
-            KernelHealth::get_mut(&self.health)
-                .services
-                .insert(name, HealthStatus::Healthy);
             info!("初始化 {} 成功", name);
         }
         info!("初始化服务完成");
@@ -192,7 +192,7 @@ impl KernelService {
         let order = match &self.order {
             Some(Ok(order)) => order,
             _ => {
-                warn!("无法获取 Order, 直接关闭 Kernel");
+                warn!("无法获取依赖顺序, 直接关闭 Kernel");
                 self.send_admin_message(AdminCommand::Shutdown(
                     crate::command::ShutdownStage::StopKernel,
                 ))
@@ -210,16 +210,18 @@ impl KernelService {
                     }
                     _ => {
                         warn!("{} 非健康状态, 强制杀死", name);
-                        match self.services
-                        .as_ref()
-                        .lock()
-                        .expect("获取 services 锁失败")
-                        .remove(name){
-                        Some(handle) => {
-                            handle.abort();
-                            info!("强制终止 {} 句柄", name);
-                        }
-                        None => (),
+                        match self
+                            .services
+                            .as_ref()
+                            .lock()
+                            .expect("获取 services 锁失败")
+                            .remove(name)
+                        {
+                            Some(handle) => {
+                                handle.abort();
+                                info!("强制终止 {} 句柄", name);
+                            }
+                            None => (),
                         };
                         continue;
                     }
@@ -241,17 +243,19 @@ impl KernelService {
                 }
                 Err(e) => {
                     warn!("获取 {} 关闭反馈失败: {}", name, e);
-                    match self.services
+                    match self
+                        .services
                         .as_ref()
                         .lock()
                         .expect("获取 services 锁失败")
-                        .remove(name){
+                        .remove(name)
+                    {
                         Some(handle) => {
                             handle.abort();
                             info!("强制终止 {} 句柄", name);
                         }
                         None => continue,
-                        };
+                    };
                 }
             }
             KernelHealth::get_mut(&self.health)

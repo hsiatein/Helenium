@@ -1,11 +1,18 @@
+pub mod midware;
+pub mod monitor;
+
 use anyhow::Result;
 use heleny_proto::{
     common_message::CommonMessage,
+    kernel_message::KernelMessage,
     message::{AnyMessage, Message},
+    name::KERNEL_NAME,
 };
 use std::{collections::HashMap, mem::replace};
 use tokio::sync::mpsc;
 use uuid::Uuid;
+
+use crate::midware::Midware;
 
 pub struct Bus {
     endpoint_kernel: mpsc::Sender<Message>,
@@ -18,24 +25,6 @@ pub struct Endpoint {
     token: Option<Uuid>,
     endpoint_kernel: mpsc::Sender<Message>,
     service_recv: mpsc::Receiver<Message>,
-}
-
-#[derive(Debug)]
-pub struct Midware {
-    tx: mpsc::Sender<Message>,
-    rx: mpsc::Receiver<Message>,
-}
-
-impl Midware {
-    pub fn new(tx: mpsc::Sender<Message>, rx: mpsc::Receiver<Message>) -> Self {
-        Self { tx, rx }
-    }
-    pub async fn recv(&mut self) -> Option<Message> {
-        self.rx.recv().await
-    }
-    pub async fn send(&mut self, msg: Message) {
-        let _ = self.tx.send(msg).await;
-    }
 }
 
 impl Endpoint {
@@ -63,6 +52,10 @@ impl Endpoint {
             .map_err(|e| anyhow::anyhow!("发送消息到 Kernel 失败: {}", e))
     }
 
+    pub async fn send_ready(&self) {
+        let _ = self.send(KERNEL_NAME, Box::new(KernelMessage::Alive)).await;
+    }
+
     pub async fn recv(&mut self) -> Option<Message> {
         self.service_recv.recv().await
     }
@@ -87,12 +80,6 @@ impl Bus {
         let (tx, rx) = mpsc::channel(buffer);
         let _ = self.address_map.insert(name, tx);
         Endpoint::new(Some(token), self.endpoint_kernel.clone(), rx)
-    }
-
-    pub fn get_endpoint(&mut self, name: &'static str, buffer: usize) -> Endpoint {
-        let (tx, rx) = mpsc::channel(buffer);
-        let _ = self.address_map.insert(name, tx);
-        Endpoint::new(None, self.endpoint_kernel.clone(), rx)
     }
 
     pub fn get_midware(&mut self, buffer: usize) -> Midware {

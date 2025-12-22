@@ -1,12 +1,15 @@
 use std::{any::Any, fmt::Debug};
 use uuid::Uuid;
 
+use crate::role::ServiceRole;
+
 /// 消息 struct，定义消息的字段
 #[derive(Debug)]
 pub struct Message {
     pub target: &'static str,
     pub token: Option<Uuid>,
     pub name: Option<&'static str>,
+    pub role: Option<ServiceRole>,
     pub payload: Box<dyn AnyMessage>,
 }
 
@@ -16,14 +19,15 @@ impl Message {
             target,
             token,
             name: None,
+            role: None,
             payload,
         }
     }
 
-    pub fn sign(mut self,name:&'static str) -> Self {
+    pub fn sign(&mut self, name: &'static str, role: ServiceRole) {
         self.name = Some(name);
+        self.role = Some(role);
         self.token = None;
-        self
     }
 }
 
