@@ -1,6 +1,5 @@
 use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex, MutexGuard},
+    collections::HashMap, sync::{Arc, Mutex, MutexGuard}
 };
 
 use chrono::{Local};
@@ -9,7 +8,7 @@ use chrono::{Local};
 pub enum HealthStatus {
     Starting,
     Healthy,
-    Hung,
+    Unhealthy,
     Stopping,
     Stopped,
 }
@@ -17,8 +16,7 @@ pub enum HealthStatus {
 #[derive(Clone, Debug)]
 pub struct KernelHealth {
     pub kernel: HealthStatus,
-    pub services: HashMap<&'static str, HealthStatus>,
-    pub last_signal: HashMap<&'static str,chrono::prelude::DateTime<Local>>,
+    pub services: HashMap<&'static str, (HealthStatus, Option<chrono::prelude::DateTime<Local>>)>,
 }
 
 impl KernelHealth {
@@ -28,23 +26,35 @@ impl KernelHealth {
 
     pub fn update(&mut self){
         let now=Local::now();
-        for (name, status) in &mut self.services {
-            status=match self.last_signal.get(*name) {
+        for (_, (status,last_signal)) in &mut self.services {
+            match last_signal {
                 Some(time) =>{
-                    let dt =  now-time;
-                    dt.as_seconds_f32() < 5.
+                    if (now-*time).as_seconds_f32() > 5.0 && *status==HealthStatus::Healthy {
+                        *status=HealthStatus::Unhealthy
+                    }
                 }
-                None => status,
+                None => {
+                    *status=HealthStatus::Starting
+                }
             }
         }
-        self.services.iter_mut().filter(|(name, status)| {
-            match self.last_signal.get(*name) {
-                Some(time) =>{
-                    let dt =  now-time;
-                    dt.as_seconds_f32() < 5.
-                }
-                None => false,
-            }
-        });
+    }
+
+    pub fn set_alive(&mut self,name:&'static str){
+        let (status,time)=match self.services.get_mut(name) {
+            Some(s)=>s,
+            None=>return,
+        };
+        *status=HealthStatus::Healthy;
+        *time=Some(Local::now());
+    }
+
+    pub fn set_dead(&mut self,name:&'static str){
+        let (status,time)=match self.services.get_mut(name) {
+            Some(s)=>s,
+            None=>return,
+        };
+        *status=HealthStatus::Stopped;
+        *time=Some(Local::now());
     }
 }

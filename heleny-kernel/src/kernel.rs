@@ -279,6 +279,9 @@ impl Kernel {
             KernelMessage::Alive => {
                 self.send_kernel_message(KernelServiceMessage::Alive(source)).await;
             }
+            KernelMessage::InitFail => {
+                self.send_kernel_message(KernelServiceMessage::InitFail(source)).await;
+            }
         }
     }
 

@@ -7,4 +7,5 @@ pub enum KernelMessage {
     Shutdown,
     GetHealth(oneshot::Sender<KernelHealth>),
     Alive,
+    InitFail,
 }

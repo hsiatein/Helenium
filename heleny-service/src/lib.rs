@@ -58,7 +58,8 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                 };
                 let mut tick_interval = interval(Duration::from_secs(1));
                 tick_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
-                service.launch(tick_interval).await;
+                service.endpoint().send_alive().await; // 通知 KernelService 自己初始化完成
+                service.launch(tick_interval).await; // 启动循环
                 Ok(())
             }
             .instrument(span),
