@@ -6,7 +6,6 @@ use tracing::debug;
 pub struct DepsRelation {
     deps_map: HashMap<&'static str, HashSet<&'static str>>,
     rev_map: HashMap<&'static str, HashSet<&'static str>>,
-    pub order: Vec<&'static str>,
     all_deps_map: HashMap<&'static str, HashSet<&'static str>>,
     all_rev_map: HashMap<&'static str, HashSet<&'static str>>,
     _init_seqs: HashMap<&'static str, Vec<&'static str>>,
@@ -50,7 +49,6 @@ impl DepsRelation {
         Ok(Self {
             deps_map,
             rev_map,
-            order,
             all_deps_map,
             all_rev_map,
             _init_seqs: init_seqs,
