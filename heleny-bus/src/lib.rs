@@ -96,7 +96,8 @@ impl Bus {
         let (name, role) = self.tokens.get(&msg.token).context("消息携带未知 token, 忽略")?.clone();
         let msg=msg.sign(name, role);
         debug!("已签名: {:?}", msg);
-        self.send(msg).await?;
+        let target=msg.target;
+        self.send(msg).await.context(format!("发送给 {} 失败",target))?;
         Ok(())
     }
 
