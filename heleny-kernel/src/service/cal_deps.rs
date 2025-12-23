@@ -1,15 +1,16 @@
 use anyhow::{Context, Result};
 use heleny_proto::health::{HealthStatus, KernelHealth};
+use tracing::debug;
 use std::collections::{HashMap, HashSet};
 
 pub struct DepsRelation {
-    deps_map: HashMap<&'static str, HashSet<&'static str>>,
-    rev_map: HashMap<&'static str, HashSet<&'static str>>,
+    _deps_map: HashMap<&'static str, HashSet<&'static str>>,
+    _rev_map: HashMap<&'static str, HashSet<&'static str>>,
     pub order: Vec<&'static str>,
     all_deps_map: HashMap<&'static str, HashSet<&'static str>>,
     all_rev_map: HashMap<&'static str, HashSet<&'static str>>,
-    init_seqs: HashMap<&'static str, Vec<&'static str>>,
-    stop_seqs: HashMap<&'static str, Vec<&'static str>>,
+    _init_seqs: HashMap<&'static str, Vec<&'static str>>,
+    _stop_seqs: HashMap<&'static str, Vec<&'static str>>,
     init_cache: Option<HashMap<&'static str, HashSet<&'static str>>>,
     stop_cache: Option<HashMap<&'static str, HashSet<&'static str>>>,
 }
@@ -47,13 +48,13 @@ impl DepsRelation {
             all_rev_map.insert(name, all_rev);
         }
         Ok(Self {
-            deps_map,
-            rev_map,
+            _deps_map: deps_map,
+            _rev_map: rev_map,
             order,
             all_deps_map,
             all_rev_map,
-            init_seqs,
-            stop_seqs,
+            _init_seqs: init_seqs,
+            _stop_seqs: stop_seqs,
             init_cache: None,
             stop_cache: None,
         })
@@ -67,43 +68,48 @@ impl DepsRelation {
         self.prepare_init_services(want_init, health)
     }
 
-    pub fn refresh_init_cache() {}
+    pub fn refresh_init_cache(&mut self, ready: &'static str) -> Result<HashSet<&'static str>> {
+        let mut cache=self.init_cache.take().context("未初始化 Init 缓存")?;
+        debug_assert!(cache.remove(ready).is_none(), "按理cache不应包含ready, 前一步初始化时就移除了");
+        cache.iter_mut().for_each(|(_name,deps)|{
+            deps.remove(ready);
+        });
+        let (can_init,need_init):(HashMap<_,_>,HashMap<_,_>)=cache.into_iter().partition(|(_name,deps)|{
+            deps.is_empty()
+        });
+        self.init_cache=Some(need_init);
+        Ok(can_init.into_keys().collect())
+    }
 
     pub fn prepare_init_services(
         &mut self,
         want_init: HashSet<&'static str>,
         health: KernelHealth,
     ) -> Result<HashSet<&'static str>> {
+        debug!("想要初始化 {} 个应用",want_init.len());
         let want_init = self.prepare_init(want_init)?;
-        let already_init: HashSet<&'static str> = want_init
-            .keys()
-            .copied()
-            .filter(|&k| {
-                health
-                    .services
-                    .get(k)
-                    .expect("不应出现 Health 没有的名字")
-                    .0
-                    == HealthStatus::Healthy
-            })
+        let (already_init,need_init):(HashMap<_, HashSet<_>>,HashMap<_, HashSet<_>>)=want_init.into_iter().partition(|(name,_deps)|{
+            health
+                .services
+                .get(name)
+                .expect("不应出现 Health 没有的名字")
+                .0
+                == HealthStatus::Healthy
+        });
+        debug!("already_init: {:?}, need_init: {:?}",already_init,need_init);
+        let already_init: HashSet<&'static str> = already_init
+            .into_keys()
             .collect();
-        let mut need_init: HashMap<&'static str, HashSet<&'static str>> = want_init
+        let need_init: HashMap<&'static str, HashSet<&'static str>> = need_init
             .into_iter()
-            .filter(|(name, _deps)| !already_init.contains(name))
             .map(|(name, deps)| (name, &deps - &already_init))
             .collect();
-        let can_init: HashSet<&'static str> = need_init
-            .iter()
-            .filter_map(|(&name, deps)| match deps.is_empty() {
-                true => Some(name),
-                false => None,
-            })
-            .collect();
-        for name in &can_init {
-            need_init.remove(name);
-        }
+        let (can_init, need_init):(HashMap<_, HashSet<_>>,HashMap<_, HashSet<_>>)=need_init.into_iter().partition(|(_name,deps)|{
+            deps.is_empty()
+        });
+        debug!("can_init {:?}, need_init {:?}",can_init,need_init);
         self.init_cache = Some(need_init);
-        Ok(can_init)
+        Ok(can_init.into_keys().collect())
     }
 
     pub fn prepare_init(
@@ -111,18 +117,19 @@ impl DepsRelation {
         names: HashSet<&'static str>,
     ) -> Result<HashMap<&'static str, HashSet<&'static str>>> {
         let all_deps: HashSet<&'static str> = names
-            .iter()
+            .into_iter()
             .try_fold(HashSet::new(), |mut current, name| {
                 let all_deps = match self.all_deps_map.get(name) {
                     Some(all_deps) => all_deps,
                     None => return None,
                 };
                 current.extend(all_deps);
+                current.insert(name);
                 Some(current)
             })
             .context("没有对应服务名, 生成初始化缓存失败")?;
         let init_cache: HashMap<&'static str, HashSet<&'static str>> = self
-            .deps_map
+            .all_deps_map
             .iter()
             .filter_map(|(name, dep)| match all_deps.contains(name) {
                 true => Some((*name, dep.clone())),
@@ -177,7 +184,7 @@ fn find_reachable_nodes(
             }
         }
     }
-    all_deps.insert(name);
+    assert!(!all_deps.contains(name));
     all_deps
 }
 

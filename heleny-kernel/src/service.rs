@@ -4,12 +4,12 @@ use std::{
     time::Duration,
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use async_trait::async_trait;
 use chrono::Local;
 use heleny_bus::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::{common_message::CommonMessage, message::Message, name::KERNEL_NAME};
+use heleny_proto::{common_message::CommonMessage, kernel_message::ServiceStatus, message::Message, name::KERNEL_NAME, role::ServiceRole};
 use heleny_service::{Service, ServiceFactory, ServiceHandle};
 use inventory;
 use tokio::{sync::oneshot, time::timeout};
@@ -26,8 +26,7 @@ pub enum KernelServiceMessage {
     StopAll,
     Init,
     GetHealth(oneshot::Sender<KernelHealth>),
-    Alive(&'static str),
-    InitFail(&'static str),
+    UploadStatus(&'static str,ServiceStatus),
     InitParams(
         Arc<Mutex<KernelHealth>>,
         Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
@@ -114,22 +113,39 @@ impl Service for KernelService {
             health,
         }))
     }
-    async fn handle(&mut self, msg: Box<KernelServiceMessage>) -> anyhow::Result<()> {
+    async fn handle(&mut self, _name: &'static str, _role: ServiceRole, msg: Box<KernelServiceMessage>) -> anyhow::Result<()> {
         match *msg {
             KernelServiceMessage::StopAll => {
                 self.stop_all_services().await;
             }
             KernelServiceMessage::Init => {
-                self.init_all_services().await;
+                let can_init=self.deps_relation.prepare_init_all_services(KernelHealth::get_mut(&self.health).to_owned())?;
+                self.init_services(can_init).await;
             }
             KernelServiceMessage::GetHealth(sender) => {
                 let _ = sender.send(KernelHealth::get_mut(&self.health).to_owned());
             }
-            KernelServiceMessage::Alive(source) => {
-                KernelHealth::get_mut(&self.health).set_alive(source);
-            }
-            KernelServiceMessage::InitFail(source) => {
-                KernelHealth::get_mut(&self.health).set_dead(source);
+            KernelServiceMessage::UploadStatus(source, status)=>{
+                match status {
+                    ServiceStatus::Alive=>{
+                        KernelHealth::get_mut(&self.health).set_alive(source);
+                    }
+                    ServiceStatus::InitFail=>{
+                        KernelHealth::get_mut(&self.health).set_dead(source);
+                        let services=match self.services.as_ref().lock(){
+                            Ok(service)=>service,
+                            Err(e)=> return Err(anyhow::anyhow!("无法获取 {} 的锁, 导致无法 Abort: {}",source,e)),
+                        };
+                        services.get(source).context(format!("未找到 {} 的句柄, 导致无法 Abort",source))?.abort();
+                    }
+                    ServiceStatus::Ready=>{
+                        if source == Self::name() {return Ok(());}
+                        info!("收到 {} 初始化完成消息",source);
+                        KernelHealth::get_mut(&self.health).set_alive(source);
+                        let can_init=self.deps_relation.refresh_init_cache(source)?;
+                        if !can_init.is_empty() {self.init_services(can_init).await;}
+                    }
+                }
             }
             KernelServiceMessage::InitParams(_, _) => {}
         }
@@ -153,27 +169,30 @@ impl KernelService {
         }
     }
 
-    /// 初始化各个服务
-    async fn init_all_services(&mut self) {
-        info!("开始代理启动各个服务");
-        let mut order = self.get_order();
-        let first = order.remove(0); // 移除 KernelService 自身
-        debug_assert!(first == KernelService::name());
-        for name in order {
-            match KernelHealth::get_mut(&self.health).services.get(name) {
-                None => {
-                    warn!("未找到 {}, 忽略", name);
-                    continue;
-                }
-                Some((HealthStatus::Healthy, _)) => {
-                    info!("{} 已经是健康状态, 跳过初始化", name);
-                    continue;
-                }
-                _ => info!("开始代理启动 {}", name),
+    /// 初始化一个列表里的各个服务
+    async fn init_services(&mut self, can_init: HashSet<&'static str>) {
+        info!("开始代理启动服务");
+        for name in can_init {
+            {
+                let mut health=KernelHealth::get_mut(&self.health);
+                let service_health=match health.services.get_mut(name){
+                    Some(service_health)=>service_health,
+                    None=>{
+                        warn!("未找到 {}, 忽略", name);
+                        continue;
+                    }
+                };
+                *service_health=match service_health {
+                    (HealthStatus::Healthy, _) => {
+                        info!("{} 已经是健康状态, 跳过初始化", name);
+                        continue;
+                    }
+                    _ => {
+                        info!("开始代理启动 {}", name);
+                        (HealthStatus::Starting, Some(Local::now()))
+                    }
+                };
             }
-            KernelHealth::get_mut(&self.health)
-                .services
-                .insert(name, (HealthStatus::Starting, Some(Local::now())));
             let factory = match self.service_factories.iter().find(|f| f.name == name) {
                 Some(factory) => factory,
                 None => {
@@ -216,9 +235,8 @@ impl KernelService {
                 .lock()
                 .expect("获取 services 锁失败")
                 .insert(handle.name(), handle);
-            info!("初始化 {} 成功", name);
+            info!("新建 {} 初始化过程完成", name);
         }
-        info!("初始化服务完成");
     }
 
     /// 终止各个服务

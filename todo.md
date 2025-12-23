@@ -24,5 +24,9 @@ todo:
 - [ ] 7.内核允许初始化有依赖的服务
 - [x] 8.内核嘱托kernelservice计算依赖关系
 - [x] 9.收集心跳
-- [ ] 10.初始化改成service非阻塞渐进式，每一个初始化好了，则发消息给kernel，检查剩下的有没有能初始化的
+- [x] 10.初始化改成service非阻塞渐进式，每一个初始化好了，则发消息给kernel，检查剩下的有没有能初始化的
 - [ ] 11.服务available检测
+- [x] 12.handle加上来源和身份
+- [ ] 13.常见类型实现Display
+- [ ] 14.让kernelservice关机时检查kernelservice是否响应
+- [ ] 15.stop也改成非阻塞渐进式

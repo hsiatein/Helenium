@@ -120,7 +120,7 @@ impl Kernel {
             return;
         }
         if let Err(e) = self.bus.send(msg).await {
-            warn!("Kernel 发送消息时出错: {}", e);
+            warn!("Kernel 转发消息时出错: {}", e);
         }
     }
 
@@ -161,7 +161,7 @@ impl Kernel {
             .bus
             .get_token_endpoint(name, self.service_buffer, token);
         if let Some(msg) = init_message {
-            let _ = self.bus.send(msg).await;
+            let _ = self.bus.send_as_kernel(msg).await;
         }
         let f = match get_factory(name) {
             Some(f) if f.deps.len() == 0 => f,
@@ -196,7 +196,7 @@ impl Kernel {
     /// 发送消息给 KernelService
     async fn send_kernel_message(&self, payload: KernelServiceMessage) {
         let message = Message::new(KernelService::name(), None, Box::new(payload));
-        let _ = self.bus.send(message).await;
+        let _ = self.bus.send_as_kernel(message).await;
     }
 
     /// 发送 Admin 消息给 Kernel(自己)
@@ -274,12 +274,8 @@ impl Kernel {
                 self.send_kernel_message(KernelServiceMessage::GetHealth(sender))
                     .await;
             }
-            KernelMessage::Alive => {
-                self.send_kernel_message(KernelServiceMessage::Alive(source))
-                    .await;
-            }
-            KernelMessage::InitFail => {
-                self.send_kernel_message(KernelServiceMessage::InitFail(source))
+            KernelMessage::UploadStatus(status) => {
+                self.send_kernel_message(KernelServiceMessage::UploadStatus(source,status))
                     .await;
             }
         }

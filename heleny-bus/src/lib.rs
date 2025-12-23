@@ -4,9 +4,9 @@ pub mod monitor;
 use anyhow::Result;
 use heleny_proto::{
     common_message::CommonMessage,
-    kernel_message::KernelMessage,
+    kernel_message::{KernelMessage, ServiceStatus},
     message::{AnyMessage, Message},
-    name::KERNEL_NAME,
+    name::KERNEL_NAME, role::ServiceRole,
 };
 use std::{collections::HashMap, mem::replace};
 use tokio::sync::mpsc;
@@ -53,11 +53,15 @@ impl Endpoint {
     }
 
     pub async fn send_alive(&self) {
-        let _ = self.send(KERNEL_NAME, Box::new(KernelMessage::Alive)).await;
+        let _ = self.send(KERNEL_NAME, Box::new(KernelMessage::UploadStatus(ServiceStatus::Alive))).await;
+    }
+
+    pub async fn send_ready(&self) {
+        let _ = self.send(KERNEL_NAME, Box::new(KernelMessage::UploadStatus(ServiceStatus::Ready))).await;
     }
 
     pub fn send_init_fail(&self) -> (mpsc::Sender<Message>, Message) {
-        let msg = Message::new(KERNEL_NAME, self.token, Box::new(KernelMessage::InitFail));
+        let msg = Message::new(KERNEL_NAME, self.token, Box::new(KernelMessage::UploadStatus(ServiceStatus::InitFail)));
         (self.endpoint_kernel.clone(), msg)
     }
 
@@ -97,6 +101,13 @@ impl Bus {
         self.kernel_recv.recv().await
     }
 
+    pub async fn send_as_kernel(&self, mut msg: Message) -> Result<()> {
+        msg.name=Some(KERNEL_NAME);
+        msg.role=Some(ServiceRole::System);
+        msg.token=None;
+        self.send(msg).await
+    }
+
     pub async fn send(&self, msg: Message) -> Result<()> {
         let target = msg.target;
         if let Some(tx) = self.address_map.get::<str>(target) {
@@ -114,6 +125,6 @@ impl Bus {
         payload: CommonMessage,
     ) -> Result<()> {
         let msg = Message::new(target, None, Box::new(payload));
-        self.send(msg).await
+        self.send_as_kernel(msg).await
     }
 }

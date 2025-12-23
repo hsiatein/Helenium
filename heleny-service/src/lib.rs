@@ -4,6 +4,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::Endpoint;
 use heleny_proto::message::Message;
+use heleny_proto::role::ServiceRole;
 use heleny_proto::{common_message::CommonMessage, message::AnyMessage};
 use tokio::task::JoinHandle;
 use tokio::time::{Interval, MissedTickBehavior, interval};
@@ -42,7 +43,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
     type MessageType: AnyMessage + Send + Sync;
     // 需要实现
     async fn new(endpoint: Endpoint) -> Result<Box<Self>>;
-    async fn handle(&mut self, msg: Box<Self::MessageType>) -> Result<()>;
+    async fn handle(&mut self, name: &'static str, role: ServiceRole, msg: Box<Self::MessageType>) -> Result<()>;
     async fn stop(&mut self);
     // 默认实现
     fn start(endpoint: Endpoint) -> Result<ServiceHandle> {
@@ -60,7 +61,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                 };
                 let mut tick_interval = interval(Duration::from_secs(1));
                 tick_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
-                service.endpoint().send_alive().await; // 通知 KernelService 自己初始化完成
+                service.endpoint().send_ready().await; // 通知 KernelService 自己初始化完成
                 service.launch(tick_interval).await; // 启动循环
                 Ok(())
             }
@@ -91,19 +92,30 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                 return;
             }
         };
+        let (name,role)=match (msg.name,msg.role) {
+            (Some(name),Some(role))=>(name,role),
+            _=> {
+                warn!("消息未携带名字或身份");
+                return ;
+            }
+        };
         match payload {
             Ok(message) => {
-                if let Err(e) = self.handle(message).await {
+                if let Err(e) = self.handle(name,role,message).await {
                     warn!("处理消息时出错: {}", e);
                 }
             }
-            Err(common_message) => self.handle_common_message(common_message, run).await,
+            Err(common_message) => self.handle_common_message(name,role,common_message, run).await,
         };
     }
     /// 处理通用信息
-    async fn handle_common_message(&mut self, message: Box<CommonMessage>, run: &mut bool) {
+    async fn handle_common_message(&mut self, _name: &'static str, role: ServiceRole, message: Box<CommonMessage>, run: &mut bool) {
         match *message {
             CommonMessage::Stop(oneshot) => {
+                if role!=ServiceRole::System {
+                    warn!("非 System 身份不能发送 Stop 消息");
+                    return ;
+                }
                 self.stop().await;
                 let _ = oneshot.send(());
                 *run = false;
