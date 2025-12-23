@@ -14,7 +14,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::oneshot;
-use tokio::time::{MissedTickBehavior, interval};
+use tokio::time::{MissedTickBehavior, interval, timeout};
 use tracing::{debug, info, warn};
 use uuid::Uuid;
 
@@ -219,20 +219,29 @@ impl Kernel {
             }
             ShutdownStage::StopAllService => {
                 info!("开始关闭所有服务");
-                self.send_kernel_message(KernelServiceMessage::StopAll)
+                let (tx, rx) = oneshot::channel();
+                self.send_kernel_message(KernelServiceMessage::StopAll(tx))
+                    .await;
+                match timeout(Duration::from_secs(5), rx).await {
+                    Ok(Ok(())) => {
+                        return;
+                    }
+                    Ok(Err(e)) => {
+                        warn!("获取 KernelService 关闭所有服务反馈出错: {}", e);
+                    }
+                    Err(e) => {
+                        warn!("获取 KernelService 关闭所有服务反馈超时: {}", e);
+                    }
+                }
+                self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::StopKernel))
                     .await;
             }
             ShutdownStage::StopKernel => {
                 info!("开始关闭内核");
-                let (tx, rx) = oneshot::channel();
                 let _ = self
                     .bus
-                    .send_common_message(KernelService::name(), CommonMessage::Stop(tx))
+                    .send_common_message(KernelService::name(), CommonMessage::Stop)
                     .await;
-                match rx.await {
-                    Ok(_) => (),
-                    Err(e) => warn!("关闭 KernelService 时发生错误: {}", e),
-                };
                 self.run = false;
             }
         }
@@ -275,7 +284,7 @@ impl Kernel {
                     .await;
             }
             KernelMessage::UploadStatus(status) => {
-                self.send_kernel_message(KernelServiceMessage::UploadStatus(source,status))
+                self.send_kernel_message(KernelServiceMessage::UploadStatus(source, status))
                     .await;
             }
         }

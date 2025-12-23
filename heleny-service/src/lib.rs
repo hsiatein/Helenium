@@ -43,7 +43,12 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
     type MessageType: AnyMessage + Send + Sync;
     // 需要实现
     async fn new(endpoint: Endpoint) -> Result<Box<Self>>;
-    async fn handle(&mut self, name: &'static str, role: ServiceRole, msg: Box<Self::MessageType>) -> Result<()>;
+    async fn handle(
+        &mut self,
+        name: &'static str,
+        role: ServiceRole,
+        msg: Box<Self::MessageType>,
+    ) -> Result<()>;
     async fn stop(&mut self);
     // 默认实现
     fn start(endpoint: Endpoint) -> Result<ServiceHandle> {
@@ -92,32 +97,41 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                 return;
             }
         };
-        let (name,role)=match (msg.name,msg.role) {
-            (Some(name),Some(role))=>(name,role),
-            _=> {
+        let (name, role) = match (msg.name, msg.role) {
+            (Some(name), Some(role)) => (name, role),
+            _ => {
                 warn!("消息未携带名字或身份");
-                return ;
+                return;
             }
         };
         match payload {
             Ok(message) => {
-                if let Err(e) = self.handle(name,role,message).await {
+                if let Err(e) = self.handle(name, role, message).await {
                     warn!("处理消息时出错: {}", e);
                 }
             }
-            Err(common_message) => self.handle_common_message(name,role,common_message, run).await,
+            Err(common_message) => {
+                self.handle_common_message(name, role, common_message, run)
+                    .await
+            }
         };
     }
     /// 处理通用信息
-    async fn handle_common_message(&mut self, _name: &'static str, role: ServiceRole, message: Box<CommonMessage>, run: &mut bool) {
+    async fn handle_common_message(
+        &mut self,
+        _name: &'static str,
+        role: ServiceRole,
+        message: Box<CommonMessage>,
+        run: &mut bool,
+    ) {
         match *message {
-            CommonMessage::Stop(oneshot) => {
-                if role!=ServiceRole::System {
+            CommonMessage::Stop => {
+                if role != ServiceRole::System {
                     warn!("非 System 身份不能发送 Stop 消息");
-                    return ;
+                    return;
                 }
                 self.stop().await;
-                let _ = oneshot.send(());
+                self.endpoint().send_terminate().await;
                 *run = false;
             }
         }

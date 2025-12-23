@@ -9,7 +9,10 @@ use async_trait::async_trait;
 use chrono::Local;
 use heleny_bus::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::{common_message::CommonMessage, kernel_message::ServiceStatus, message::Message, name::KERNEL_NAME, role::ServiceRole};
+use heleny_proto::{
+    common_message::CommonMessage, kernel_message::ServiceStatus, message::Message,
+    name::KERNEL_NAME, role::ServiceRole,
+};
 use heleny_service::{Service, ServiceFactory, ServiceHandle};
 use inventory;
 use tokio::{sync::oneshot, time::timeout};
@@ -23,10 +26,10 @@ mod cal_deps;
 
 #[derive(Debug)]
 pub enum KernelServiceMessage {
-    StopAll,
+    StopAll(oneshot::Sender<()>),
     Init,
     GetHealth(oneshot::Sender<KernelHealth>),
-    UploadStatus(&'static str,ServiceStatus),
+    UploadStatus(&'static str, ServiceStatus),
     InitParams(
         Arc<Mutex<KernelHealth>>,
         Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
@@ -113,40 +116,94 @@ impl Service for KernelService {
             health,
         }))
     }
-    async fn handle(&mut self, _name: &'static str, _role: ServiceRole, msg: Box<KernelServiceMessage>) -> anyhow::Result<()> {
+    async fn handle(
+        &mut self,
+        _name: &'static str,
+        _role: ServiceRole,
+        msg: Box<KernelServiceMessage>,
+    ) -> anyhow::Result<()> {
         match *msg {
-            KernelServiceMessage::StopAll => {
-                self.stop_all_services().await;
+            KernelServiceMessage::StopAll(sender) => {
+                let _ = sender.send(());
+                let can_stop = self
+                    .deps_relation
+                    .prepare_all_services(KernelHealth::get_mut(&self.health).to_owned(), false)?;
+                // self.stop_all_services().await;
+                self.stop_services(can_stop).await;
             }
             KernelServiceMessage::Init => {
-                let can_init=self.deps_relation.prepare_init_all_services(KernelHealth::get_mut(&self.health).to_owned())?;
+                let can_init = self
+                    .deps_relation
+                    .prepare_all_services(KernelHealth::get_mut(&self.health).to_owned(), true)?;
                 self.init_services(can_init).await;
             }
             KernelServiceMessage::GetHealth(sender) => {
                 let _ = sender.send(KernelHealth::get_mut(&self.health).to_owned());
             }
-            KernelServiceMessage::UploadStatus(source, status)=>{
-                match status {
-                    ServiceStatus::Alive=>{
-                        KernelHealth::get_mut(&self.health).set_alive(source);
+            KernelServiceMessage::UploadStatus(source, status) => match status {
+                ServiceStatus::Alive => {
+                    KernelHealth::get_mut(&self.health).set_alive(source);
+                }
+                ServiceStatus::InitFail => {
+                    KernelHealth::get_mut(&self.health).set_dead(source);
+                    let mut services = match self.services.as_ref().lock() {
+                        Ok(service) => service,
+                        Err(e) => {
+                            return Err(anyhow::anyhow!(
+                                "无法获取 {} 的锁, 导致无法 Abort: {}",
+                                source,
+                                e
+                            ));
+                        }
+                    };
+                    services
+                        .get(source)
+                        .context(format!("未找到 {} 的句柄, 导致无法 Abort", source))?
+                        .abort();
+                    services.remove(source);
+                }
+                ServiceStatus::Ready => {
+                    if source == Self::name() {
+                        return Ok(());
                     }
-                    ServiceStatus::InitFail=>{
-                        KernelHealth::get_mut(&self.health).set_dead(source);
-                        let services=match self.services.as_ref().lock(){
-                            Ok(service)=>service,
-                            Err(e)=> return Err(anyhow::anyhow!("无法获取 {} 的锁, 导致无法 Abort: {}",source,e)),
-                        };
-                        services.get(source).context(format!("未找到 {} 的句柄, 导致无法 Abort",source))?.abort();
-                    }
-                    ServiceStatus::Ready=>{
-                        if source == Self::name() {return Ok(());}
-                        info!("收到 {} 初始化完成消息",source);
-                        KernelHealth::get_mut(&self.health).set_alive(source);
-                        let can_init=self.deps_relation.refresh_init_cache(source)?;
-                        if !can_init.is_empty() {self.init_services(can_init).await;}
+                    info!("{} 成功初始化", source);
+                    KernelHealth::get_mut(&self.health).set_alive(source);
+                    let can_init = self.deps_relation.refresh_cache(source, true)?;
+                    if !can_init.is_empty() {
+                        self.init_services(can_init).await;
                     }
                 }
-            }
+                ServiceStatus::Terminate => {
+                    info!("{} 成功退出", source);
+                    KernelHealth::get_mut(&self.health).set_dead(source);
+                    {
+                        let mut services = match self.services.as_ref().lock() {
+                            Ok(service) => service,
+                            Err(e) => {
+                                return Err(anyhow::anyhow!(
+                                    "无法获取 {} 的锁, 导致无法清理: {}",
+                                    source,
+                                    e
+                                ));
+                            }
+                        };
+                        services
+                            .get(source)
+                            .context(format!("未找到 {} 的句柄, 导致无法清理", source))?
+                            .abort();
+                        services.remove(source);
+                    }
+                    let can_stop = self.deps_relation.refresh_cache(source, false)?;
+                    if can_stop.contains(KernelService::name()) {
+                        self.send_admin_message(AdminCommand::Shutdown(
+                            crate::command::ShutdownStage::StopKernel,
+                        ))
+                        .await;
+                    } else if !can_stop.is_empty() {
+                        self.stop_services(can_stop).await;
+                    }
+                }
+            },
             KernelServiceMessage::InitParams(_, _) => {}
         }
         Ok(())
@@ -174,15 +231,15 @@ impl KernelService {
         info!("开始代理启动服务");
         for name in can_init {
             {
-                let mut health=KernelHealth::get_mut(&self.health);
-                let service_health=match health.services.get_mut(name){
-                    Some(service_health)=>service_health,
-                    None=>{
+                let mut health = KernelHealth::get_mut(&self.health);
+                let service_health = match health.services.get_mut(name) {
+                    Some(service_health) => service_health,
+                    None => {
                         warn!("未找到 {}, 忽略", name);
                         continue;
                     }
                 };
-                *service_health=match service_health {
+                *service_health = match service_health {
                     (HealthStatus::Healthy, _) => {
                         info!("{} 已经是健康状态, 跳过初始化", name);
                         continue;
@@ -239,14 +296,87 @@ impl KernelService {
         }
     }
 
-    /// 终止各个服务
-    async fn stop_all_services(&mut self) {
-        info!("开始代理关闭所有服务");
-        let mut order = self.get_order();
-        let name = order.remove(0); // 移除 KernelService 自身
-        println!("{:?}", name);
-        debug_assert!(name == KernelService::name());
-        for &name in order.iter().rev() {
+    // /// 终止各个服务
+    // async fn stop_all_services(&mut self) {
+    //     info!("开始代理关闭所有服务");
+    //     let mut order = self.get_order();
+    //     let name = order.remove(0); // 移除 KernelService 自身
+    //     println!("{:?}", name);
+    //     debug_assert!(name == KernelService::name());
+    //     for &name in order.iter().rev() {
+    //         info!("开始代理关闭 {}", name);
+    //         {
+    //             let mut health = KernelHealth::get_mut(&self.health);
+    //             match health.services.get(name) {
+    //                 Some((HealthStatus::Healthy, _)) => health
+    //                     .services
+    //                     .insert(name, (HealthStatus::Stopping, Some(Local::now()))),
+    //                 _ => {
+    //                     warn!("{} 非健康状态, 强制杀死", name);
+    //                     match self
+    //                         .services
+    //                         .as_ref()
+    //                         .lock()
+    //                         .expect("获取 services 锁失败")
+    //                         .remove(name)
+    //                     {
+    //                         Some(handle) => {
+    //                             handle.abort();
+    //                             health
+    //                                 .services
+    //                                 .insert(name, (HealthStatus::Stopped, Some(Local::now())));
+    //                             info!("强制终止 {} 句柄", name);
+    //                         }
+    //                         None => (),
+    //                     };
+    //                     continue;
+    //                 }
+    //             };
+    //         }
+    //         let _ = self
+    //             .endpoint
+    //             .send(name, Box::new(CommonMessage::Stop))
+    //             .await;
+    //         match timeout(Duration::from_secs(5), rx).await {
+    //             Ok(_) => {
+    //                 info!("清理 {} 句柄", name);
+    //                 self.services
+    //                     .as_ref()
+    //                     .lock()
+    //                     .expect("获取 services 锁失败")
+    //                     .remove(name);
+    //             }
+    //             Err(e) => {
+    //                 warn!("获取 {} 关闭反馈失败: {}", name, e);
+    //                 match self
+    //                     .services
+    //                     .as_ref()
+    //                     .lock()
+    //                     .expect("获取 services 锁失败")
+    //                     .remove(name)
+    //                 {
+    //                     Some(handle) => {
+    //                         handle.abort();
+    //                         info!("强制终止 {} 句柄", name);
+    //                     }
+    //                     None => continue,
+    //                 };
+    //             }
+    //         }
+    //         KernelHealth::get_mut(&self.health)
+    //             .services
+    //             .insert(name, (HealthStatus::Stopped, Some(Local::now())));
+    //     }
+    //     self.send_admin_message(AdminCommand::Shutdown(
+    //         crate::command::ShutdownStage::StopKernel,
+    //     ))
+    //     .await;
+    // }
+
+    /// 终止一个列表里的各个服务
+    async fn stop_services(&mut self, can_stop: HashSet<&'static str>) {
+        info!("开始代理关闭服务");
+        for name in can_stop {
             info!("开始代理关闭 {}", name);
             {
                 let mut health = KernelHealth::get_mut(&self.health);
@@ -276,55 +406,16 @@ impl KernelService {
                     }
                 };
             }
-            let (tx, rx) = oneshot::channel();
             let _ = self
                 .endpoint
-                .send(name, Box::new(CommonMessage::Stop(tx)))
+                .send(name, Box::new(CommonMessage::Stop))
                 .await;
-            match timeout(Duration::from_secs(5), rx).await {
-                Ok(_) => {
-                    info!("清理 {} 句柄", name);
-                    self.services
-                        .as_ref()
-                        .lock()
-                        .expect("获取 services 锁失败")
-                        .remove(name);
-                }
-                Err(e) => {
-                    warn!("获取 {} 关闭反馈失败: {}", name, e);
-                    match self
-                        .services
-                        .as_ref()
-                        .lock()
-                        .expect("获取 services 锁失败")
-                        .remove(name)
-                    {
-                        Some(handle) => {
-                            handle.abort();
-                            info!("强制终止 {} 句柄", name);
-                        }
-                        None => continue,
-                    };
-                }
-            }
-            KernelHealth::get_mut(&self.health)
-                .services
-                .insert(name, (HealthStatus::Stopped, Some(Local::now())));
         }
-        self.send_admin_message(AdminCommand::Shutdown(
-            crate::command::ShutdownStage::StopKernel,
-        ))
-        .await;
     }
 
     /// 向内核发送管理员消息
     async fn send_admin_message(&self, payload: AdminCommand) {
         let _ = self.endpoint.send(KERNEL_NAME, Box::new(payload)).await;
-    }
-
-    /// 获取初始化顺序
-    fn get_order(&self) -> Vec<&'static str> {
-        self.deps_relation.order.clone()
     }
 
     /// 检测前置服务是否准备好

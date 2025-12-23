@@ -28,5 +28,5 @@ todo:
 - [ ] 11.服务available检测
 - [x] 12.handle加上来源和身份
 - [ ] 13.常见类型实现Display
-- [ ] 14.让kernelservice关机时检查kernelservice是否响应
-- [ ] 15.stop也改成非阻塞渐进式
+- [x] 14.让kernelservice关机时检查kernelservice是否响应
+- [x] 15.stop也改成非阻塞渐进式

@@ -46,7 +46,12 @@ impl Service for ConfigService {
             config_value,
         }))
     }
-    async fn handle(&mut self, name: &'static str, role: ServiceRole, msg: Box<Self::MessageType>) -> Result<()> {
+    async fn handle(
+        &mut self,
+        name: &'static str,
+        role: ServiceRole,
+        msg: Box<Self::MessageType>,
+    ) -> Result<()> {
         match *msg {
             ConfigServiceMessage::Get { path, sender } => {}
             ConfigServiceMessage::Set { path, value } => {}

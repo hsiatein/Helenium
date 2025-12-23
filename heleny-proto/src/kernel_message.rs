@@ -2,8 +2,6 @@ use tokio::sync::oneshot;
 
 use crate::health::KernelHealth;
 
-
-
 #[derive(Debug)]
 pub enum KernelMessage {
     Shutdown,
@@ -16,4 +14,5 @@ pub enum ServiceStatus {
     Ready,
     Alive,
     InitFail,
+    Terminate,
 }

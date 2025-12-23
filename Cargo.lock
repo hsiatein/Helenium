@@ -191,6 +191,7 @@ dependencies = [
  "chrono",
  "tokio",
  "toml",
+ "tracing",
  "uuid",
 ]
 

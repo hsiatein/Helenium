@@ -6,7 +6,8 @@ use heleny_proto::{
     common_message::CommonMessage,
     kernel_message::{KernelMessage, ServiceStatus},
     message::{AnyMessage, Message},
-    name::KERNEL_NAME, role::ServiceRole,
+    name::KERNEL_NAME,
+    role::ServiceRole,
 };
 use std::{collections::HashMap, mem::replace};
 use tokio::sync::mpsc;
@@ -53,15 +54,38 @@ impl Endpoint {
     }
 
     pub async fn send_alive(&self) {
-        let _ = self.send(KERNEL_NAME, Box::new(KernelMessage::UploadStatus(ServiceStatus::Alive))).await;
+        let _ = self
+            .send(
+                KERNEL_NAME,
+                Box::new(KernelMessage::UploadStatus(ServiceStatus::Alive)),
+            )
+            .await;
     }
 
     pub async fn send_ready(&self) {
-        let _ = self.send(KERNEL_NAME, Box::new(KernelMessage::UploadStatus(ServiceStatus::Ready))).await;
+        let _ = self
+            .send(
+                KERNEL_NAME,
+                Box::new(KernelMessage::UploadStatus(ServiceStatus::Ready)),
+            )
+            .await;
+    }
+
+    pub async fn send_terminate(&self) {
+        let _ = self
+            .send(
+                KERNEL_NAME,
+                Box::new(KernelMessage::UploadStatus(ServiceStatus::Terminate)),
+            )
+            .await;
     }
 
     pub fn send_init_fail(&self) -> (mpsc::Sender<Message>, Message) {
-        let msg = Message::new(KERNEL_NAME, self.token, Box::new(KernelMessage::UploadStatus(ServiceStatus::InitFail)));
+        let msg = Message::new(
+            KERNEL_NAME,
+            self.token,
+            Box::new(KernelMessage::UploadStatus(ServiceStatus::InitFail)),
+        );
         (self.endpoint_kernel.clone(), msg)
     }
 
@@ -102,9 +126,9 @@ impl Bus {
     }
 
     pub async fn send_as_kernel(&self, mut msg: Message) -> Result<()> {
-        msg.name=Some(KERNEL_NAME);
-        msg.role=Some(ServiceRole::System);
-        msg.token=None;
+        msg.name = Some(KERNEL_NAME);
+        msg.role = Some(ServiceRole::System);
+        msg.token = None;
         self.send(msg).await
     }
 

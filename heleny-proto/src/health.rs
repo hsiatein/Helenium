@@ -4,6 +4,7 @@ use std::{
 };
 
 use chrono::Local;
+use tracing::warn;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum HealthStatus {
@@ -42,7 +43,10 @@ impl KernelHealth {
     pub fn set_alive(&mut self, name: &'static str) {
         let (status, time) = match self.services.get_mut(name) {
             Some(s) => s,
-            None => return,
+            None => {
+                warn!("未知服务: {}", name);
+                return;
+            }
         };
         *status = HealthStatus::Healthy;
         *time = Some(Local::now());
@@ -51,7 +55,10 @@ impl KernelHealth {
     pub fn set_dead(&mut self, name: &'static str) {
         let (status, time) = match self.services.get_mut(name) {
             Some(s) => s,
-            None => return,
+            None => {
+                warn!("未知服务: {}", name);
+                return;
+            }
         };
         *status = HealthStatus::Stopped;
         *time = Some(Local::now());
