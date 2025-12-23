@@ -3,31 +3,45 @@ use uuid::Uuid;
 
 use crate::role::ServiceRole;
 
-/// 消息 struct，定义消息的字段
+/// Token消息 struct，定义Token消息的字段
 #[derive(Debug)]
-pub struct Message {
+pub struct TokenMessage {
     pub target: &'static str,
-    pub token: Option<Uuid>,
-    pub name: Option<&'static str>,
-    pub role: Option<ServiceRole>,
+    pub token: Uuid,
     pub payload: Box<dyn AnyMessage>,
 }
 
-impl Message {
-    pub fn new(target: &'static str, token: Option<Uuid>, payload: Box<dyn AnyMessage>) -> Self {
+impl TokenMessage {
+    pub fn new(target: &'static str, token: Uuid, payload: Box<dyn AnyMessage>) -> Self {
         Self {
             target,
             token,
-            name: None,
-            role: None,
             payload,
         }
     }
 
-    pub fn sign(&mut self, name: &'static str, role: ServiceRole) {
-        self.name = Some(name);
-        self.role = Some(role);
-        self.token = None;
+    pub fn sign(self, name: &'static str, role: ServiceRole)->SignedMessage {
+        SignedMessage::new(self.target, name, role, self.payload)
+    }
+}
+
+/// 消息 struct，定义消息的字段
+#[derive(Debug)]
+pub struct SignedMessage {
+    pub target: &'static str,
+    pub name: &'static str,
+    pub role: ServiceRole,
+    pub payload: Box<dyn AnyMessage>,
+}
+
+impl SignedMessage {
+    pub fn new(target: &'static str, name: &'static str, role: ServiceRole, payload: Box<dyn AnyMessage>) -> Self {
+        Self {
+            target,
+            name,
+            role,
+            payload,
+        }
     }
 }
 

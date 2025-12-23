@@ -1,6 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use heleny_bus::Endpoint;
+use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::{config_service_message::ConfigServiceMessage, role::ServiceRole};
 use heleny_service::Service;

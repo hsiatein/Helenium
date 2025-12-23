@@ -30,3 +30,8 @@ todo:
 - [ ] 13.常见类型实现Display
 - [x] 14.让kernelservice关机时检查kernelservice是否响应
 - [x] 15.stop也改成非阻塞渐进式
+- [ ] 16.一段时间的路由流量统计
+- [x] 17.message分开成signed和token
+- [ ] 18.bus管理tokens
+- [ ] 19.bus单独一个线程转发
+- [ ] 20.广播变量状态变化给依赖自己的服务

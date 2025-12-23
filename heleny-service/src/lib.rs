@@ -2,13 +2,13 @@ use std::time::Duration;
 
 use anyhow::Result;
 use async_trait::async_trait;
-use heleny_bus::Endpoint;
-use heleny_proto::message::Message;
+use heleny_bus::endpoint::Endpoint;
+use heleny_proto::message::{SignedMessage};
 use heleny_proto::role::ServiceRole;
 use heleny_proto::{common_message::CommonMessage, message::AnyMessage};
 use tokio::task::JoinHandle;
 use tokio::time::{Interval, MissedTickBehavior, interval};
-use tracing::{Instrument, error, info_span, warn};
+use tracing::{Instrument, debug, error, info_span, warn};
 
 /// 服务句柄，用于管理服务的生命周期
 #[derive(Debug)]
@@ -89,7 +89,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
         }
     }
     /// 处理收到的所有信息
-    async fn handle_msg(&mut self, msg: Message, run: &mut bool) {
+    async fn handle_msg(&mut self, msg: SignedMessage, run: &mut bool) {
         let payload = match Self::downcast(msg.payload) {
             Ok(payload) => payload,
             Err(e) => {
@@ -97,21 +97,14 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                 return;
             }
         };
-        let (name, role) = match (msg.name, msg.role) {
-            (Some(name), Some(role)) => (name, role),
-            _ => {
-                warn!("消息未携带名字或身份");
-                return;
-            }
-        };
         match payload {
             Ok(message) => {
-                if let Err(e) = self.handle(name, role, message).await {
+                if let Err(e) = self.handle(msg.name, msg.role, message).await {
                     warn!("处理消息时出错: {}", e);
                 }
             }
             Err(common_message) => {
-                self.handle_common_message(name, role, common_message, run)
+                self.handle_common_message(msg.name, msg.role, common_message, run)
                     .await
             }
         };
@@ -139,6 +132,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
     fn downcast(
         msg: Box<dyn AnyMessage>,
     ) -> Result<Result<Box<Self::MessageType>, Box<CommonMessage>>> {
+        debug!("尝试转换: {:?}",msg);
         let msg = match msg.as_any().downcast::<Self::MessageType>() {
             Ok(msg) => return Ok(Ok(msg)),
             Err(msg) => msg,
@@ -164,7 +158,7 @@ pub trait HasName {
 pub struct ServiceFactory {
     pub name: &'static str,
     pub deps: Vec<&'static str>,
-    pub launch: fn(heleny_bus::Endpoint) -> Result<ServiceHandle>,
+    pub launch: fn(Endpoint) -> Result<ServiceHandle>,
 }
 
 inventory::collect!(ServiceFactory);

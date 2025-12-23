@@ -36,7 +36,7 @@ pub fn base_service(args: TokenStream, input: TokenStream) -> TokenStream {
 
         use heleny_service::HasEndpoint;
         impl HasEndpoint for #name {
-            fn endpoint(&mut self) -> &mut heleny_bus::Endpoint {
+            fn endpoint(&mut self) -> &mut heleny_bus::endpoint::Endpoint {
                 &mut self.endpoint
             }
         }

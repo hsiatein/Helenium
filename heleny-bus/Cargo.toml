@@ -8,3 +8,4 @@ heleny_proto ={ path = "../heleny-proto"}
 tokio = { workspace = true }
 anyhow = { workspace = true }
 uuid ={ workspace = true }
+tracing ={workspace = true}

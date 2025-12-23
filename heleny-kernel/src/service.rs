@@ -7,10 +7,10 @@ use std::{
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use chrono::Local;
-use heleny_bus::Endpoint;
+use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::{
-    common_message::CommonMessage, kernel_message::ServiceStatus, message::Message,
+    common_message::CommonMessage, kernel_message::ServiceStatus, message::{SignedMessage},
     name::KERNEL_NAME, role::ServiceRole,
 };
 use heleny_service::{Service, ServiceFactory, ServiceHandle};
@@ -38,7 +38,7 @@ pub enum KernelServiceMessage {
 
 #[base_service(deps=[])]
 pub struct KernelService {
-    endpoint: heleny_bus::Endpoint,
+    endpoint: Endpoint,
     service_factories: Vec<ServiceFactory>,
     deps_relation: cal_deps::DepsRelation,
     services: Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
@@ -48,7 +48,7 @@ pub struct KernelService {
 #[async_trait]
 impl Service for KernelService {
     type MessageType = KernelServiceMessage;
-    async fn new(mut endpoint: heleny_bus::Endpoint) -> Result<Box<Self>> {
+    async fn new(mut endpoint: Endpoint) -> Result<Box<Self>> {
         // 初始化服务工厂
         let service_factories: Vec<ServiceFactory> = inventory::iter::<ServiceFactory>
             .into_iter()
@@ -77,9 +77,8 @@ impl Service for KernelService {
         let deps_relation = cal_deps::DepsRelation::new(dag_map.clone())?;
         // 构建健康表
         let (health, services) = match endpoint.recv().await {
-            Some(Message {
+            Some(SignedMessage {
                 target: _,
-                token: _,
                 name: _,
                 role: _,
                 payload,
@@ -92,15 +91,20 @@ impl Service for KernelService {
                         ));
                     }
                 },
-                _ => {
+                Ok(Err(msg))=>{
                     return Err(anyhow::anyhow!(
-                        "初始化 KernelService 时未带所需 Arc<Mutex<KernelHealth>>"
+                        "收到初始化参数, 但是解析为 CommonMessage: {:?}",msg
+                    ));
+                }
+                Err(e) => {
+                    return Err(anyhow::anyhow!(
+                        "收到初始化参数, 但是解析失败: {}",e
                     ));
                 }
             },
             None => {
                 return Err(anyhow::anyhow!(
-                    "初始化 KernelService 时未带所需 Arc<Mutex<KernelHealth>>"
+                    "未收到初始化参数"
                 ));
             }
         };

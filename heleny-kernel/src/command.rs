@@ -1,5 +1,5 @@
 use anyhow::Result;
-use heleny_bus::Endpoint;
+use heleny_bus::endpoint::Endpoint;
 use heleny_proto::message::AnyMessage;
 use tokio::sync::oneshot;
 

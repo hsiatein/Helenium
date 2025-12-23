@@ -151,6 +151,7 @@ dependencies = [
  "anyhow",
  "heleny_proto",
  "tokio",
+ "tracing",
  "uuid",
 ]
 

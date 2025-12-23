@@ -2,11 +2,11 @@ use crate::command::{self, AdminCommand, ShutdownStage};
 use crate::health::new_kernel_health;
 use crate::service::{KernelService, KernelServiceMessage};
 use anyhow::{Result, anyhow};
-use heleny_bus::{self, Bus, Endpoint};
+use heleny_bus::{self, BusHandle, endpoint::Endpoint};
 use heleny_proto::common_message::CommonMessage;
 use heleny_proto::health::KernelHealth;
 use heleny_proto::kernel_message::KernelMessage;
-use heleny_proto::message::Message;
+use heleny_proto::message::{ AnyMessage, SignedMessage};
 use heleny_proto::name::KERNEL_NAME;
 use heleny_proto::role::ServiceRole;
 use heleny_service::{HasName, ServiceHandle, get_factory};
@@ -16,14 +16,12 @@ use std::time::Duration;
 use tokio::sync::oneshot;
 use tokio::time::{MissedTickBehavior, interval, timeout};
 use tracing::{debug, info, warn};
-use uuid::Uuid;
 
 pub struct Kernel {
-    bus: Bus,
+    bus: BusHandle,
     endpoint: Endpoint,
     services: Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
     health: Arc<Mutex<KernelHealth>>,
-    tokens: HashMap<Uuid, (&'static str, ServiceRole)>,
     system_components: HashSet<&'static str>,
 
     service_buffer: usize,
@@ -33,15 +31,13 @@ pub struct Kernel {
 
 impl Kernel {
     pub async fn new(kernel_buffer: usize, service_buffer: usize) -> Result<Self> {
-        let mut bus = Bus::new(kernel_buffer);
-        let token = Uuid::new_v4();
-        let endpoint = bus.get_token_endpoint(KERNEL_NAME, service_buffer, token);
+        let mut bus = BusHandle::new(kernel_buffer);
+        let endpoint = bus.get_endpoint(KERNEL_NAME, service_buffer, ServiceRole::System).await?;
         let mut kernel = Self {
             bus,
             endpoint,
             services: Arc::new(Mutex::new(HashMap::new())),
             health: Arc::new(Mutex::new(new_kernel_health())),
-            tokens: HashMap::from([(token, (KERNEL_NAME, ServiceRole::System))]),
             system_components: HashSet::from([KernelService::name()]),
             service_buffer,
             run: true,
@@ -65,7 +61,7 @@ impl Kernel {
         tick_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
         while self.run {
             tokio::select! {
-                Some(msg) = self.bus.recv() => {
+                Some(msg) = self.endpoint.recv() => {
                     self.handle_msg(msg).await;
                 }
                 _ = tick_interval.tick() => {
@@ -75,28 +71,11 @@ impl Kernel {
         }
     }
 
-    ///
-    async fn handle_msg(&mut self, mut msg: Message) {
-        debug!("未清洗消息: {:?}", msg);
-        let token = match msg.token.take() {
-            Some(token) => token,
-            None => {
-                warn!("消息未携带 token, 忽略");
-                return;
-            }
-        };
-        let (name, role) = match self.tokens.get(&token) {
-            Some(&identity) => identity,
-            None => {
-                warn!("消息携带未知 token, 忽略");
-                return;
-            }
-        };
-        msg.sign(name, role);
-        debug!("已清洗消息: {:?}", msg);
+    /// 处理已签名消息
+    async fn handle_msg(&mut self, msg: SignedMessage) {
         if self.system_components.contains(msg.target) {
             match msg.role {
-                Some(ServiceRole::System) => (),
+                ServiceRole::System => (),
                 _ => {
                     warn!("拒绝外部对私有服务 KernelService 的访问");
                     return;
@@ -112,15 +91,12 @@ impl Kernel {
             };
             match command {
                 Ok(command) => match msg.role {
-                    Some(ServiceRole::System) => self.handle_admin(*command, name, role).await,
+                    ServiceRole::System => self.handle_admin(*command, msg.name, msg.role).await,
                     _ => warn!("无 System 权限, 忽略命令"),
                 },
-                Err(command) => self.handle(*command, name, role).await,
+                Err(command) => self.handle(*command, msg.name, msg.role).await,
             };
             return;
-        }
-        if let Err(e) = self.bus.send(msg).await {
-            warn!("Kernel 转发消息时出错: {}", e);
         }
     }
 
@@ -130,14 +106,12 @@ impl Kernel {
             .init_service(
                 KernelService::name(),
                 ServiceRole::System,
-                Some(Message::new(
-                    KernelService::name(),
-                    None,
+                Some(
                     Box::new(KernelServiceMessage::InitParams(
                         self.health.clone(),
                         self.services.clone(),
                     )),
-                )),
+                ),
             )
             .await?;
         Ok(())
@@ -154,15 +128,18 @@ impl Kernel {
         &mut self,
         name: &'static str,
         role: ServiceRole,
-        init_message: Option<Message>,
+        init_message: Option<Box<dyn AnyMessage>>,
     ) -> Result<()> {
-        let token = self.generate_token(name, role);
+        info!("初始化 {} 的 Endpoint",name);
         let endpoint = self
             .bus
-            .get_token_endpoint(name, self.service_buffer, token);
+            .get_endpoint(name, self.service_buffer, role).await?;
         if let Some(msg) = init_message {
-            let _ = self.bus.send_as_kernel(msg).await;
+            info!("发送 {} 的初始化参数",name);
+            let _ = self.endpoint.send(name, Box::new(msg)).await;
+            // let a=endpoint.recv().await;
         }
+        info!("寻找 {} 的工厂函数",name);
         let f = match get_factory(name) {
             Some(f) if f.deps.len() == 0 => f,
             Some(_) => {
@@ -172,6 +149,7 @@ impl Kernel {
                 return Err(anyhow::anyhow!("未找到此服务的工厂函数: {}", name));
             }
         };
+        info!("启动 {}",name);
         let handle = match (f.launch)(endpoint) {
             Ok(handle) => handle,
             Err(e) => {
@@ -186,17 +164,11 @@ impl Kernel {
         Ok(())
     }
 
-    /// 生成管理员 token
-    fn generate_token(&mut self, name: &'static str, role: ServiceRole) -> Uuid {
-        let token = Uuid::new_v4();
-        self.tokens.insert(token, (name, role));
-        token
-    }
-
     /// 发送消息给 KernelService
     async fn send_kernel_message(&self, payload: KernelServiceMessage) {
-        let message = Message::new(KernelService::name(), None, Box::new(payload));
-        let _ = self.bus.send_as_kernel(message).await;
+        // let message = SignedMessage::new(KernelService::name(), KERNEL_NAME,ServiceRole::System, Box::new(payload));
+        // let _ = self.bus.send_as_kernel(message).await;
+        let _ = self.endpoint.send(KernelService::name(), Box::new(payload)).await;
     }
 
     /// 发送 Admin 消息给 Kernel(自己)
@@ -238,9 +210,7 @@ impl Kernel {
             }
             ShutdownStage::StopKernel => {
                 info!("开始关闭内核");
-                let _ = self
-                    .bus
-                    .send_common_message(KernelService::name(), CommonMessage::Stop)
+                let _ = self.endpoint.send(KernelService::name(), Box::new(CommonMessage::Stop))
                     .await;
                 self.run = false;
             }
@@ -251,10 +221,16 @@ impl Kernel {
     async fn handle_admin(&mut self, command: AdminCommand, _: &'static str, _: ServiceRole) {
         match command {
             AdminCommand::NewEndpoint(name, sender) => {
-                let token = self.generate_token(name, ServiceRole::Standard);
-                let endpoint = self
+                let endpoint = match self
                     .bus
-                    .get_token_endpoint(name, self.service_buffer, token);
+                    .get_endpoint(name, self.service_buffer, ServiceRole::Standard).await {
+                        Ok(endpoint)=>endpoint,
+                        Err(e)=>{
+                            warn!("{}",e);
+                            return ;
+                        }
+                    };
+
                 let _ = sender.send(endpoint);
             }
             AdminCommand::Shutdown(stage) => {
