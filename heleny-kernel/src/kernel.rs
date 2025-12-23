@@ -212,6 +212,7 @@ impl Kernel {
                 info!("开始关闭内核");
                 let _ = self.endpoint.send(KernelService::name(), Box::new(CommonMessage::Stop))
                     .await;
+                self.bus.abort();
                 self.run = false;
             }
         }

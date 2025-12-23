@@ -136,6 +136,10 @@ impl BusHandle {
         Ok(Endpoint::new(token, self.endpoint_to_bus.clone(), mpsc_rx))
     }
 
+    pub fn abort(&self){
+        self.handle.abort();
+    }
+
     // pub fn get_midware(&mut self, buffer: usize) -> Midware {
     //     let (tx, rx) = mpsc::channel(buffer);
     //     let old_rx = replace(&mut self.from_endpoints, rx);
