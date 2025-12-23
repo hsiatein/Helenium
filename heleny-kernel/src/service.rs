@@ -14,7 +14,7 @@ use heleny_service::{Service, ServiceFactory, ServiceHandle};
 use inventory;
 use tokio::{sync::oneshot, time::timeout};
 
-use crate::{command::AdminCommand, service::cal_deps::deps_exist};
+use crate::command::AdminCommand;
 use heleny_proto::health::HealthStatus;
 use heleny_proto::health::KernelHealth;
 use tracing::{info, warn};
@@ -38,7 +38,7 @@ pub enum KernelServiceMessage {
 pub struct KernelService {
     endpoint: heleny_bus::Endpoint,
     service_factories: Vec<ServiceFactory>,
-    order: Option<Result<Vec<&'static str>>>,
+    deps_relation: cal_deps::DepsRelation,
     services: Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
     health: Arc<Mutex<KernelHealth>>,
 }
@@ -65,7 +65,6 @@ impl Service for KernelService {
         // 计算服务依赖
         let dag_map = service_factories
             .iter()
-            .filter(|f| f.name != Self::name())
             .map(|f| {
                 (
                     f.name,
@@ -73,9 +72,7 @@ impl Service for KernelService {
                 )
             })
             .collect::<HashMap<&'static str, HashSet<&'static str>>>();
-        if deps_exist(&dag_map) {
-            return Err(anyhow::anyhow!("服务依赖里含有未知服务名"));
-        }
+        let deps_relation = cal_deps::DepsRelation::new(dag_map.clone())?;
         // 构建健康表
         let (health, services) = match endpoint.recv().await {
             Some(Message {
@@ -112,7 +109,7 @@ impl Service for KernelService {
         Ok(Box::new(Self {
             endpoint,
             service_factories,
-            order: None,
+            deps_relation,
             services,
             health,
         }))
@@ -159,18 +156,9 @@ impl KernelService {
     /// 初始化各个服务
     async fn init_all_services(&mut self) {
         info!("开始代理启动各个服务");
-        let order = match self.get_order() {
-            Ok(order) => order,
-            Err(e) => {
-                warn!("无法获取依赖顺序, 初始化失败: {}", e);
-                KernelHealth::get_mut(&self.health).services = KernelHealth::get_mut(&self.health)
-                    .services
-                    .iter()
-                    .map(|(name, _)| (*name, (HealthStatus::Stopped, Some(Local::now()))))
-                    .collect();
-                return;
-            }
-        };
+        let mut order = self.get_order();
+        let first = order.remove(0); // 移除 KernelService 自身
+        debug_assert!(first == KernelService::name());
         for name in order {
             match KernelHealth::get_mut(&self.health).services.get(name) {
                 None => {
@@ -236,21 +224,11 @@ impl KernelService {
     /// 终止各个服务
     async fn stop_all_services(&mut self) {
         info!("开始代理关闭所有服务");
-        let order = match &self.order {
-            Some(Ok(order)) => order,
-            _ => {
-                warn!("无法获取依赖顺序, 直接关闭 Kernel");
-                self.send_admin_message(AdminCommand::Shutdown(
-                    crate::command::ShutdownStage::StopKernel,
-                ))
-                .await;
-                return;
-            }
-        };
+        let mut order = self.get_order();
+        let name = order.remove(0); // 移除 KernelService 自身
+        println!("{:?}", name);
+        debug_assert!(name == KernelService::name());
         for &name in order.iter().rev() {
-            if name == KernelService::name() {
-                continue;
-            }
             info!("开始代理关闭 {}", name);
             {
                 let mut health = KernelHealth::get_mut(&self.health);
@@ -327,26 +305,8 @@ impl KernelService {
     }
 
     /// 获取初始化顺序
-    fn get_order(&mut self) -> Result<Vec<&'static str>> {
-        if self.order.is_none() {
-            let dag_map = self
-                .service_factories
-                .iter()
-                .map(|f| {
-                    (
-                        f.name,
-                        f.deps.iter().copied().collect::<HashSet<&'static str>>(),
-                    )
-                })
-                .collect::<HashMap<&'static str, HashSet<&'static str>>>();
-            let order = cal_order(dag_map);
-            self.order = Some(order);
-        }
-        match &self.order {
-            None => Err(anyhow::anyhow!("计算初始化顺序失败")),
-            Some(Ok(order)) => Ok(order.clone()),
-            Some(Err(e)) => Err(anyhow::anyhow!("{}", e)),
-        }
+    fn get_order(&self) -> Vec<&'static str> {
+        self.deps_relation.order.clone()
     }
 
     /// 检测前置服务是否准备好
@@ -359,32 +319,3 @@ impl KernelService {
         })
     }
 }
-
-/// 计算依赖顺序
-fn cal_order(
-    mut dag_map: HashMap<&'static str, HashSet<&'static str>>,
-) -> Result<Vec<&'static str>> {
-    let mut order = Vec::new();
-    let mut last_len = 0;
-    while last_len != dag_map.len() {
-        last_len = dag_map.len();
-        let (new, remain): (
-            HashMap<&'static str, HashSet<&'static str>>,
-            HashMap<&'static str, HashSet<&'static str>>,
-        ) = dag_map.into_iter().partition(|(_, deps)| deps.len() == 0);
-        let new = new.keys().copied().collect::<HashSet<&'static str>>();
-        dag_map = remain
-            .into_iter()
-            .map(|(k, deps)| (k, &deps - &new))
-            .collect();
-        order.extend(new);
-    }
-    if dag_map.len() == 0 {
-        Ok(order)
-    } else {
-        Err(anyhow::anyhow!("有循环依赖或未知依赖 {:?}", dag_map.keys()))
-    }
-}
-
-#[cfg(test)]
-mod test_order;

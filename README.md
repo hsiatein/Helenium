@@ -50,8 +50,8 @@
 
 ### AI使用情况
 
-1. heleny-utils::init_tracing函数 (1-31行) 为AI生成.
-2. heleny-kernel::service::test_order的所有单元测试 (1-117行) 为AI生成.
+本项目单元测试大量使用AI, 在单元测试以外使用AI生成的还有:
+1. heleny-utils::init_tracing函数 (6-31行) 为AI生成.
 
 <p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 
