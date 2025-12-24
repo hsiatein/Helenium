@@ -22,7 +22,6 @@ pub struct Kernel {
     endpoint: Endpoint,
     services: Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
     health: Arc<Mutex<KernelHealth>>,
-    system_components: HashSet<&'static str>,
 
     service_buffer: usize,
     run: bool,
@@ -38,7 +37,6 @@ impl Kernel {
             endpoint,
             services: Arc::new(Mutex::new(HashMap::new())),
             health: Arc::new(Mutex::new(new_kernel_health())),
-            system_components: HashSet::from([KernelService::name()]),
             service_buffer,
             run: true,
             time_tick: 0,
@@ -73,31 +71,21 @@ impl Kernel {
 
     /// 处理已签名消息
     async fn handle_msg(&mut self, msg: SignedMessage) {
-        if self.system_components.contains(msg.target) {
-            match msg.role {
-                ServiceRole::System => (),
-                _ => {
-                    warn!("拒绝外部对私有服务 KernelService 的访问");
-                    return;
-                }
+        let command = match command::downcast(msg.payload) {
+            Ok(command) => command,
+            Err(e) => {
+                warn!("解析失败, 忽略命令: {}", e);
+                return;
             }
-        } else if msg.target == KERNEL_NAME {
-            let command = match command::downcast(msg.payload) {
-                Ok(command) => command,
-                Err(e) => {
-                    warn!("解析失败, 忽略命令: {}", e);
-                    return;
-                }
-            };
-            match command {
-                Ok(command) => match msg.role {
-                    ServiceRole::System => self.handle_admin(*command, msg.name, msg.role).await,
-                    _ => warn!("无 System 权限, 忽略命令"),
-                },
-                Err(command) => self.handle(*command, msg.name, msg.role).await,
-            };
-            return;
-        }
+        };
+        match command {
+            Ok(command) => match msg.role {
+                ServiceRole::System => self.handle_admin(*command, msg.name, msg.role).await,
+                _ => warn!("无 System 权限, 忽略命令"),
+            },
+            Err(command) => self.handle(*command, msg.name, msg.role).await,
+        };
+        return;
     }
 
     /// 初始化必要的服务
@@ -136,7 +124,7 @@ impl Kernel {
             .get_endpoint(name, self.service_buffer, role).await?;
         if let Some(msg) = init_message {
             info!("发送 {} 的初始化参数",name);
-            let _ = self.endpoint.send(name, Box::new(msg)).await;
+            let _ = self.endpoint.send(name, msg).await;
             // let a=endpoint.recv().await;
         }
         info!("寻找 {} 的工厂函数",name);
@@ -166,8 +154,6 @@ impl Kernel {
 
     /// 发送消息给 KernelService
     async fn send_kernel_message(&self, payload: KernelServiceMessage) {
-        // let message = SignedMessage::new(KernelService::name(), KERNEL_NAME,ServiceRole::System, Box::new(payload));
-        // let _ = self.bus.send_as_kernel(message).await;
         let _ = self.endpoint.send(KernelService::name(), Box::new(payload)).await;
     }
 

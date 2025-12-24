@@ -140,44 +140,4 @@ impl BusHandle {
         self.handle.abort();
     }
 
-    // pub fn get_midware(&mut self, buffer: usize) -> Midware {
-    //     let (tx, rx) = mpsc::channel(buffer);
-    //     let old_rx = replace(&mut self.from_endpoints, rx);
-    //     Midware::new(tx, old_rx)
-    // }
-
-    // pub async fn recv(&mut self) -> Result<SignedMessage> {
-    //     let msg=self.from_endpoints.recv().await.context("消息接收失败")?;
-    //     debug!("未清洗消息: {:?}", msg);
-    //     let (name, role) = self.tokens.get(&msg.token).context("消息携带未知 token, 忽略")?.clone();
-    //     let msg=msg.sign(name, role);
-    //     debug!("已清洗消息: {:?}", msg);
-    //     Ok(msg)
-    // }
-
-    // pub async fn send_as_kernel(&self, mut msg: SignedMessage) -> Result<()> {
-    //     msg.name = KERNEL_NAME;
-    //     msg.role = ServiceRole::System;
-    //     self.send(msg).await
-    // }
-
-    // pub async fn send(&self, msg: SignedMessage) -> Result<()> {
-    //     let target = msg.target;
-    //     if let Some(tx) = self.address_map.get::<str>(target) {
-    //         tx.send(msg)
-    //             .await
-    //             .map_err(|e| anyhow::anyhow!("发送消息到服务 {} 失败: {}", target, e))
-    //     } else {
-    //         Err(anyhow::anyhow!("未找到服务: {}", target))
-    //     }
-    // }
-
-    // pub async fn send_common_message(
-    //     &self,
-    //     target: &'static str,
-    //     payload: CommonMessage,
-    // ) -> Result<()> {
-    //     let msg = SignedMessage::new(target, KERNEL_NAME,ServiceRole::System, Box::new(payload));
-    //     self.send_as_kernel(msg).await
-    // }
 }
