@@ -7,7 +7,6 @@ use tokio::sync::oneshot;
 
 use crate::{health::KernelHealth, service_handle::ServiceHandle};
 
-
 #[derive(Debug)]
 pub enum ServiceSignal {
     Ready,
@@ -15,7 +14,6 @@ pub enum ServiceSignal {
     InitFail,
     Terminate,
 }
-
 
 #[derive(Debug)]
 pub enum KernelServiceMessage {

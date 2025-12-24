@@ -1,7 +1,7 @@
 use anyhow::Result;
 use heleny_proto::{
-    kernel_service_message::ServiceSignal,
     kernel_service_message::KernelServiceMessage,
+    kernel_service_message::ServiceSignal,
     message::{AnyMessage, SignedMessage, TokenMessage},
     name::KERNEL_SERVICE,
 };

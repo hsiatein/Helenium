@@ -64,32 +64,29 @@ impl Kernel {
         while self.run {
             tokio::select! {
                 Some(msg) = self.endpoint.recv() => {
-                    self.handle_msg(msg).await;
+                    if let Err(e) = self.handle_msg(msg).await {
+                        warn!("{}",e)
+                    };
                 }
                 _ = tick_interval.tick() => {
-                    self.handle_tick().await;
+                    if let Err(e) = self.handle_tick().await {
+                        warn!("{}",e)
+                    };
                 }
             }
         }
     }
 
     /// 处理已签名消息
-    async fn handle_msg(&mut self, msg: SignedMessage) {
-        let command = match command::downcast(msg.payload) {
-            Ok(command) => command,
-            Err(e) => {
-                warn!("解析失败, 忽略命令: {}", e);
-                return;
-            }
-        };
+    async fn handle_msg(&mut self, msg: SignedMessage) -> Result<()> {
+        let command = command::downcast(msg.payload)?;
         match command {
             Ok(command) => match msg.role {
                 ServiceRole::System => self.handle_admin(*command, msg.name, msg.role).await,
-                _ => warn!("无 System 权限, 忽略命令"),
+                _ => Err(anyhow::anyhow!("无 System 权限, 忽略命令")),
             },
             Err(command) => self.handle(*command, msg.name, msg.role).await,
-        };
-        return;
+        }
     }
 
     /// 初始化必要的服务
@@ -109,8 +106,7 @@ impl Kernel {
 
     /// 初始化所有服务
     async fn init_all_services(&mut self) -> Result<()> {
-        self.send_kernel_message(KernelServiceMessage::Init).await;
-        Ok(())
+        self.send_kernel_message(KernelServiceMessage::Init).await
     }
 
     /// 初始化一个服务
@@ -156,39 +152,39 @@ impl Kernel {
     }
 
     /// 发送消息给 KernelService
-    async fn send_kernel_message(&self, payload: KernelServiceMessage) {
-        let _ = self
-            .endpoint
+    async fn send_kernel_message(&self, payload: KernelServiceMessage) -> Result<()> {
+        self.endpoint
             .send(KernelService::name(), Box::new(payload))
-            .await;
+            .await
     }
 
     /// 发送 Admin 消息给 Kernel(自己)
-    async fn send_admin_command(&self, payload: AdminCommand) {
-        let _ = self.endpoint.send(KERNEL_NAME, Box::new(payload)).await;
+    async fn send_admin_command(&self, payload: AdminCommand) -> Result<()> {
+        self.endpoint.send(KERNEL_NAME, Box::new(payload)).await
     }
 
     /// 发送消息给 Kernel(自己)
-    async fn send_kernel_command(&self, payload: KernelMessage) {
-        let _ = self.endpoint.send(KERNEL_NAME, Box::new(payload)).await;
+    async fn send_kernel_command(&self, payload: KernelMessage) -> Result<()> {
+        self.endpoint.send(KERNEL_NAME, Box::new(payload)).await
     }
 
     // 关机
-    async fn shutdown(&mut self, stage: ShutdownStage) {
+    async fn shutdown(&mut self, stage: ShutdownStage) -> Result<()> {
         match stage {
             ShutdownStage::Start => {
                 info!("开始关机");
                 self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::StopAllService))
-                    .await;
+                    .await
             }
             ShutdownStage::StopAllService => {
                 info!("开始关闭所有服务");
                 let (tx, rx) = oneshot::channel();
-                self.send_kernel_message(KernelServiceMessage::StopAll(tx))
+                let _ = self
+                    .send_kernel_message(KernelServiceMessage::StopAll(tx))
                     .await;
                 match timeout(Duration::from_secs(5), rx).await {
-                    Ok(Ok(())) => {
-                        return;
+                    Ok(Ok(_)) => {
+                        return Ok(());
                     }
                     Ok(Err(e)) => {
                         warn!("获取 KernelService 关闭所有服务反馈出错: {}", e);
@@ -198,7 +194,7 @@ impl Kernel {
                     }
                 }
                 self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::StopKernel))
-                    .await;
+                    .await
             }
             ShutdownStage::StopKernel => {
                 info!("开始关闭内核");
@@ -208,59 +204,65 @@ impl Kernel {
                     .await;
                 self.bus.abort();
                 self.run = false;
+                Ok(())
             }
         }
     }
 
     /// 处理管理员 Command
-    async fn handle_admin(&mut self, command: AdminCommand, _: &'static str, _: ServiceRole) {
+    async fn handle_admin(
+        &mut self,
+        command: AdminCommand,
+        _: &'static str,
+        _: ServiceRole,
+    ) -> Result<()> {
         match command {
             AdminCommand::NewEndpoint(name, sender) => {
-                let endpoint = match self
+                let endpoint = self
                     .bus
                     .get_endpoint(name, self.service_buffer, ServiceRole::Standard)
-                    .await
-                {
-                    Ok(endpoint) => endpoint,
-                    Err(e) => {
-                        warn!("{}", e);
-                        return;
-                    }
-                };
+                    .await?;
 
                 let _ = sender.send(endpoint);
+                Ok(())
             }
-            AdminCommand::Shutdown(stage) => {
-                self.shutdown(stage).await;
-            }
+            AdminCommand::Shutdown(stage) => self.shutdown(stage).await,
         }
     }
 
     /// 处理普通 Command
-    async fn handle(&mut self, command: KernelMessage, source: &'static str, role: ServiceRole) {
+    async fn handle(
+        &mut self,
+        command: KernelMessage,
+        source: &'static str,
+        role: ServiceRole,
+    ) -> Result<()> {
         match command {
             KernelMessage::Shutdown => match role {
                 ServiceRole::User => {
                     self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::Start))
-                        .await;
+                        .await
                 }
                 ServiceRole::System => {
                     self.send_admin_command(AdminCommand::Shutdown(ShutdownStage::Start))
-                        .await;
+                        .await
                 }
-                _ => {
-                    warn!("{} 的身份为 {:?}, 无关机权限", source, role)
-                }
+                _ => Err(anyhow::anyhow!(
+                    "{} 的身份为 {:?}, 无关机权限",
+                    source,
+                    role
+                )),
             },
         }
     }
 
     /// 处理 Tick
-    async fn handle_tick(&mut self) {
+    async fn handle_tick(&mut self) -> Result<()> {
         self.time_tick = self.time_tick + 1;
         if self.time_tick > 1 {
-            self.send_kernel_command(KernelMessage::Shutdown).await;
+            self.send_kernel_command(KernelMessage::Shutdown).await?;
         }
-        debug!("{:?}", KernelHealth::get_mut(&self.health))
+        debug!("{:?}", KernelHealth::get_mut(&self.health));
+        Ok(())
     }
 }

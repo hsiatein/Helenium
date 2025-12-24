@@ -11,8 +11,8 @@ use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::service_handle::ServiceHandle;
 use heleny_proto::{
-    common_message::CommonMessage, kernel_service_message::ServiceSignal,
-    kernel_service_message::KernelServiceMessage, message::SignedMessage, name::KERNEL_NAME,
+    common_message::CommonMessage, kernel_service_message::KernelServiceMessage,
+    kernel_service_message::ServiceSignal, message::SignedMessage, name::KERNEL_NAME,
     role::ServiceRole,
 };
 use heleny_service::{Service, ServiceFactory};
