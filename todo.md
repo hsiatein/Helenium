@@ -1,7 +1,7 @@
 services:
 - [ ] file_service
 - [ ] log_service
-- [ ] kernel_service
+- [x] kernel_service
 - [ ] scheduler_service
 - [ ] chat_service
 - [ ] task_service
@@ -11,8 +11,9 @@ services:
 - [ ] shell_service
 - [ ] memory_service
 - [ ] db_service
-- [ ] config_service
+- [x] config_service
 - [ ] auth_service
+- [ ] stats_service
 
 todo:
 - [x] 1.token换成每人都有，权限不同

@@ -84,27 +84,18 @@ impl Bus {
                 loop {
                     tokio::select! {
                         Some(msg) = from_endpoints.recv() => {
-                            match bus.handle_token_message(msg).await{
-                                Ok(()) => (),
-                                Err(e) => {
-                                    warn!("{}",e);
-                                }
+                            if let Err(e) = bus.handle_token_message(msg).await{
+                                warn!("{}",e);
                             };
                         }
                         Some(msg) = from_handle.recv() => {
-                            match bus.handle_bus_message(msg).await{
-                                Ok(()) => (),
-                                Err(e) => {
-                                    warn!("{}",e);
-                                }
+                            if let Err(e) = bus.handle_bus_message(msg).await{
+                                warn!("{}",e);
                             };
                         }
                         tick = tick_interval.tick() => {
-                            match bus.handle_tick(tick){
-                                Ok(()) => (),
-                                Err(e) => {
-                                    warn!("{}",e);
-                                }
+                            if let Err(e) = bus.handle_tick(tick){
+                                warn!("{}",e);
                             };
                         }
                     }

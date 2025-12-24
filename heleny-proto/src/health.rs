@@ -31,7 +31,7 @@ impl KernelHealth {
         for (_, (status, last_signal)) in &mut self.services {
             match last_signal {
                 Some(time) => {
-                    if (now - *time).as_seconds_f32() > 5.0 && *status == HealthStatus::Healthy {
+                    if (now - *time).as_seconds_f64() > 5.0 && *status == HealthStatus::Healthy {
                         *status = HealthStatus::Unhealthy
                     }
                 }

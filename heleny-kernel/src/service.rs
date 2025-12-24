@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use chrono::Local;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::{message::TokenMessage, service_handle::ServiceHandle};
+use heleny_proto::{message::{AnyMessage}, service_handle::ServiceHandle};
 use heleny_proto::{
     common_message::CommonMessage, kernel_service_message::KernelServiceMessage,
     kernel_service_message::ServiceSignal, message::SignedMessage, name::KERNEL_NAME,
@@ -17,7 +17,7 @@ use heleny_proto::{
 };
 use heleny_service::{Service, ServiceFactory};
 use inventory;
-use tokio::{sync::oneshot, time::timeout};
+use tokio::{sync::oneshot, time::{Instant, timeout}};
 
 use crate::command::AdminCommand;
 use heleny_proto::health::HealthStatus;
@@ -119,7 +119,15 @@ impl Service for KernelService {
                 let can_stop = self
                     .deps_relation
                     .prepare_all_services(KernelHealth::get_mut(&self.health).to_owned(), false)?;
-                self.stop_services(can_stop).await;
+                if can_stop.contains(KernelService::name()) {
+                    self.send_admin_message(AdminCommand::Shutdown(
+                        crate::command::ShutdownStage::StopKernel,
+                    ))
+                    .await;
+                }
+                else {
+                    self.stop_services(can_stop).await;
+                }
             }
             (KernelServiceMessage::Init, ServiceRole::System) => {
                 let can_init = self
@@ -202,8 +210,11 @@ impl Service for KernelService {
         info!("{} 已关闭", Self::name())
     }
 
-    async fn handle_sub_endpoint(&mut self, _msg:TokenMessage){
-        
+    async fn handle_sub_endpoint(&mut self, _msg:Box<(dyn AnyMessage)>) -> Result<()>{
+        Ok(())
+    }
+    async fn handle_tick(&mut self, _tick:Instant) -> Result<()>{
+        Ok(())
     }
 }
 

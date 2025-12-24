@@ -3,12 +3,12 @@ use std::time::Duration;
 use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
-use heleny_proto::message::{SignedMessage, TokenMessage};
+use heleny_proto::message::{SignedMessage};
 use heleny_proto::role::ServiceRole;
 use heleny_proto::service_handle::ServiceHandle;
 use heleny_proto::{common_message::CommonMessage, message::AnyMessage};
 use tokio::sync::mpsc;
-use tokio::time::{Interval, MissedTickBehavior, interval};
+use tokio::time::{Instant, Interval, MissedTickBehavior, interval};
 use tracing::{Instrument, debug, error, info_span, warn};
 
 /// 服务 trait，定义了服务的基本行为
@@ -24,7 +24,8 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
         msg: Box<Self::MessageType>,
     ) -> Result<()>;
     async fn stop(&mut self);
-    async fn handle_sub_endpoint(&mut self, msg: TokenMessage);
+    async fn handle_sub_endpoint(&mut self, msg: Box<dyn AnyMessage>) -> Result<()>;
+    async fn handle_tick(&mut self, tick:Instant) -> Result<()>;
     // 默认实现
     fn start(endpoint: Endpoint) -> Result<ServiceHandle> {
         let span = info_span!("", Name = %Self::name());
@@ -51,7 +52,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
         Ok(ServiceHandle::new(Self::name(), handle))
     }
     /// 控制 tokio::select! 的 loop 循环
-    async fn launch(&mut self, mut from_bus:mpsc::Receiver<SignedMessage>, mut from_sub_endpoint: mpsc::Receiver<TokenMessage>, mut tick_interval: Interval) {
+    async fn launch(&mut self, mut from_bus:mpsc::Receiver<SignedMessage>, mut from_sub_endpoint: mpsc::Receiver<Box<dyn AnyMessage>>, mut tick_interval: Interval) {
         let mut run = true;
         
         while run {
@@ -60,10 +61,15 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                     self.handle_msg(msg, &mut run).await;
                 }
                 Some(msg) = from_sub_endpoint.recv()=>{
-                    self.handle_sub_endpoint(msg).await;
+                    if let Err(e) = self.handle_sub_endpoint(msg).await{
+                        warn!("处理 Sub Endpoint 消息错误: {}",e)
+                    };
                 }
-                _ = tick_interval.tick()=>{
+                tick = tick_interval.tick()=>{
                     self.endpoint().send_alive().await;
+                    if let Err(e) = self.handle_tick(tick).await{
+                        warn!("处理 Tick 错误: {}",e)
+                    };
                 }
             }
         }

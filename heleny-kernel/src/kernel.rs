@@ -7,7 +7,7 @@ use heleny_proto::common_message::CommonMessage;
 use heleny_proto::health::KernelHealth;
 use heleny_proto::kernel_message::KernelMessage;
 use heleny_proto::kernel_service_message::KernelServiceMessage;
-use heleny_proto::message::{AnyMessage, SignedMessage, TokenMessage};
+use heleny_proto::message::{AnyMessage, SignedMessage};
 use heleny_proto::name::KERNEL_NAME;
 use heleny_proto::role::ServiceRole;
 use heleny_proto::service_handle::ServiceHandle;
@@ -45,11 +45,8 @@ impl Kernel {
             run: true,
             time_tick: 0,
         };
-        match kernel.init_necessary_services().await {
-            Ok(_) => (),
-            Err(e) => {
-                return Err(anyhow!("创建 Kernel 失败, 因为必要服务启动失败: {}", e));
-            }
+        if let Err(e) = kernel.init_necessary_services().await {
+            return Err(anyhow!("创建 Kernel 失败, 因为必要服务启动失败: {}", e));
         }
         Ok(kernel)
     }
@@ -96,7 +93,7 @@ impl Kernel {
     }
 
     /// 处理已签名消息
-    async fn handle_sub_endpoint(&mut self, _msg: TokenMessage) -> Result<()> {
+    async fn handle_sub_endpoint(&mut self, _msg: Box<dyn AnyMessage>) -> Result<()> {
         Ok(())
     }
 
@@ -270,7 +267,7 @@ impl Kernel {
     /// 处理 Tick
     async fn handle_tick(&mut self) -> Result<()> {
         self.time_tick = self.time_tick + 1;
-        if self.time_tick > 1 {
+        if self.time_tick == 2 {
             self.send_kernel_command(KernelMessage::Shutdown).await?;
         }
         debug!("{:?}", KernelHealth::get_mut(&self.health));

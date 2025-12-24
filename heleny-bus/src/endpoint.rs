@@ -13,8 +13,8 @@ pub struct Endpoint {
     token: Uuid,
     to_bus: mpsc::Sender<TokenMessage>,
     from_bus: Option<mpsc::Receiver<SignedMessage>>,
-    to_self: mpsc::Sender<TokenMessage>,
-    from_sub_endpoint: Option<mpsc::Receiver<TokenMessage>>,
+    to_self: mpsc::Sender<Box<dyn AnyMessage>>,
+    from_sub_endpoint: Option<mpsc::Receiver<Box<dyn AnyMessage>>>,
 }
 
 impl Endpoint {
@@ -46,9 +46,9 @@ impl Endpoint {
             .map_err(|e| anyhow::anyhow!("发送消息到 Kernel 失败: {}", e))
     }
 
-    pub async fn get_sub_endpoint(
+    pub fn get_sub_endpoint(
         &self,
-    ) -> mpsc::Sender<TokenMessage> {
+    ) -> mpsc::Sender<Box<dyn AnyMessage>> {
         self.to_self.clone()
     }
 
@@ -88,7 +88,7 @@ impl Endpoint {
         (self.to_bus.clone(), msg)
     }
 
-    pub fn get_rx(&mut self) -> Result<(mpsc::Receiver<SignedMessage>,mpsc::Receiver<TokenMessage>)> {
+    pub fn get_rx(&mut self) -> Result<(mpsc::Receiver<SignedMessage>,mpsc::Receiver<Box<dyn AnyMessage>>)> {
         let from_bus=self.from_bus.take().context("没有来自 Bus 消息的接收端")?;
         let from_sub_endpoint=self.from_sub_endpoint.take().context("没有来自 Sub Endpoint 消息的接收端")?;
         Ok((from_bus,from_sub_endpoint))
