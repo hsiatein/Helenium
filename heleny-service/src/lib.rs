@@ -3,10 +3,11 @@ use std::time::Duration;
 use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
-use heleny_proto::message::SignedMessage;
+use heleny_proto::message::{SignedMessage, TokenMessage};
 use heleny_proto::role::ServiceRole;
 use heleny_proto::service_handle::ServiceHandle;
 use heleny_proto::{common_message::CommonMessage, message::AnyMessage};
+use tokio::sync::mpsc;
 use tokio::time::{Interval, MissedTickBehavior, interval};
 use tracing::{Instrument, debug, error, info_span, warn};
 
@@ -23,6 +24,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
         msg: Box<Self::MessageType>,
     ) -> Result<()>;
     async fn stop(&mut self);
+    async fn handle_sub_endpoint(&mut self, msg: TokenMessage);
     // 默认实现
     fn start(endpoint: Endpoint) -> Result<ServiceHandle> {
         let span = info_span!("", Name = %Self::name());
@@ -37,10 +39,11 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                         return Err(anyhow::anyhow!("新建服务实例失败, 无法开始: {}", e));
                     }
                 };
+                let (from_bus,from_sub_endpoint)=service.endpoint().get_rx()?;
                 let mut tick_interval = interval(Duration::from_secs(1));
                 tick_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
                 service.endpoint().send_ready().await; // 通知 KernelService 自己初始化完成
-                service.launch(tick_interval).await; // 启动循环
+                service.launch(from_bus,from_sub_endpoint,tick_interval).await; // 启动循环
                 Ok(())
             }
             .instrument(span),
@@ -48,12 +51,16 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
         Ok(ServiceHandle::new(Self::name(), handle))
     }
     /// 控制 tokio::select! 的 loop 循环
-    async fn launch(&mut self, mut tick_interval: Interval) {
+    async fn launch(&mut self, mut from_bus:mpsc::Receiver<SignedMessage>, mut from_sub_endpoint: mpsc::Receiver<TokenMessage>, mut tick_interval: Interval) {
         let mut run = true;
+        
         while run {
             tokio::select! {
-                Some(msg) = self.endpoint().recv()=>{
+                Some(msg) = from_bus.recv()=>{
                     self.handle_msg(msg, &mut run).await;
+                }
+                Some(msg) = from_sub_endpoint.recv()=>{
+                    self.handle_sub_endpoint(msg).await;
                 }
                 _ = tick_interval.tick()=>{
                     self.endpoint().send_alive().await;

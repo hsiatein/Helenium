@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use heleny_proto::{
     kernel_service_message::KernelServiceMessage,
     kernel_service_message::ServiceSignal,
@@ -11,20 +11,26 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct Endpoint {
     token: Uuid,
-    sender: mpsc::Sender<TokenMessage>,
-    receiver: mpsc::Receiver<SignedMessage>,
+    to_bus: mpsc::Sender<TokenMessage>,
+    from_bus: Option<mpsc::Receiver<SignedMessage>>,
+    to_self: mpsc::Sender<TokenMessage>,
+    from_sub_endpoint: Option<mpsc::Receiver<TokenMessage>>,
 }
 
 impl Endpoint {
     pub fn new(
         token: Uuid,
-        sender: mpsc::Sender<TokenMessage>,
-        receiver: mpsc::Receiver<SignedMessage>,
+        to_bus: mpsc::Sender<TokenMessage>,
+        from_bus: mpsc::Receiver<SignedMessage>,
+        sub_buffer: usize,
     ) -> Self {
+        let (to_self,from_sub_endpoint)=mpsc::channel(sub_buffer);
         Self {
             token,
-            sender,
-            receiver,
+            to_bus,
+            from_bus:Some(from_bus),
+            to_self,
+            from_sub_endpoint:Some(from_sub_endpoint),
         }
     }
 
@@ -34,10 +40,16 @@ impl Endpoint {
         payload: Box<dyn AnyMessage + 'static>,
     ) -> Result<()> {
         let msg = TokenMessage::new(target, self.token, payload);
-        self.sender
+        self.to_bus
             .send(msg)
             .await
             .map_err(|e| anyhow::anyhow!("发送消息到 Kernel 失败: {}", e))
+    }
+
+    pub async fn get_sub_endpoint(
+        &self,
+    ) -> mpsc::Sender<TokenMessage> {
+        self.to_self.clone()
     }
 
     pub async fn send_alive(&self) {
@@ -73,10 +85,19 @@ impl Endpoint {
             self.token,
             Box::new(KernelServiceMessage::UploadStatus(ServiceSignal::InitFail)),
         );
-        (self.sender.clone(), msg)
+        (self.to_bus.clone(), msg)
     }
 
-    pub async fn recv(&mut self) -> Option<SignedMessage> {
-        self.receiver.recv().await
+    pub fn get_rx(&mut self) -> Result<(mpsc::Receiver<SignedMessage>,mpsc::Receiver<TokenMessage>)> {
+        let from_bus=self.from_bus.take().context("没有来自 Bus 消息的接收端")?;
+        let from_sub_endpoint=self.from_sub_endpoint.take().context("没有来自 Sub Endpoint 消息的接收端")?;
+        Ok((from_bus,from_sub_endpoint))
+    }
+
+    pub async fn recv(&mut self) -> Result<SignedMessage> {
+        let mut from_bus=self.from_bus.take().context("没有来自 Bus 消息的接收端")?;
+        let msg=from_bus.recv().await.context("接收消息失败");
+        self.from_bus=Some(from_bus);
+        msg
     }
 }

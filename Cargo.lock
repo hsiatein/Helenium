@@ -479,6 +479,7 @@ dependencies = [
  "heleny_proto",
  "heleny_service",
  "inventory",
+ "tokio",
  "toml",
  "tracing",
 ]

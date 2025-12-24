@@ -4,11 +4,9 @@ use tokio::sync::oneshot;
 #[derive(Debug)]
 pub enum ConfigServiceMessage {
     Get {
-        path: String,
         sender: oneshot::Sender<Option<toml::Value>>,
     },
     Set {
-        path: String,
         value: toml::Value,
     },
     Update,

@@ -7,7 +7,7 @@ use heleny_proto::common_message::CommonMessage;
 use heleny_proto::health::KernelHealth;
 use heleny_proto::kernel_message::KernelMessage;
 use heleny_proto::kernel_service_message::KernelServiceMessage;
-use heleny_proto::message::{AnyMessage, SignedMessage};
+use heleny_proto::message::{AnyMessage, SignedMessage, TokenMessage};
 use heleny_proto::name::KERNEL_NAME;
 use heleny_proto::role::ServiceRole;
 use heleny_proto::service_handle::ServiceHandle;
@@ -59,12 +59,18 @@ impl Kernel {
         // 开始初始化服务
         let _ = self.init_all_services().await;
         // 计时器
+        let (mut from_bus,mut from_sub_endpoint)=self.endpoint.get_rx().expect("Kernel 应当获取到接收端");
         let mut tick_interval = interval(Duration::from_secs(1));
         tick_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
         while self.run {
             tokio::select! {
-                Some(msg) = self.endpoint.recv() => {
+                Some(msg) = from_bus.recv() => {
                     if let Err(e) = self.handle_msg(msg).await {
+                        warn!("{}",e)
+                    };
+                }
+                Some(msg) = from_sub_endpoint.recv() => {
+                    if let Err(e) = self.handle_sub_endpoint(msg).await {
                         warn!("{}",e)
                     };
                 }
@@ -87,6 +93,11 @@ impl Kernel {
             },
             Err(command) => self.handle(*command, msg.name, msg.role).await,
         }
+    }
+
+    /// 处理已签名消息
+    async fn handle_sub_endpoint(&mut self, _msg: TokenMessage) -> Result<()> {
+        Ok(())
     }
 
     /// 初始化必要的服务

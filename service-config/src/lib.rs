@@ -1,10 +1,11 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::{config_service_message::ConfigServiceMessage, role::ServiceRole};
+use heleny_proto::{config_service_message::ConfigServiceMessage, message::TokenMessage, role::ServiceRole};
 use heleny_service::Service;
-use std::path::PathBuf;
+use std::{path::PathBuf};
+use tokio::fs;
 use tracing::{info, warn};
 
 #[base_service(deps=[])]
@@ -31,7 +32,7 @@ impl Service for ConfigService {
                 }
             }
         };
-        let config_string = match std::fs::read_to_string(&config_path) {
+        let config_string = match fs::read_to_string(&config_path).await {
             Ok(string) => string,
             Err(e) => return Err(anyhow::anyhow!("读取配置文件失败: {}", e)),
         };
@@ -49,20 +50,44 @@ impl Service for ConfigService {
     async fn handle(
         &mut self,
         name: &'static str,
-        role: ServiceRole,
+        _role: ServiceRole,
         msg: Box<Self::MessageType>,
     ) -> Result<()> {
         match *msg {
-            ConfigServiceMessage::Get { path, sender } => {}
-            ConfigServiceMessage::Set { path, value } => {}
-            ConfigServiceMessage::Update => {}
-            ConfigServiceMessage::Persist => {}
+            ConfigServiceMessage::Get { sender } => {
+                let _=sender.send(self.config_value.get(name).cloned());
+                Ok(())
+            }
+            ConfigServiceMessage::Set { value } => {
+                let table=self.config_value.as_table_mut().context("转为列表失败")?;
+                table.insert(name.to_string(), value);
+                Ok(())
+            }
+            ConfigServiceMessage::Update => {
+                self.update().await
+            }
+            ConfigServiceMessage::Persist => {
+                self.persist().await
+            }
         }
-        Ok(())
     }
     async fn stop(&mut self) {
         info!("{} 正在停止...", Self::name());
     }
+    async fn handle_sub_endpoint(&mut self, _msg:TokenMessage){
+
+    }
+
 }
 
-impl ConfigService {}
+impl ConfigService {
+    async fn persist(&self)->Result<()>{
+        fs::write(&self.config_path, self.config_value.to_string()).await.context("写入配置文件时出错")
+    }
+
+    async fn update(&mut self)->Result<()>{
+        let str=fs::read_to_string(&self.config_path).await.context("写入配置文件时出错")?;
+        self.config_value=toml::Value::try_from(str).context("解析配置文件失败")?;
+        Ok(())
+    }
+}

@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use chrono::Local;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::service_handle::ServiceHandle;
+use heleny_proto::{message::TokenMessage, service_handle::ServiceHandle};
 use heleny_proto::{
     common_message::CommonMessage, kernel_service_message::KernelServiceMessage,
     kernel_service_message::ServiceSignal, message::SignedMessage, name::KERNEL_NAME,
@@ -67,7 +67,7 @@ impl Service for KernelService {
         let deps_relation = cal_deps::DepsRelation::new(dag_map.clone())?;
         // 构建健康表
         let (health, services) = match endpoint.recv().await {
-            Some(SignedMessage {
+            Ok(SignedMessage {
                 target: _,
                 name: _,
                 role: _,
@@ -91,8 +91,8 @@ impl Service for KernelService {
                     return Err(anyhow::anyhow!("收到初始化参数, 但是解析失败: {}", e));
                 }
             },
-            None => {
-                return Err(anyhow::anyhow!("未收到初始化参数"));
+            Err(e) => {
+                return Err(anyhow::anyhow!("未收到初始化参数: {}",e));
             }
         };
         KernelHealth::get_mut(&health)
@@ -200,6 +200,10 @@ impl Service for KernelService {
     }
     async fn stop(&mut self) {
         info!("{} 已关闭", Self::name())
+    }
+
+    async fn handle_sub_endpoint(&mut self, _msg:TokenMessage){
+        
     }
 }
 
