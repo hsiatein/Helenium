@@ -3,39 +3,12 @@ use std::time::Duration;
 use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
-use heleny_proto::message::{SignedMessage};
+use heleny_proto::message::SignedMessage;
 use heleny_proto::role::ServiceRole;
+use heleny_proto::service_handle::ServiceHandle;
 use heleny_proto::{common_message::CommonMessage, message::AnyMessage};
-use tokio::task::JoinHandle;
 use tokio::time::{Interval, MissedTickBehavior, interval};
 use tracing::{Instrument, debug, error, info_span, warn};
-
-/// 服务句柄，用于管理服务的生命周期
-#[derive(Debug)]
-pub struct ServiceHandle {
-    service_name: &'static str,
-    thread_handle: JoinHandle<Result<(), anyhow::Error>>,
-}
-
-impl ServiceHandle {
-    pub fn new(
-        service_name: &'static str,
-        thread_handle: JoinHandle<Result<(), anyhow::Error>>,
-    ) -> Self {
-        Self {
-            service_name,
-            thread_handle,
-        }
-    }
-
-    pub fn abort(&self) {
-        self.thread_handle.abort();
-    }
-
-    pub fn name(&self) -> &'static str {
-        self.service_name
-    }
-}
 
 /// 服务 trait，定义了服务的基本行为
 #[async_trait]
@@ -132,7 +105,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
     fn downcast(
         msg: Box<dyn AnyMessage>,
     ) -> Result<Result<Box<Self::MessageType>, Box<CommonMessage>>> {
-        debug!("尝试转换: {:?}",msg);
+        debug!("尝试转换: {:?}", msg);
         let msg = match msg.as_any().downcast::<Self::MessageType>() {
             Ok(msg) => return Ok(Ok(msg)),
             Err(msg) => msg,

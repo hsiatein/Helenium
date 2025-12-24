@@ -1,16 +1,18 @@
 use crate::command::{self, AdminCommand, ShutdownStage};
 use crate::health::new_kernel_health;
-use crate::service::{KernelService, KernelServiceMessage};
+use crate::service::KernelService;
 use anyhow::{Result, anyhow};
 use heleny_bus::{self, BusHandle, endpoint::Endpoint};
 use heleny_proto::common_message::CommonMessage;
 use heleny_proto::health::KernelHealth;
 use heleny_proto::kernel_message::KernelMessage;
-use heleny_proto::message::{ AnyMessage, SignedMessage};
+use heleny_proto::kernel_service_message::KernelServiceMessage;
+use heleny_proto::message::{AnyMessage, SignedMessage};
 use heleny_proto::name::KERNEL_NAME;
 use heleny_proto::role::ServiceRole;
-use heleny_service::{HasName, ServiceHandle, get_factory};
-use std::collections::{HashMap, HashSet};
+use heleny_proto::service_handle::ServiceHandle;
+use heleny_service::{HasName, get_factory};
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::oneshot;
@@ -31,7 +33,9 @@ pub struct Kernel {
 impl Kernel {
     pub async fn new(kernel_buffer: usize, service_buffer: usize) -> Result<Self> {
         let mut bus = BusHandle::new(kernel_buffer);
-        let endpoint = bus.get_endpoint(KERNEL_NAME, service_buffer, ServiceRole::System).await?;
+        let endpoint = bus
+            .get_endpoint(KERNEL_NAME, service_buffer, ServiceRole::System)
+            .await?;
         let mut kernel = Self {
             bus,
             endpoint,
@@ -94,12 +98,10 @@ impl Kernel {
             .init_service(
                 KernelService::name(),
                 ServiceRole::System,
-                Some(
-                    Box::new(KernelServiceMessage::InitParams(
-                        self.health.clone(),
-                        self.services.clone(),
-                    )),
-                ),
+                Some(Box::new(KernelServiceMessage::InitParams(
+                    self.health.clone(),
+                    self.services.clone(),
+                ))),
             )
             .await?;
         Ok(())
@@ -118,16 +120,17 @@ impl Kernel {
         role: ServiceRole,
         init_message: Option<Box<dyn AnyMessage>>,
     ) -> Result<()> {
-        info!("初始化 {} 的 Endpoint",name);
+        info!("初始化 {} 的 Endpoint", name);
         let endpoint = self
             .bus
-            .get_endpoint(name, self.service_buffer, role).await?;
+            .get_endpoint(name, self.service_buffer, role)
+            .await?;
         if let Some(msg) = init_message {
-            info!("发送 {} 的初始化参数",name);
+            info!("发送 {} 的初始化参数", name);
             let _ = self.endpoint.send(name, msg).await;
             // let a=endpoint.recv().await;
         }
-        info!("寻找 {} 的工厂函数",name);
+        info!("寻找 {} 的工厂函数", name);
         let f = match get_factory(name) {
             Some(f) if f.deps.len() == 0 => f,
             Some(_) => {
@@ -137,7 +140,7 @@ impl Kernel {
                 return Err(anyhow::anyhow!("未找到此服务的工厂函数: {}", name));
             }
         };
-        info!("启动 {}",name);
+        info!("启动 {}", name);
         let handle = match (f.launch)(endpoint) {
             Ok(handle) => handle,
             Err(e) => {
@@ -154,7 +157,10 @@ impl Kernel {
 
     /// 发送消息给 KernelService
     async fn send_kernel_message(&self, payload: KernelServiceMessage) {
-        let _ = self.endpoint.send(KernelService::name(), Box::new(payload)).await;
+        let _ = self
+            .endpoint
+            .send(KernelService::name(), Box::new(payload))
+            .await;
     }
 
     /// 发送 Admin 消息给 Kernel(自己)
@@ -196,7 +202,9 @@ impl Kernel {
             }
             ShutdownStage::StopKernel => {
                 info!("开始关闭内核");
-                let _ = self.endpoint.send(KernelService::name(), Box::new(CommonMessage::Stop))
+                let _ = self
+                    .endpoint
+                    .send(KernelService::name(), Box::new(CommonMessage::Stop))
                     .await;
                 self.bus.abort();
                 self.run = false;
@@ -210,13 +218,15 @@ impl Kernel {
             AdminCommand::NewEndpoint(name, sender) => {
                 let endpoint = match self
                     .bus
-                    .get_endpoint(name, self.service_buffer, ServiceRole::Standard).await {
-                        Ok(endpoint)=>endpoint,
-                        Err(e)=>{
-                            warn!("{}",e);
-                            return ;
-                        }
-                    };
+                    .get_endpoint(name, self.service_buffer, ServiceRole::Standard)
+                    .await
+                {
+                    Ok(endpoint) => endpoint,
+                    Err(e) => {
+                        warn!("{}", e);
+                        return;
+                    }
+                };
 
                 let _ = sender.send(endpoint);
             }
@@ -242,14 +252,6 @@ impl Kernel {
                     warn!("{} 的身份为 {:?}, 无关机权限", source, role)
                 }
             },
-            KernelMessage::GetHealth(sender) => {
-                self.send_kernel_message(KernelServiceMessage::GetHealth(sender))
-                    .await;
-            }
-            KernelMessage::UploadStatus(status) => {
-                self.send_kernel_message(KernelServiceMessage::UploadStatus(source, status))
-                    .await;
-            }
         }
     }
 

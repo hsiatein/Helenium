@@ -1,20 +1,30 @@
-pub mod midware;
 pub mod endpoint;
+pub mod midware;
 
 use anyhow::{Context, Result};
 use heleny_proto::{
     message::{SignedMessage, TokenMessage},
     role::ServiceRole,
 };
-use tracing::{Instrument, debug, info_span, warn};
 use std::{collections::HashMap, time::Duration};
-use tokio::{sync::{mpsc, oneshot}, task::JoinHandle, time::timeout};
+use tokio::{
+    sync::{mpsc, oneshot},
+    task::JoinHandle,
+    time::timeout,
+};
+use tracing::{Instrument, debug, info_span, warn};
 use uuid::Uuid;
 
 use crate::endpoint::Endpoint;
 
 pub enum BusMessage {
-    AddEndpoint(Uuid,&'static str,ServiceRole,mpsc::Sender<SignedMessage>,oneshot::Sender<()>)
+    AddEndpoint(
+        Uuid,
+        &'static str,
+        ServiceRole,
+        mpsc::Sender<SignedMessage>,
+        oneshot::Sender<()>,
+    ),
 }
 
 pub struct BusHandle {
@@ -31,79 +41,96 @@ pub struct Bus {
 }
 
 impl Bus {
-    pub fn new(from_endpoints: mpsc::Receiver<TokenMessage>,
-    from_handle: mpsc::Receiver<BusMessage>,
-    address_map: HashMap<&'static str, mpsc::Sender<SignedMessage>>,
-    tokens: HashMap<Uuid, (&'static str, ServiceRole)>)->Bus{
+    pub fn new(
+        from_endpoints: mpsc::Receiver<TokenMessage>,
+        from_handle: mpsc::Receiver<BusMessage>,
+        address_map: HashMap<&'static str, mpsc::Sender<SignedMessage>>,
+        tokens: HashMap<Uuid, (&'static str, ServiceRole)>,
+    ) -> Bus {
         Self {
-            from_endpoints:Some(from_endpoints),from_handle:Some(from_handle),address_map,tokens
+            from_endpoints: Some(from_endpoints),
+            from_handle: Some(from_handle),
+            address_map,
+            tokens,
         }
     }
 
-    pub fn start(mut bus:Bus)->JoinHandle<()>{
+    pub fn start(mut bus: Bus) -> JoinHandle<()> {
         let span = info_span!("Bus");
-        tokio::spawn(async move {
-            let mut from_endpoints=match bus.from_endpoints.take() {
-                Some(rx)=>rx,
-                None => {
-                    warn!("没有接收端 from_endpoints");
-                    return ;
-                }
-            };
-            let mut from_handle=match bus.from_handle.take() {
-                Some(rx)=>rx,
-                None => {
-                    warn!("没有接收端 from_handle");
-                    return ;
-                }
-            };
-            loop {
-                tokio::select! {
-                    Some(msg) = from_endpoints.recv() => {
-                        match bus.handle_token_message(msg).await{
-                            Ok(()) => (),
-                            Err(e) => {
-                                warn!("{}",e);
-                            }
-                        };
+        tokio::spawn(
+            async move {
+                let mut from_endpoints = match bus.from_endpoints.take() {
+                    Some(rx) => rx,
+                    None => {
+                        warn!("没有接收端 from_endpoints");
+                        return;
                     }
-                    Some(msg) = from_handle.recv() => {
-                        match bus.handle_bus_message(msg).await{
-                            Ok(()) => (),
-                            Err(e) => {
-                                warn!("{}",e);
-                            }
-                        };
+                };
+                let mut from_handle = match bus.from_handle.take() {
+                    Some(rx) => rx,
+                    None => {
+                        warn!("没有接收端 from_handle");
+                        return;
+                    }
+                };
+                loop {
+                    tokio::select! {
+                        Some(msg) = from_endpoints.recv() => {
+                            match bus.handle_token_message(msg).await{
+                                Ok(()) => (),
+                                Err(e) => {
+                                    warn!("{}",e);
+                                }
+                            };
+                        }
+                        Some(msg) = from_handle.recv() => {
+                            match bus.handle_bus_message(msg).await{
+                                Ok(()) => (),
+                                Err(e) => {
+                                    warn!("{}",e);
+                                }
+                            };
+                        }
                     }
                 }
             }
-        }.instrument(span))
+            .instrument(span),
+        )
     }
 
-    pub async fn handle_bus_message(&mut self, msg:BusMessage)->Result<()>{
+    pub async fn handle_bus_message(&mut self, msg: BusMessage) -> Result<()> {
         match msg {
-            BusMessage::AddEndpoint(token,name ,role ,tx,sender)=>{
-                self.tokens.insert(token, (name,role));
+            BusMessage::AddEndpoint(token, name, role, tx, sender) => {
+                self.tokens.insert(token, (name, role));
                 self.address_map.insert(name, tx);
-                let _=sender.send(());
+                let _ = sender.send(());
             }
         }
         Ok(())
     }
 
-    pub async fn handle_token_message(&mut self, msg:TokenMessage)->Result<()>{
-        debug!("未签名: {:?}", msg);
-        let (name, role) = self.tokens.get(&msg.token).context("消息携带未知 token, 忽略")?.clone();
-        let msg=msg.sign(name, role);
+    pub async fn handle_token_message(&mut self, msg: TokenMessage) -> Result<()> {
+        // debug!("未签名: {:?}", msg);
+        let (name, role) = self
+            .tokens
+            .get(&msg.token)
+            .context("消息携带未知 token, 忽略")?
+            .clone();
+        let msg = msg.sign(name, role);
         debug!("已签名: {:?}", msg);
-        let target=msg.target;
-        self.send(msg).await.context(format!("发送给 {} 失败",target))?;
+        let target = msg.target;
+        self.send(msg)
+            .await
+            .context(format!("发送给 {} 失败", target))?;
         Ok(())
     }
 
     pub async fn send(&self, msg: SignedMessage) -> Result<()> {
         let target = msg.target;
-        let tx=self.address_map.get(target).context(format!("未找到服务: {}", target))?;
+        let tx = self
+            .address_map
+            .get(target)
+            .context(format!("未找到服务: {}", target))?;
         tx.send(msg).await?;
         Ok(())
     }
@@ -113,12 +140,12 @@ impl BusHandle {
     pub fn new(buffer: usize) -> Self {
         let (endpoint_to_bus, from_endpoints) = mpsc::channel(buffer);
         let (handle_to_bus, from_handle) = mpsc::channel(buffer);
-        let bus=Bus::new(from_endpoints, from_handle, HashMap::new(), HashMap::new());
-        let handle=Bus::start(bus);
+        let bus = Bus::new(from_endpoints, from_handle, HashMap::new(), HashMap::new());
+        let handle = Bus::start(bus);
         Self {
             endpoint_to_bus,
             handle_to_bus,
-            handle
+            handle,
         }
     }
 
@@ -128,16 +155,18 @@ impl BusHandle {
         buffer: usize,
         role: ServiceRole,
     ) -> Result<Endpoint> {
-        let token=Uuid::new_v4();
+        let token = Uuid::new_v4();
         let (mpsc_tx, mpsc_rx) = mpsc::channel(buffer);
-        let (tx,rx)=oneshot::channel();
-        let _=self.handle_to_bus.send(BusMessage::AddEndpoint(token, name, role, mpsc_tx,tx)).await;
-        let _=timeout(Duration::from_secs(5), rx).await??;
+        let (tx, rx) = oneshot::channel();
+        let _ = self
+            .handle_to_bus
+            .send(BusMessage::AddEndpoint(token, name, role, mpsc_tx, tx))
+            .await;
+        let _ = timeout(Duration::from_secs(5), rx).await??;
         Ok(Endpoint::new(token, self.endpoint_to_bus.clone(), mpsc_rx))
     }
 
-    pub fn abort(&self){
+    pub fn abort(&self) {
         self.handle.abort();
     }
-
 }

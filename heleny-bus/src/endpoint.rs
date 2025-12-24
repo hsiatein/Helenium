@@ -1,8 +1,9 @@
 use anyhow::Result;
 use heleny_proto::{
-    kernel_message::{KernelMessage, ServiceStatus},
+    kernel_service_message::ServiceSignal,
+    kernel_service_message::KernelServiceMessage,
     message::{AnyMessage, SignedMessage, TokenMessage},
-    name::KERNEL_NAME,
+    name::KERNEL_SERVICE,
 };
 use tokio::sync::mpsc;
 use uuid::Uuid;
@@ -42,8 +43,8 @@ impl Endpoint {
     pub async fn send_alive(&self) {
         let _ = self
             .send(
-                KERNEL_NAME,
-                Box::new(KernelMessage::UploadStatus(ServiceStatus::Alive)),
+                KERNEL_SERVICE,
+                Box::new(KernelServiceMessage::UploadStatus(ServiceSignal::Alive)),
             )
             .await;
     }
@@ -51,8 +52,8 @@ impl Endpoint {
     pub async fn send_ready(&self) {
         let _ = self
             .send(
-                KERNEL_NAME,
-                Box::new(KernelMessage::UploadStatus(ServiceStatus::Ready)),
+                KERNEL_SERVICE,
+                Box::new(KernelServiceMessage::UploadStatus(ServiceSignal::Ready)),
             )
             .await;
     }
@@ -60,17 +61,17 @@ impl Endpoint {
     pub async fn send_terminate(&self) {
         let _ = self
             .send(
-                KERNEL_NAME,
-                Box::new(KernelMessage::UploadStatus(ServiceStatus::Terminate)),
+                KERNEL_SERVICE,
+                Box::new(KernelServiceMessage::UploadStatus(ServiceSignal::Terminate)),
             )
             .await;
     }
 
     pub fn send_init_fail(&self) -> (mpsc::Sender<TokenMessage>, TokenMessage) {
         let msg = TokenMessage::new(
-            KERNEL_NAME,
+            KERNEL_SERVICE,
             self.token,
-            Box::new(KernelMessage::UploadStatus(ServiceStatus::InitFail)),
+            Box::new(KernelServiceMessage::UploadStatus(ServiceSignal::InitFail)),
         );
         (self.sender.clone(), msg)
     }

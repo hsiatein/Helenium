@@ -20,7 +20,7 @@ impl TokenMessage {
         }
     }
 
-    pub fn sign(self, name: &'static str, role: ServiceRole)->SignedMessage {
+    pub fn sign(self, name: &'static str, role: ServiceRole) -> SignedMessage {
         SignedMessage::new(self.target, name, role, self.payload)
     }
 }
@@ -35,7 +35,12 @@ pub struct SignedMessage {
 }
 
 impl SignedMessage {
-    pub fn new(target: &'static str, name: &'static str, role: ServiceRole, payload: Box<dyn AnyMessage>) -> Self {
+    pub fn new(
+        target: &'static str,
+        name: &'static str,
+        role: ServiceRole,
+        payload: Box<dyn AnyMessage>,
+    ) -> Self {
         Self {
             target,
             name,
