@@ -18,12 +18,12 @@ mod stats_config;
 #[base_service(deps=["ConfigService"])]
 pub struct StatsService {
     endpoint: Endpoint,
-    stats_config: StatsConfig,
+    _stats_config: StatsConfig,
     bus_watcher: BusWatcher,
 }
 
 #[derive(Debug)]
-enum WorkerMessage {}
+enum _WorkerMessage {}
 
 #[async_trait]
 impl Service for StatsService {
@@ -42,7 +42,7 @@ impl Service for StatsService {
         let bus_watcher = BusWatcher::new(config.duration, rx)?;
         let instance = Self {
             endpoint,
-            stats_config: config,
+            _stats_config: config,
             bus_watcher,
         };
         Ok(Box::new(instance))

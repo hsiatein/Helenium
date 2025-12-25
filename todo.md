@@ -14,6 +14,7 @@ services:
 - [x] config_service
 - [x] auth_service
 - [ ] stats_service
+  - [x] 实现了最基础的Bus总流量统计用来测试
 - [ ] bridge_service(给gui提供资源)
 - [ ] storage_service(调用db或fs)
 - [ ] gui_service(提供gui)
@@ -36,7 +37,7 @@ todo:
 - [ ] 13.常见类型实现Display
 - [x] 14.让kernelservice关机时检查kernelservice是否响应
 - [x] 15.stop也改成非阻塞渐进式
-- [ ] 16.一段时间的路由流量统计
+- [x] 16.一段时间的路由流量统计
 - [x] 17.message分开成signed和token
 - [x] 18.bus管理tokens
 - [x] 19.bus单独一个线程转发

@@ -7,8 +7,9 @@ use anyhow::Result;
 use tokio::{sync::mpsc, task::JoinHandle};
 use tracing::warn;
 
+/// 主要职责是监控Bus的流量进行统计
 pub struct BusWatcher {
-    handle: JoinHandle<Result<()>>,
+    _handle: JoinHandle<Result<()>>,
     total_traffic: Arc<Mutex<VecDeque<usize>>>,
 }
 
@@ -31,13 +32,13 @@ impl BusWatcher {
             }
         });
         Ok(Self {
-            handle,
+            _handle:handle,
             total_traffic,
         })
     }
 
-    pub fn abort(&self) {
-        self.handle.abort();
+    pub fn _abort(&self) {
+        self._handle.abort();
     }
 
     pub fn get_total_traffic(&self) -> Result<VecDeque<usize>> {

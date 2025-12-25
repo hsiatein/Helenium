@@ -52,7 +52,7 @@ impl Service for ConfigService {
         let save_after = config_value
             .get(Self::name())
             .context("读取 ConfigService 字段失败")?
-            .get("SaveAfter")
+            .get("save_after")
             .context("读取 save_after 字段失败")?
             .as_f64()
             .context("save_after 字段值不是浮点数")?;

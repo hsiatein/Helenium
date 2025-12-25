@@ -1,9 +1,9 @@
 {
     "Kernel":{
-        "UserName":"Mugi"
+        "user_name":"Mugi"
     },
     "ConfigService":{
-        "SaveAfter" : 10.0
+        "save_after" : 10.0
     },
     "AuthService":{
         "pub_keys":[
