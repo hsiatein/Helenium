@@ -40,6 +40,8 @@ inventory = { workspace = true }
 anyhow = {workspace = true}
 tracing = {workspace = true}
 tokio = {workspace = true}
+serde_json = {workspace = true}
+serde = {workspace = true}
 "#;
     std::fs::write(manifest_path, manifest).expect("写入失败");
 

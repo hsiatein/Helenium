@@ -8,9 +8,5 @@ edition = "2024"
 name="new_service"
 path="src/bin/new_service.rs"
 
-[[bin]]
-
-name="main"
-path="src/bin/main.rs"
 
 [dependencies]

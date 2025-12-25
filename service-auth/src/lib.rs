@@ -11,16 +11,12 @@ use heleny_proto::{
     message::{AnyMessage, downcast},
     role::ServiceRole,
 };
-use heleny_service::Service;
+use heleny_service::{Service, get_from_config_service};
 use rand::RngCore;
 use rand::rngs::OsRng;
 use serde_json::Value;
-use std::{collections::HashSet, time::Duration};
-use tokio::{
-    sync::oneshot,
-    task::JoinHandle,
-    time::{Instant, timeout},
-};
+use std::collections::HashSet;
+use tokio::{sync::oneshot, task::JoinHandle, time::Instant};
 use tracing::{debug, warn};
 
 use crate::auth_config::AuthConfig;
@@ -42,20 +38,7 @@ enum WorkerMessage {
 impl Service for AuthService {
     type MessageType = AuthServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>> {
-        let (tx, rx) = oneshot::channel();
-        endpoint
-            .send(
-                "ConfigService",
-                Box::new(ConfigServiceMessage::Get { sender: tx }),
-            )
-            .await
-            .context("AuthService 获取 ConfigService 的资源发送失败")?;
-        let config = timeout(Duration::from_secs(5), rx)
-            .await
-            .context("获取 ConfigService 的资源超时")?
-            .context("获取 ConfigService 的资源失败")?
-            .context("获取 ConfigService 的资源为空")?;
-        let config: AuthConfig = serde_json::from_str(&config.to_string())?;
+        let config = get_from_config_service::<AuthConfig>(&endpoint).await?;
         debug!("AuthService Config: {:?}", config);
         let pub_keys = config
             .pub_keys

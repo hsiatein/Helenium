@@ -13,3 +13,4 @@ pub mod fs_service_message;
 
 pub mod bridge_service_message;
 pub mod gui_service_message;
+pub mod stats_service_message;

@@ -9,3 +9,4 @@ extern crate service_fs;
 
 extern crate service_bridge;
 extern crate service_gui;
+extern crate service_stats;

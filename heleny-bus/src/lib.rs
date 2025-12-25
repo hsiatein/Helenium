@@ -25,13 +25,15 @@ pub enum BusMessage {
         mpsc::Sender<SignedMessage>,
         oneshot::Sender<()>,
     ),
+    RegisterStats {
+        sender: mpsc::Sender<HashMap<&'static str, usize>>,
+    },
 }
 
 pub struct BusHandle {
     endpoint_to_bus: mpsc::Sender<TokenMessage>,
     handle_to_bus: mpsc::Sender<BusMessage>,
     handle: JoinHandle<()>,
-    stats_rx: Option<mpsc::Receiver<HashMap<&'static str, u64>>>,
 }
 
 pub struct Bus {
@@ -39,8 +41,8 @@ pub struct Bus {
     from_handle: Option<mpsc::Receiver<BusMessage>>,
     router: HashMap<&'static str, mpsc::Sender<SignedMessage>>,
     tokens: HashMap<Uuid, (&'static str, ServiceRole)>,
-    stats_table: Option<HashMap<&'static str, u64>>,
-    stats_tx: mpsc::Sender<HashMap<&'static str, u64>>,
+    stats_table: Option<HashMap<&'static str, usize>>,
+    stats_tx: Option<mpsc::Sender<HashMap<&'static str, usize>>>,
 }
 
 impl Bus {
@@ -49,7 +51,6 @@ impl Bus {
         from_handle: mpsc::Receiver<BusMessage>,
         address_map: HashMap<&'static str, mpsc::Sender<SignedMessage>>,
         tokens: HashMap<Uuid, (&'static str, ServiceRole)>,
-        stats_tx: mpsc::Sender<HashMap<&'static str, u64>>,
     ) -> Bus {
         Self {
             from_endpoints: Some(from_endpoints),
@@ -57,7 +58,7 @@ impl Bus {
             router: address_map,
             tokens,
             stats_table: Some(HashMap::new()),
-            stats_tx,
+            stats_tx: None,
         }
     }
 
@@ -107,7 +108,9 @@ impl Bus {
 
     pub fn handle_tick(&mut self, _tick: Instant) -> Result<()> {
         let table = self.stats_table.take().context("没有路由统计表")?;
-        self.stats_tx.try_send(table)?;
+        if let Some(tx) = &self.stats_tx {
+            tx.try_send(table)?
+        }
         self.stats_table = Some(HashMap::new());
         Ok(())
     }
@@ -119,6 +122,7 @@ impl Bus {
                 self.router.insert(name, tx);
                 let _ = sender.send(());
             }
+            BusMessage::RegisterStats { sender } => self.stats_tx = Some(sender),
         }
         Ok(())
     }
@@ -139,8 +143,11 @@ impl Bus {
         Ok(())
     }
 
-    pub async fn send(&self, msg: SignedMessage) -> Result<()> {
+    pub async fn send(&mut self, msg: SignedMessage) -> Result<()> {
         let target = msg.target;
+        if let Some(table) = self.stats_table.as_mut() {
+            *table.entry(target).or_insert(0) += 1;
+        }
         let tx = self
             .router
             .get(target)
@@ -154,21 +161,13 @@ impl BusHandle {
     pub fn new(buffer: usize) -> Self {
         let (endpoint_to_bus, from_endpoints) = mpsc::channel(buffer);
         let (handle_to_bus, from_handle) = mpsc::channel(buffer);
-        let (stats_tx, stats_rx) = mpsc::channel(buffer);
-        let bus = Bus::new(
-            from_endpoints,
-            from_handle,
-            HashMap::new(),
-            HashMap::new(),
-            stats_tx,
-        );
+        let bus = Bus::new(from_endpoints, from_handle, HashMap::new(), HashMap::new());
 
         let handle = Bus::start(bus);
         Self {
             endpoint_to_bus,
             handle_to_bus,
             handle,
-            stats_rx: Some(stats_rx),
         }
     }
 
@@ -207,7 +206,13 @@ impl BusHandle {
         self.handle.abort();
     }
 
-    pub fn get_stats(&mut self) -> Result<mpsc::Receiver<HashMap<&'static str, u64>>> {
-        self.stats_rx.take().context("没有统计接收端")
+    pub async fn register_stats(
+        &mut self,
+        sender: mpsc::Sender<HashMap<&'static str, usize>>,
+    ) -> Result<()> {
+        self.handle_to_bus
+            .send(BusMessage::RegisterStats { sender })
+            .await
+            .context("发送统计发送端失败")
     }
 }

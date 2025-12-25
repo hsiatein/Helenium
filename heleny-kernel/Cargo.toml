@@ -22,3 +22,4 @@ service_fs ={ path = "../service-fs"}
 service_auth ={ path = "../service-auth"}
 service_bridge ={ path = "../service-bridge"}
 service_gui ={ path = "../service-gui"}
+service_stats ={ path = "../service-stats"}

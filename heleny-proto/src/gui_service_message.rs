@@ -1,4 +1,2 @@
 #[derive(Debug)]
-pub enum GuiServiceMessage {
-
-}
+pub enum GuiServiceMessage {}

@@ -11,3 +11,5 @@ heleny_bus ={ path = "../heleny-bus"}
 heleny_proto ={ path = "../heleny-proto"}
 inventory ={ workspace = true}
 tracing = { workspace = true }
+serde_json = {workspace = true}
+serde = {workspace = true}

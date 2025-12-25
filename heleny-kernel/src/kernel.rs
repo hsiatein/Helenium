@@ -279,6 +279,7 @@ impl Kernel {
                     role
                 )),
             },
+            KernelMessage::GetBusStatsRx { sender } => self.bus.register_stats(sender).await,
         }
     }
 

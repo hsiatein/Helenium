@@ -306,6 +306,7 @@ dependencies = [
  "service_config",
  "service_fs",
  "service_gui",
+ "service_stats",
  "tokio",
  "tracing",
  "uuid",
@@ -354,6 +355,8 @@ dependencies = [
  "heleny_bus",
  "heleny_proto",
  "inventory",
+ "serde",
+ "serde_json",
  "tokio",
  "tracing",
 ]
@@ -737,6 +740,23 @@ dependencies = [
  "heleny_proto",
  "heleny_service",
  "inventory",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "service_stats"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "heleny_bus",
+ "heleny_macros",
+ "heleny_proto",
+ "heleny_service",
+ "inventory",
+ "serde",
+ "serde_json",
  "tokio",
  "tracing",
 ]

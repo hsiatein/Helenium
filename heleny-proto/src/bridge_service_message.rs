@@ -1,4 +1,2 @@
 #[derive(Debug)]
-pub enum BridgeServiceMessage {
-
-}
+pub enum BridgeServiceMessage {}

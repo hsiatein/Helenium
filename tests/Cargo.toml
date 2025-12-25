@@ -20,3 +20,8 @@ heleny_utils = { path = "../heleny-utils" }
 ed25519-dalek = { workspace = true}
 rand = { workspace = true }
 heleny_service ={path ="../heleny-service"}
+
+[[bin]]
+name="test_stats"
+path="src/test_stats.rs"
+

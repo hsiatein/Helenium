@@ -11,5 +11,8 @@
             "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAG17AlUB4Smih6Z9bk7/FL3IyTm9USZD2aMuAWXBLa64=\n-----END PUBLIC KEY-----",
             "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAezkZozB1KXNmhUxch+lYqWnO3Bwrh1smaFogHa4PTr0=\n-----END PUBLIC KEY-----"
         ]
+    },
+    "StatsService":{
+        "duration":60
     }
 }
