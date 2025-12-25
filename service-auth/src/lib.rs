@@ -1,51 +1,83 @@
 mod auth_config;
 
-use std::{collections::HashSet, time::Duration};
+use anyhow::{Context, Result};
+use async_trait::async_trait;
 use ed25519_dalek::{Signature, VerifyingKey, pkcs8::DecodePublicKey};
-use tracing::{debug, warn};
-use tokio::{sync::oneshot, time::{Instant, timeout}};
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
+use heleny_proto::{
+    auth_service_message::AuthServiceMessage,
+    config_service_message::ConfigServiceMessage,
+    message::{AnyMessage, downcast},
+    role::ServiceRole,
+};
 use heleny_service::Service;
-use heleny_proto::{auth_service_message::AuthServiceMessage, config_service_message::ConfigServiceMessage, message::AnyMessage, role::ServiceRole};
-use async_trait::async_trait;
-use anyhow::{Context, Result};
+use rand::RngCore;
+use rand::rngs::OsRng;
+use serde_json::Value;
+use std::{collections::HashSet, time::Duration};
+use tokio::{
+    sync::oneshot,
+    task::JoinHandle,
+    time::{Instant, timeout},
+};
+use tracing::{debug, warn};
 
 use crate::auth_config::AuthConfig;
 
-
-
 #[base_service(deps=["ConfigService"])]
-pub struct AuthService{
-    endpoint:Endpoint,
-    pub_keys:Vec<VerifyingKey>,
-    challenges:HashSet<[u8;32]>,
+pub struct AuthService {
+    endpoint: Endpoint,
+    pub_keys: Vec<VerifyingKey>,
+    challenges: HashSet<[u8; 32]>,
+    is_updating: Option<JoinHandle<Result<Vec<VerifyingKey>>>>,
+}
+
+#[derive(Debug)]
+enum WorkerMessage {
+    UpdateOver,
 }
 
 #[async_trait]
 impl Service for AuthService {
-    type MessageType= AuthServiceMessage;
-    async fn new(endpoint: Endpoint) -> Result<Box<Self>>{
-        let (tx,rx)=oneshot::channel();
-        endpoint.send("ConfigService", Box::new(ConfigServiceMessage::Get { sender: tx })).await.context("AuthService 获取 ConfigService 的资源发送失败")?;
-        let config=timeout(Duration::from_secs(5), rx).await.context("获取 ConfigService 的资源超时")?.context("获取 ConfigService 的资源失败")?.context("获取 ConfigService 的资源为空")?;
-        let config:AuthConfig=serde_json::from_str(&config.to_string())?;
-        debug!("AuthService Config: {:?}",config);
-        let pub_keys=config.pub_keys.iter().cloned().filter_map(|pub_key|{
-            match VerifyingKey::from_public_key_pem(&pub_key){
-                Ok(pub_key)=>Some(pub_key),
-                Err(e)=>{
-                    warn!("{:?}解析失败, 忽略: {}",pub_key,e);
-                    None
-                }
-            }
-        }).collect();
-        debug!("AuthService 公钥: {:?}",pub_keys);
+    type MessageType = AuthServiceMessage;
+    async fn new(endpoint: Endpoint) -> Result<Box<Self>> {
+        let (tx, rx) = oneshot::channel();
+        endpoint
+            .send(
+                "ConfigService",
+                Box::new(ConfigServiceMessage::Get { sender: tx }),
+            )
+            .await
+            .context("AuthService 获取 ConfigService 的资源发送失败")?;
+        let config = timeout(Duration::from_secs(5), rx)
+            .await
+            .context("获取 ConfigService 的资源超时")?
+            .context("获取 ConfigService 的资源失败")?
+            .context("获取 ConfigService 的资源为空")?;
+        let config: AuthConfig = serde_json::from_str(&config.to_string())?;
+        debug!("AuthService Config: {:?}", config);
+        let pub_keys = config
+            .pub_keys
+            .iter()
+            .cloned()
+            .filter_map(
+                |pub_key| match VerifyingKey::from_public_key_pem(&pub_key) {
+                    Ok(pub_key) => Some(pub_key),
+                    Err(e) => {
+                        warn!("{:?}解析失败, 忽略: {}", pub_key, e);
+                        None
+                    }
+                },
+            )
+            .collect();
+        debug!("AuthService 公钥: {:?}", pub_keys);
 
-        let instance=Self {
+        let instance = Self {
             endpoint,
             pub_keys,
-            challenges:HashSet::new(),
+            challenges: HashSet::new(),
+            is_updating: None,
         };
         Ok(Box::new(instance))
     }
@@ -54,48 +86,109 @@ impl Service for AuthService {
         _name: &'static str,
         _role: ServiceRole,
         msg: Box<Self::MessageType>,
-    ) -> Result<()>{
+    ) -> Result<()> {
         match *msg {
-            AuthServiceMessage::GetChallenge{msg_sender}=>{
-                let challenge=generate_challenge();
-                let _=msg_sender.send(challenge);
+            AuthServiceMessage::GetChallenge { msg_sender } => {
+                let challenge = generate_challenge();
+                let _ = msg_sender.send(challenge);
                 self.challenges.insert(challenge);
             }
-            AuthServiceMessage::Verify { msg, signature, pass }=>{
+            AuthServiceMessage::Verify {
+                msg,
+                signature,
+                pass,
+            } => {
                 if self.challenges.remove(&msg) {
-                    let _=pass.send(self.verify(msg, signature));
+                    let _ = pass.send(self.verify(msg, signature));
                 }
+            }
+            AuthServiceMessage::Update => {
+                return self.handle_update().await;
             }
         }
         Ok(())
     }
-    async fn stop(&mut self){
-
+    async fn stop(&mut self) {}
+    async fn handle_sub_endpoint(&mut self, msg: Box<dyn AnyMessage>) -> Result<()> {
+        let msg = downcast::<WorkerMessage>(msg)?;
+        match msg {
+            WorkerMessage::UpdateOver => self.post_update().await,
+        }
     }
-    async fn handle_sub_endpoint(&mut self, _msg: Box<dyn AnyMessage>) -> Result<()>{
+    async fn handle_tick(&mut self, _tick: Instant) -> Result<()> {
         Ok(())
     }
-    async fn handle_tick(&mut self, _tick:Instant) -> Result<()>{
-        Ok(())
-    }
-    
 }
 
-use rand::rngs::OsRng;
-use rand::RngCore;
-
-fn generate_challenge() -> [u8;32] {
+fn generate_challenge() -> [u8; 32] {
     let mut challenge = [0u8; 32];
     OsRng.fill_bytes(&mut challenge);
     challenge
 }
 
 impl AuthService {
-    fn verify(&mut self,msg:[u8;32],signature:Signature)->bool{
-        self.pub_keys.iter_mut().any(|key| {
-            key.verify_strict(&msg, &signature).is_ok()
-        })
+    fn verify(&mut self, msg: [u8; 32], signature: Signature) -> bool {
+        self.pub_keys
+            .iter_mut()
+            .any(|key| key.verify_strict(&msg, &signature).is_ok())
     }
+    async fn handle_update(&mut self) -> Result<()> {
+        if let Some(is_updating) = self.is_updating.take() {
+            if is_updating.is_finished() {
+                self.post_update().await?;
+            } else {
+                is_updating.abort();
+            }
+        }
+        let sub_endpoint = self.endpoint.get_sub_endpoint();
+        let (tx, rx) = oneshot::channel();
+        self.endpoint
+            .send(
+                "ConfigService",
+                Box::new(ConfigServiceMessage::Get { sender: tx }),
+            )
+            .await
+            .context("AuthService 获取 ConfigService 的资源发送失败")?;
+        let handle = tokio::spawn(async move {
+            let result = worker_update(rx).await;
+            let _ = sub_endpoint.send(Box::new(WorkerMessage::UpdateOver)).await;
+            result
+        });
+        self.is_updating = Some(handle);
+        Ok(())
+    }
+
+    async fn post_update(&mut self) -> Result<()> {
+        let keys = self
+            .is_updating
+            .take()
+            .context("没有正在更新的子任务")?
+            .await
+            .context("获取await结果失败")?
+            .context("未得到最新 VerifyingKeys")?;
+        self.pub_keys = keys;
+        Ok(())
+    }
+}
+
+async fn worker_update(rx: oneshot::Receiver<Option<Value>>) -> Result<Vec<VerifyingKey>> {
+    let new_value = rx.await.context("获取回应失败")?.context("获取资源失败")?;
+    let config: AuthConfig = serde_json::from_str(&new_value.to_string())?;
+    let pub_keys = config
+        .pub_keys
+        .iter()
+        .cloned()
+        .filter_map(
+            |pub_key| match VerifyingKey::from_public_key_pem(&pub_key) {
+                Ok(pub_key) => Some(pub_key),
+                Err(e) => {
+                    warn!("{:?}解析失败, 忽略: {}", pub_key, e);
+                    None
+                }
+            },
+        )
+        .collect();
+    Ok(pub_keys)
 }
 
 #[cfg(test)]

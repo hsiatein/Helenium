@@ -1,7 +1,6 @@
 use serde::Deserialize;
 
-
-#[derive(Deserialize,Debug)]
+#[derive(Deserialize, Debug)]
 pub struct AuthConfig {
-    pub pub_keys:Vec<String>,
+    pub pub_keys: Vec<String>,
 }

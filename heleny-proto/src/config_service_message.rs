@@ -1,5 +1,5 @@
-use tokio::sync::oneshot;
 use serde_json::Value;
+use tokio::sync::oneshot;
 
 #[derive(Debug)]
 pub enum ConfigServiceMessage {

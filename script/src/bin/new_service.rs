@@ -9,23 +9,29 @@ fn capitalize(s: &str) -> String {
 }
 
 fn main() {
-    let args:Vec<String>=std::env::args().collect();
-    if args.len()==1 {return;}
-    let name=&args[1];
-    let project_dir_str=format!("service-{}",name);
-    std::process::Command::new("cargo").arg("new").arg(&project_dir_str).spawn().expect("cargo new 失败");
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() == 1 {
+        return;
+    }
+    let name = &args[1];
+    let project_dir_str = format!("service-{}", name);
+    std::process::Command::new("cargo")
+        .arg("new")
+        .arg(&project_dir_str)
+        .spawn()
+        .expect("cargo new 失败");
 
-
-    let current_dir=std::env::current_dir().expect("读取当前文件夹失败");
-    println!("{:?}",current_dir);
-    let project_dir=current_dir.join(&project_dir_str);
-    let manifest_path=project_dir.join("Cargo.toml");
-    println!("{:?}",manifest_path);
+    let current_dir = std::env::current_dir().expect("读取当前文件夹失败");
+    println!("{:?}", current_dir);
+    let project_dir = current_dir.join(&project_dir_str);
+    let manifest_path = project_dir.join("Cargo.toml");
+    println!("{:?}", manifest_path);
     sleep(Duration::from_millis(500));
-    
-    let manifest=std::fs::read_to_string(&manifest_path).expect("读取失败");
-    let manifest=manifest.replace(&project_dir_str, &format!("service_{}",name));
-    let manifest=manifest+r#"heleny_service = {path = "../heleny-service"}
+
+    let manifest = std::fs::read_to_string(&manifest_path).expect("读取失败");
+    let manifest = manifest.replace(&project_dir_str, &format!("service_{}", name));
+    let manifest = manifest
+        + r#"heleny_service = {path = "../heleny-service"}
 heleny_proto = {path = "../heleny-proto"}
 heleny_macros = { path = "../heleny-macros" }
 heleny_bus = { path = "../heleny-bus" }
@@ -39,7 +45,7 @@ tokio = {workspace = true}
 
     std::fs::remove_file(project_dir.join("src").join("main.rs")).expect("删除main失败");
 
-    let code =r#"use tokio::time::Instant;
+    let code = r#"use tokio::time::Instant;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_service::Service;
@@ -52,6 +58,11 @@ use anyhow::Result;
 #[base_service(deps=[])]
 pub struct {PATTERN}Service{
     endpoint:Endpoint,
+}
+
+#[derive(Debug)]
+enum WorkerMessage{
+    
 }
 
 #[async_trait]
@@ -87,33 +98,45 @@ impl {PATTERN}Service {
     
 }
 "#;
-    let code=code.replace("{pattern}", &name);
-    let code=code.replace("{PATTERN}", &capitalize(&name));
+    let code = code.replace("{pattern}", &name);
+    let code = code.replace("{PATTERN}", &capitalize(&name));
     std::fs::write(project_dir.join("src").join("lib.rs"), code).expect("写入lib.rs失败");
 
-    let message=r#"#[derive(Debug)]
+    let message = r#"#[derive(Debug)]
 pub enum {PATTERN}ServiceMessage {
 
 }"#;
-    let message=message.replace("{PATTERN}", &capitalize(&name));
-    std::fs::write(PathBuf::from("heleny-proto").join("src").join(format!("{}_service_message.rs",name)), message).expect("写入message枚举失败");
+    let message = message.replace("{PATTERN}", &capitalize(&name));
+    std::fs::write(
+        PathBuf::from("heleny-proto")
+            .join("src")
+            .join(format!("{}_service_message.rs", name)),
+        message,
+    )
+    .expect("写入message枚举失败");
 
-    let message_lib=std::fs::read_to_string(&PathBuf::from("heleny-proto").join("src").join("lib.rs")).expect("读取失败");
-    let message_lib=message_lib+"\npub mod "+name+"_service_message;";
-    std::fs::write(&PathBuf::from("heleny-proto").join("src").join("lib.rs"),message_lib).expect("写入mod声明失败");
+    let message_lib =
+        std::fs::read_to_string(&PathBuf::from("heleny-proto").join("src").join("lib.rs"))
+            .expect("读取失败");
+    let message_lib = message_lib + "\npub mod " + name + "_service_message;";
+    std::fs::write(
+        &PathBuf::from("heleny-proto").join("src").join("lib.rs"),
+        message_lib,
+    )
+    .expect("写入mod声明失败");
 
-    let manifest_path=current_dir.join("heleny-kernel").join("Cargo.toml");
-    let manifest=std::fs::read_to_string(&manifest_path).expect("读取heleny-kernel cargo.toml失败");
-    let line=format!("service_{} ={{ path = \"../service-{}\"}}",&name,&name);
-    let manifest=manifest+"\n"+line.as_str();
-    std::fs::write(manifest_path,manifest).expect("写入库依赖声明失败");
+    let manifest_path = current_dir.join("heleny-kernel").join("Cargo.toml");
+    let manifest =
+        std::fs::read_to_string(&manifest_path).expect("读取heleny-kernel cargo.toml失败");
+    let line = format!("service_{} ={{ path = \"../service-{}\"}}", &name, &name);
+    let manifest = manifest + "\n" + line.as_str();
+    std::fs::write(manifest_path, manifest).expect("写入库依赖声明失败");
 
-    let kernel_path=current_dir.join("heleny-kernel").join("src").join("lib.rs");
-    let lib=std::fs::read_to_string(&kernel_path).expect("读取heleny-kernel lib.rs失败");
-    let line=format!("extern crate service_{};",&name);
-    let lib=lib+"\n"+line.as_str();
-    std::fs::write(&kernel_path,lib).expect("写入库依赖声明失败");
+    let kernel_path = current_dir.join("heleny-kernel").join("src").join("lib.rs");
+    let lib = std::fs::read_to_string(&kernel_path).expect("读取heleny-kernel lib.rs失败");
+    let line = format!("extern crate service_{};", &name);
+    let lib = lib + "\n" + line.as_str();
+    std::fs::write(&kernel_path, lib).expect("写入库依赖声明失败");
 
-    println!("成功新建 {}Service",&capitalize(&name));
-
+    println!("成功新建 {}Service", &capitalize(&name));
 }

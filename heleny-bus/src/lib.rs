@@ -183,13 +183,24 @@ impl BusHandle {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .handle_to_bus
-            .send(BusMessage::AddEndpoint(token, name, role, mpsc_tx.clone(), tx))
+            .send(BusMessage::AddEndpoint(
+                token,
+                name,
+                role,
+                mpsc_tx.clone(),
+                tx,
+            ))
             .await;
         let _ = timeout(Duration::from_secs(5), rx)
             .await
             .context("推送新 Endpoint 信息超时")?
             .context("推送新 Endpoint 信息错误")?;
-        Ok(Endpoint::new(token, self.endpoint_to_bus.clone(), mpsc_rx,buffer))
+        Ok(Endpoint::new(
+            token,
+            self.endpoint_to_bus.clone(),
+            mpsc_rx,
+            buffer,
+        ))
     }
 
     pub fn abort(&self) {

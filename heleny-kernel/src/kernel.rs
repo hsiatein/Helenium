@@ -52,13 +52,24 @@ impl Kernel {
     }
 
     /// 给测试用的, 获取一个 Endpoint
-    pub async fn get_endpoint(&mut self,name:&'static str,buffer:usize,role:ServiceRole)->Result<Endpoint> {
+    pub async fn get_endpoint(
+        &mut self,
+        name: &'static str,
+        buffer: usize,
+        role: ServiceRole,
+    ) -> Result<Endpoint> {
         self.bus.get_endpoint(name, buffer, role).await
     }
 
-    pub async fn wait_for(&mut self,name:&'static str)->oneshot::Receiver<Result<()>>{
-        let (tx,rx)=oneshot::channel();
-        let _=self.endpoint.send(KernelService::name(), Box::new(KernelServiceMessage::WaitFor { name, sender: tx })).await;
+    pub async fn wait_for(&mut self, name: &'static str) -> oneshot::Receiver<Result<()>> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self
+            .endpoint
+            .send(
+                KernelService::name(),
+                Box::new(KernelServiceMessage::WaitFor { name, sender: tx }),
+            )
+            .await;
         rx
     }
 
@@ -67,7 +78,8 @@ impl Kernel {
         // 开始初始化服务
         let _ = self.init_all_services().await;
         // 计时器
-        let (mut from_bus,mut from_sub_endpoint)=self.endpoint.get_rx().expect("Kernel 应当获取到接收端");
+        let (mut from_bus, mut from_sub_endpoint) =
+            self.endpoint.get_rx().expect("Kernel 应当获取到接收端");
         let mut tick_interval = interval(Duration::from_secs(1));
         tick_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
         while self.run {

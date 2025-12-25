@@ -24,13 +24,13 @@ impl Endpoint {
         from_bus: mpsc::Receiver<SignedMessage>,
         sub_buffer: usize,
     ) -> Self {
-        let (to_self,from_sub_endpoint)=mpsc::channel(sub_buffer);
+        let (to_self, from_sub_endpoint) = mpsc::channel(sub_buffer);
         Self {
             token,
             to_bus,
-            from_bus:Some(from_bus),
+            from_bus: Some(from_bus),
             to_self,
-            from_sub_endpoint:Some(from_sub_endpoint),
+            from_sub_endpoint: Some(from_sub_endpoint),
         }
     }
 
@@ -46,9 +46,7 @@ impl Endpoint {
             .map_err(|e| anyhow::anyhow!("发送消息到 Kernel 失败: {}", e))
     }
 
-    pub fn get_sub_endpoint(
-        &self,
-    ) -> mpsc::Sender<Box<dyn AnyMessage>> {
+    pub fn get_sub_endpoint(&self) -> mpsc::Sender<Box<dyn AnyMessage>> {
         self.to_self.clone()
     }
 
@@ -88,16 +86,24 @@ impl Endpoint {
         (self.to_bus.clone(), msg)
     }
 
-    pub fn get_rx(&mut self) -> Result<(mpsc::Receiver<SignedMessage>,mpsc::Receiver<Box<dyn AnyMessage>>)> {
-        let from_bus=self.from_bus.take().context("没有来自 Bus 消息的接收端")?;
-        let from_sub_endpoint=self.from_sub_endpoint.take().context("没有来自 Sub Endpoint 消息的接收端")?;
-        Ok((from_bus,from_sub_endpoint))
+    pub fn get_rx(
+        &mut self,
+    ) -> Result<(
+        mpsc::Receiver<SignedMessage>,
+        mpsc::Receiver<Box<dyn AnyMessage>>,
+    )> {
+        let from_bus = self.from_bus.take().context("没有来自 Bus 消息的接收端")?;
+        let from_sub_endpoint = self
+            .from_sub_endpoint
+            .take()
+            .context("没有来自 Sub Endpoint 消息的接收端")?;
+        Ok((from_bus, from_sub_endpoint))
     }
 
     pub async fn recv(&mut self) -> Result<SignedMessage> {
-        let mut from_bus=self.from_bus.take().context("没有来自 Bus 消息的接收端")?;
-        let msg=from_bus.recv().await.context("接收消息失败");
-        self.from_bus=Some(from_bus);
+        let mut from_bus = self.from_bus.take().context("没有来自 Bus 消息的接收端")?;
+        let msg = from_bus.recv().await.context("接收消息失败");
+        self.from_bus = Some(from_bus);
         msg
     }
 }

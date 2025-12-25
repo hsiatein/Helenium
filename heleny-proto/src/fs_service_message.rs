@@ -1,4 +1,2 @@
 #[derive(Debug)]
-pub enum FsServiceMessage {
-
-}
+pub enum FsServiceMessage {}
