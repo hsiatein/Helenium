@@ -12,9 +12,13 @@ services:
 - [ ] memory_service
 - [ ] db_service
 - [x] config_service
-- [ ] auth_service
+- [x] auth_service
 - [ ] stats_service
-- [ ] bridge_service
+- [ ] bridge_service(给gui提供资源)
+- [ ] storage_service(调用db或fs)
+- [ ] gui_service(提供gui)
+
+
 
 todo:
 - [x] 1.token换成每人都有，权限不同
