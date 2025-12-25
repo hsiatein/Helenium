@@ -5,8 +5,8 @@ use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::{config_service_message::ConfigServiceMessage, message::{AnyMessage}, role::ServiceRole};
 use heleny_service::Service;
-use toml::{Table, map::Map};
-use std::{path::PathBuf};
+use serde_json::{Map,Value};
+use std::{path::PathBuf, str::FromStr};
 use tokio::{fs, task::JoinHandle, time::Instant};
 use tracing::{debug, info, warn};
 
@@ -14,11 +14,11 @@ use tracing::{debug, info, warn};
 pub struct ConfigService {
     endpoint: Endpoint,
     config_path: PathBuf,
-    config_value: Map<String,toml::Value>,
+    config_value: Map<String,Value>,
     last_edit: Option<DateTime<Local>>,
     save_after: f64,
     is_writing: Option<JoinHandle<Result<PathBuf>>>,
-    is_reading: Option<JoinHandle<Result<Map<String,toml::Value>>>>,
+    is_reading: Option<JoinHandle<Result<Map<String,Value>>>>,
 }
 
 #[async_trait]
@@ -33,7 +33,7 @@ impl Service for ConfigService {
                     e
                 );
                 match std::env::current_dir() {
-                    Ok(path) => path.join("Config.toml"),
+                    Ok(path) => path.join("Config.json"),
                     Err(e) => return Err(anyhow::anyhow!("获取当前目录失败: {}", e)),
                 }
             }
@@ -42,12 +42,10 @@ impl Service for ConfigService {
             Ok(string) => string,
             Err(e) => return Err(anyhow::anyhow!("读取配置文件失败: {}", e)),
         };
-        let config_value = match toml::from_str::<Table>(&config_string) {
-            Ok(value) => value,
-            Err(e) => return Err(anyhow::anyhow!("解析配置文件失败: {}", e)),
-        };
+        let config_value=serde_json::Value::from_str(&config_string)?;
+        let config_value=config_value.as_object().context("无法作为 obj")?.clone();
         debug!("config_value: {:?}",config_value);
-        let save_after=config_value.get(Self::name()).context("读取 ConfigService 字段失败")?.get("save_after").context("读取 save_after 字段失败")?.as_float().context("save_after 字段值不是浮点数")?;
+        let save_after=config_value.get(Self::name()).context("读取 ConfigService 字段失败")?.get("SaveAfter").context("读取 save_after 字段失败")?.as_f64().context("save_after 字段值不是浮点数")?;
 
         Ok(Box::new(Self {
             endpoint,
@@ -129,7 +127,7 @@ impl ConfigService {
             }
             None=>{
                 let sub=self.endpoint.get_sub_endpoint();
-                let value=self.config_value.to_string();
+                let value=serde_json::to_string_pretty(&self.config_value).context("配置转字符串错误")?;
                 let tmp_path=self.config_path.to_str().context("转化路径成字符串错误")?.to_string()+".tmp";
                 let handle:tokio::task::JoinHandle<Result<PathBuf>>=tokio::spawn(async move{
                     let result=fs::write(&tmp_path, value).await.context("写入配置文件时出错");
@@ -186,8 +184,8 @@ impl ConfigService {
                             return Err(e);
                         }
                     };
-                    let config_value=match toml::from_str::<Table>(str.as_str()).context("解析配置文件失败"){
-                        Ok(str)=>str,
+                    let config_value=match Value::from_str(str.as_str()).context("解析配置文件失败")?.as_object().context("无法转为 obj") {
+                        Ok(str)=>str.clone(),
                         Err(e)=>{
                             let _=sub.send(Box::new(WorkStatus::ReadOver)).await;
                             return Err(e);
@@ -207,4 +205,10 @@ impl ConfigService {
 enum WorkStatus {
     WriteOver,
     ReadOver,
+}
+
+#[cfg(test)]
+mod tests{
+
+    
 }

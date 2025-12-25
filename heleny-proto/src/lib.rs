@@ -7,3 +7,6 @@ pub mod message;
 pub mod name;
 pub mod role;
 pub mod service_handle;
+
+pub mod fs_service_message;
+pub mod auth_service_message;

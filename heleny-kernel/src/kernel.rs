@@ -51,6 +51,17 @@ impl Kernel {
         Ok(kernel)
     }
 
+    /// 给测试用的, 获取一个 Endpoint
+    pub async fn get_endpoint(&mut self,name:&'static str,buffer:usize,role:ServiceRole)->Result<Endpoint> {
+        self.bus.get_endpoint(name, buffer, role).await
+    }
+
+    pub async fn wait_for(&mut self,name:&'static str)->oneshot::Receiver<Result<()>>{
+        let (tx,rx)=oneshot::channel();
+        let _=self.endpoint.send(KernelService::name(), Box::new(KernelServiceMessage::WaitFor { name, sender: tx })).await;
+        rx
+    }
+
     /// 运行内核
     pub async fn run(&mut self) {
         // 开始初始化服务
@@ -171,11 +182,6 @@ impl Kernel {
         self.endpoint.send(KERNEL_NAME, Box::new(payload)).await
     }
 
-    /// 发送消息给 Kernel(自己)
-    async fn send_kernel_command(&self, payload: KernelMessage) -> Result<()> {
-        self.endpoint.send(KERNEL_NAME, Box::new(payload)).await
-    }
-
     // 关机
     async fn shutdown(&mut self, stage: ShutdownStage) -> Result<()> {
         match stage {
@@ -267,9 +273,9 @@ impl Kernel {
     /// 处理 Tick
     async fn handle_tick(&mut self) -> Result<()> {
         self.time_tick = self.time_tick + 1;
-        if self.time_tick == 2 {
-            self.send_kernel_command(KernelMessage::Shutdown).await?;
-        }
+        // if self.time_tick == 2 {
+        //     self.send_kernel_command(KernelMessage::Shutdown).await?;
+        // }
         debug!("{:?}", KernelHealth::get_mut(&self.health));
         Ok(())
     }

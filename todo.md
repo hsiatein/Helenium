@@ -14,6 +14,7 @@ services:
 - [x] config_service
 - [ ] auth_service
 - [ ] stats_service
+- [ ] bridge_service
 
 todo:
 - [x] 1.token换成每人都有，权限不同
@@ -36,3 +37,4 @@ todo:
 - [x] 18.bus管理tokens
 - [x] 19.bus单独一个线程转发
 - [ ] 20.广播变量状态变化给依赖自己的服务
+- [ ] 21.心跳加随机延迟来错峰

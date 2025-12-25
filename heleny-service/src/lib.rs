@@ -9,13 +9,13 @@ use heleny_proto::service_handle::ServiceHandle;
 use heleny_proto::{common_message::CommonMessage, message::AnyMessage};
 use tokio::sync::mpsc;
 use tokio::time::{Instant, Interval, MissedTickBehavior, interval};
-use tracing::{Instrument, debug, error, info_span, warn};
+use tracing::{Instrument,error, info_span, warn};
 
 /// 服务 trait，定义了服务的基本行为
 #[async_trait]
 pub trait Service: 'static + HasEndpoint + HasName + Send {
-    type MessageType: AnyMessage + Send + Sync;
     // 需要实现
+    type MessageType: AnyMessage + Send + Sync;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>>;
     async fn handle(
         &mut self,
@@ -118,7 +118,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
     fn downcast(
         msg: Box<dyn AnyMessage>,
     ) -> Result<Result<Box<Self::MessageType>, Box<CommonMessage>>> {
-        debug!("尝试转换: {:?}", msg);
+        // debug!("尝试转换: {:?}", msg);
         let msg = match msg.as_any().downcast::<Self::MessageType>() {
             Ok(msg) => return Ok(Ok(msg)),
             Err(msg) => msg,
@@ -142,6 +142,12 @@ pub trait HasName {
 }
 
 pub struct ServiceFactory {
+    pub name: &'static str,
+    pub deps: &'static [&'static str],
+    pub launch: fn(Endpoint) -> Result<ServiceHandle>,
+}
+
+pub struct ServiceFactoryVec {
     pub name: &'static str,
     pub deps: Vec<&'static str>,
     pub launch: fn(Endpoint) -> Result<ServiceHandle>,

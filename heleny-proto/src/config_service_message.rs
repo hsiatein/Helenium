@@ -1,13 +1,13 @@
 use tokio::sync::oneshot;
+use serde_json::Value;
 
-/// path的各个键用.分割, 如data["a"]["b"]["c"] => path="a.b.c"
 #[derive(Debug)]
 pub enum ConfigServiceMessage {
     Get {
-        sender: oneshot::Sender<Option<toml::Value>>,
+        sender: oneshot::Sender<Option<Value>>,
     },
     Set {
-        value: toml::Value,
+        value: Value,
     },
     Update,
     Persist,

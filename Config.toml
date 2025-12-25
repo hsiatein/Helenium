@@ -1,5 +1,0 @@
-[Kernel]
-gui=false
-
-[ConfigService]
-save_after = 10.0

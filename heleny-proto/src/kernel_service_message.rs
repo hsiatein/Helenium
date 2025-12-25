@@ -2,6 +2,7 @@ use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
 };
+use anyhow::Result;
 
 use tokio::sync::oneshot;
 
@@ -27,4 +28,5 @@ pub enum KernelServiceMessage {
     // Standard
     GetHealth(oneshot::Sender<KernelHealth>),
     UploadStatus(ServiceSignal),
+    WaitFor{name:&'static str,sender:oneshot::Sender<Result<()>>}
 }

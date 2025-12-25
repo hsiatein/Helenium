@@ -58,8 +58,9 @@
 
 ### AI使用情况
 
-本项目单元测试大量使用AI, 在单元测试以外使用AI生成的还有:
+本项目测试大多数使用AI生成, 在测试以外使用AI生成的还有:
 1. heleny-utils::init_tracing函数 (6-31行) 为AI生成.
+2. heleny-macros::base_service宏 (1-63行) 为AI生成.
 
 <p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 

@@ -51,7 +51,7 @@ pub fn base_service(args: TokenStream, input: TokenStream) -> TokenStream {
         inventory::submit! {
             heleny_service::ServiceFactory {
                 name: #name_str,
-                deps: vec![#(#deps),*],
+                deps: &[ #(#deps),* ],
                 launch: |ep| {
                     #name::start(ep)
                 }

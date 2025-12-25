@@ -18,3 +18,5 @@ heleny_proto ={ path = "../heleny-proto"}
 service_config ={ path = "../service-config"}
 tracing = { workspace = true }
 chrono = {workspace = true}
+service_fs ={ path = "../service-fs"}
+service_auth ={ path = "../service-auth"}

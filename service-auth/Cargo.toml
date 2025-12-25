@@ -1,5 +1,5 @@
 [package]
-name = "service_config"
+name = "service_auth"
 version = "0.1.0"
 edition = "2024"
 
@@ -14,6 +14,10 @@ anyhow = {workspace = true}
 tracing = {workspace = true}
 tokio = {workspace = true}
 
-uuid = {workspace = true}
-chrono = {workspace = true}
+serde = {workspace = true}
+rand = {workspace = true}
+ed25519-dalek = {workspace = true}
 serde_json = {workspace = true}
+
+[dev-dependencies]
+dotenvy = {workspace = true}

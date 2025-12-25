@@ -15,24 +15,25 @@ use heleny_proto::{
     kernel_service_message::ServiceSignal, message::SignedMessage, name::KERNEL_NAME,
     role::ServiceRole,
 };
-use heleny_service::{Service, ServiceFactory};
+use heleny_service::{Service, ServiceFactory, ServiceFactoryVec};
 use inventory;
 use tokio::{sync::oneshot, time::{Instant, timeout}};
 
 use crate::command::AdminCommand;
 use heleny_proto::health::HealthStatus;
 use heleny_proto::health::KernelHealth;
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
 mod cal_deps;
 
 #[base_service(deps=[])]
 pub struct KernelService {
     endpoint: Endpoint,
-    service_factories: Vec<ServiceFactory>,
+    service_factories: Vec<ServiceFactoryVec>,
     deps_relation: cal_deps::DepsRelation,
     services: Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
     health: Arc<Mutex<KernelHealth>>,
+    is_waiting: HashMap<&'static str, Vec<oneshot::Sender<Result<()>>>>,
 }
 
 #[async_trait]
@@ -40,14 +41,14 @@ impl Service for KernelService {
     type MessageType = KernelServiceMessage;
     async fn new(mut endpoint: Endpoint) -> Result<Box<Self>> {
         // 初始化服务工厂
-        let service_factories: Vec<ServiceFactory> = inventory::iter::<ServiceFactory>
+        let service_factories: Vec<ServiceFactoryVec> = inventory::iter::<ServiceFactory>
             .into_iter()
             .map(|ServiceFactory { name, deps, launch }| {
-                let mut deps = deps.clone();
+                let mut deps = Vec::from(*deps);
                 if *name != KernelService::name() && !deps.contains(&KernelService::name()) {
                     deps.push(KernelService::name());
                 }
-                ServiceFactory {
+                ServiceFactoryVec {
                     name,
                     deps,
                     launch: launch.clone(),
@@ -105,6 +106,7 @@ impl Service for KernelService {
             deps_relation,
             services,
             health,
+            is_waiting:HashMap::new(),
         }))
     }
     async fn handle(
@@ -140,6 +142,7 @@ impl Service for KernelService {
             }
             (KernelServiceMessage::UploadStatus(status), _) => match status {
                 ServiceSignal::Alive => {
+                    self.notify(name);
                     KernelHealth::get_mut(&self.health).set_alive(name);
                 }
                 ServiceSignal::InitFail => {
@@ -161,6 +164,7 @@ impl Service for KernelService {
                     services.remove(name);
                 }
                 ServiceSignal::Ready => {
+                    self.notify(name);
                     if name == Self::name() {
                         return Ok(());
                     }
@@ -202,6 +206,33 @@ impl Service for KernelService {
                     }
                 }
             },
+            (KernelServiceMessage::WaitFor { name, sender },_)=>{
+                debug!("开始等待: {}",name);
+                let health=match KernelHealth::get_mut(&self.health).services.get(name){
+                    Some(service)=>{
+                        service.0.clone()
+                    }
+                    None=>{
+                        let _=sender.send(Err(anyhow::anyhow!("没有这个服务")));
+                        return Err(anyhow::anyhow!("等待 {} 失败: 没有这个服务",name));
+                    }
+                };
+                match health {
+                    HealthStatus::Healthy=>{
+                        let _=sender.send(Ok(()));
+                    }
+                    _=>{
+                        match self.is_waiting.get_mut(name) {
+                            Some(set)=>{
+                                set.push(sender)
+                            }
+                            None=>{
+                                self.is_waiting.insert(name, vec![sender]);
+                            }
+                        }
+                    }
+                }
+            }
             _ => {}
         }
         Ok(())
@@ -210,7 +241,7 @@ impl Service for KernelService {
         info!("{} 已关闭", Self::name())
     }
 
-    async fn handle_sub_endpoint(&mut self, _msg:Box<(dyn AnyMessage)>) -> Result<()>{
+    async fn handle_sub_endpoint(&mut self, _msg:Box<dyn AnyMessage>) -> Result<()>{
         Ok(())
     }
     async fn handle_tick(&mut self, _tick:Instant) -> Result<()>{
@@ -354,5 +385,14 @@ impl KernelService {
                 .get(name)
                 .is_some_and(|(status, _)| *status == HealthStatus::Healthy)
         })
+    }
+
+    /// 
+    fn notify(&mut self, name:&'static str){
+        if let Some(set) = self.is_waiting.remove(name) {
+            set.into_iter().for_each(|sender|{
+                let _=sender.send(Ok(()));
+            });
+        }
     }
 }
