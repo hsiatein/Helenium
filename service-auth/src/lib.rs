@@ -108,7 +108,11 @@ impl Service for AuthService {
         }
         Ok(())
     }
-    async fn stop(&mut self) {}
+    async fn stop(&mut self) {
+        if let Some(handle) = self.is_updating.take() {
+            handle.abort();
+        }
+    }
     async fn handle_sub_endpoint(&mut self, msg: Box<dyn AnyMessage>) -> Result<()> {
         let msg = downcast::<WorkerMessage>(msg)?;
         match msg {
@@ -133,11 +137,9 @@ impl AuthService {
             .any(|key| key.verify_strict(&msg, &signature).is_ok())
     }
     async fn handle_update(&mut self) -> Result<()> {
-        if let Some(is_updating) = self.is_updating.take() {
+        if let Some(is_updating) = &self.is_updating {
             if is_updating.is_finished() {
                 self.post_update().await?;
-            } else {
-                is_updating.abort();
             }
         }
         let sub_endpoint = self.endpoint.get_sub_endpoint();
