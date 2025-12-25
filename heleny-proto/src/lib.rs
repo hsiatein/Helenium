@@ -10,3 +10,6 @@ pub mod service_handle;
 
 pub mod auth_service_message;
 pub mod fs_service_message;
+
+pub mod bridge_service_message;
+pub mod gui_service_message;

@@ -1,4 +1,4 @@
 #!/bin/bash
-name="auth"
+name="bridge"
 
 target/debug/new_service ${name}

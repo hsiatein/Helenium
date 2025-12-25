@@ -273,6 +273,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "heleny-frontend"
+version = "0.1.0"
+
+[[package]]
 name = "heleny_bus"
 version = "0.1.0"
 dependencies = [
@@ -298,8 +302,10 @@ dependencies = [
  "serde",
  "serde_json",
  "service_auth",
+ "service_bridge",
  "service_config",
  "service_fs",
+ "service_gui",
  "tokio",
  "tracing",
  "uuid",
@@ -673,6 +679,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "service_bridge"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "heleny_bus",
+ "heleny_macros",
+ "heleny_proto",
+ "heleny_service",
+ "inventory",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "service_config"
 version = "0.1.0"
 dependencies = [
@@ -692,6 +713,21 @@ dependencies = [
 
 [[package]]
 name = "service_fs"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "heleny_bus",
+ "heleny_macros",
+ "heleny_proto",
+ "heleny_service",
+ "inventory",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "service_gui"
 version = "0.1.0"
 dependencies = [
  "anyhow",
