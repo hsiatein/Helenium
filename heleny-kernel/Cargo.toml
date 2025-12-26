@@ -23,3 +23,5 @@ service_auth ={ path = "../service-auth"}
 service_bridge ={ path = "../service-bridge"}
 service_gui ={ path = "../service-gui"}
 service_stats ={ path = "../service-stats"}
+service_user ={ path = "../service-user"}
+service_hub ={ path = "../service-hub"}

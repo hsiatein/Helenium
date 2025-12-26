@@ -1,0 +1,106 @@
+use std::collections::{HashMap, HashSet};
+
+use anyhow::{Result};
+use async_trait::async_trait;
+use heleny_bus::endpoint::{Endpoint};
+use heleny_macros::base_service;
+use heleny_service::HubServiceMessage;
+use heleny_proto::message::AnyMessage;
+use heleny_proto::resource::Resource;
+use heleny_proto::role::ServiceRole;
+use heleny_service::Service;
+use tokio::time::Instant;
+use tracing::info;
+
+use crate::provider::Provider;
+
+mod provider;
+
+#[base_service(deps=[])]
+pub struct HubService {
+    endpoint: Endpoint,
+    // 资源提供者
+    providers: HashMap<String, Provider>,
+    // 正在等待资源的服务
+    pending: HashMap<String,HashSet<String>>,
+}
+
+#[derive(Debug)]
+enum _WorkerMessage {}
+
+#[async_trait]
+impl Service for HubService {
+    type MessageType = HubServiceMessage;
+    async fn new(endpoint: Endpoint) -> Result<Box<Self>> {
+        let instance = Self {
+            endpoint,
+            providers: HashMap::new(),
+            pending: HashMap::new(),
+        };
+        Ok(Box::new(instance))
+    }
+    async fn handle(
+        &mut self,
+        name: String,
+        _role: ServiceRole,
+        msg: HubServiceMessage,
+    ) -> Result<()> {
+        match msg {
+            HubServiceMessage::Publish {
+                provider,
+                resource_name,
+                receiver,
+            } => match self.providers.get_mut(&resource_name) {
+                Some(resource) if resource.name != provider => {
+                    Err(anyhow::anyhow!("已经有服务注册了"))
+                }
+                _ => {
+                    let endpoint=self.endpoint.create_sender_endpoint();
+                    let subsribers=match self.pending.remove(&resource_name){
+                        Some(subsribers)=>subsribers,
+                        None=>HashSet::new(),
+                    };
+                    self.providers
+                        .insert(resource_name.clone(), Provider::new(provider,resource_name.clone(),endpoint, receiver,subsribers)?);
+                    info!("{} 已发布",resource_name);
+                    Ok(())
+                }
+            },
+            HubServiceMessage::Subscribe {
+                resource_name,
+            } => {
+                match self.providers.get_mut(&resource_name) {
+                    Some(provider)=>{
+                        provider.subscribe(name).await
+                    }
+                    None=>{
+                        self.pending.entry(resource_name).or_insert(HashSet::new()).insert(name);
+                        Ok(())
+                    }
+                }
+            }
+            HubServiceMessage::Unsubscribe { resource_name } => {
+                match self.providers.get_mut(&resource_name) {
+                    Some(provider)=>{
+                        provider.unsubscribe(name).await
+                    }
+                    None=>{
+                        Ok(())
+                    }
+                }
+            }
+        }
+    }
+    async fn stop(&mut self) {}
+    async fn handle_sub_endpoint(&mut self, _msg: Box<dyn AnyMessage>) -> Result<()> {
+        Ok(())
+    }
+    async fn handle_tick(&mut self, _tick: Instant) -> Result<()> {
+        Ok(())
+    }
+    async fn handle_resource(&mut self, _resource: Resource) -> Result<()> {
+        Ok(())
+    }
+}
+
+impl HubService {}

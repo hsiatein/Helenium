@@ -1,7 +1,7 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex, MutexGuard},
-};
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::sync::MutexGuard;
 
 use chrono::Local;
 use tracing::warn;
@@ -18,7 +18,7 @@ pub enum HealthStatus {
 #[derive(Clone, Debug)]
 pub struct KernelHealth {
     pub kernel: HealthStatus,
-    pub services: HashMap<&'static str, (HealthStatus, Option<chrono::prelude::DateTime<Local>>)>,
+    pub services: HashMap<String, (HealthStatus, Option<chrono::prelude::DateTime<Local>>)>,
 }
 
 impl KernelHealth {
@@ -40,7 +40,7 @@ impl KernelHealth {
         }
     }
 
-    pub fn set_alive(&mut self, name: &'static str) {
+    pub fn set_alive(&mut self, name: &str) {
         let (status, time) = match self.services.get_mut(name) {
             Some(s) => s,
             None => {
@@ -52,7 +52,7 @@ impl KernelHealth {
         *time = Some(Local::now());
     }
 
-    pub fn set_dead(&mut self, name: &'static str) {
+    pub fn set_dead(&mut self, name: &str) {
         let (status, time) = match self.services.get_mut(name) {
             Some(s) => s,
             None => {

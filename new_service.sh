@@ -1,4 +1,4 @@
 #!/bin/bash
-name="bridge"
+name="hub"
 
-target/debug/new_service ${name}
+./target/debug/new_service ${name}

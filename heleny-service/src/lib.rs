@@ -1,18 +1,31 @@
 use std::time::Duration;
 
+use anyhow::Context;
 use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
+use heleny_proto::message::AnyMessage;
 use heleny_proto::message::SignedMessage;
+use heleny_proto::name::KERNEL_NAME;
+use heleny_proto::name::KERNEL_SERVICE;
+use heleny_proto::resource::Resource;
 use heleny_proto::role::ServiceRole;
 use heleny_proto::service_handle::ServiceHandle;
-use heleny_proto::{common_message::CommonMessage, message::AnyMessage};
 use tokio::sync::mpsc;
-use tokio::time::{Instant, Interval, MissedTickBehavior, interval};
-use tracing::{Instrument, error, info_span, warn};
+use tokio::sync::oneshot;
+use tokio::time::Instant;
+use tokio::time::Interval;
+use tokio::time::MissedTickBehavior;
+use tokio::time::interval;
+use tracing::Instrument;
+use tracing::error;
+use tracing::info_span;
+use tracing::warn;
 
 mod utils;
 pub use utils::*;
+mod messages;
+pub use messages::*;
 
 /// 服务 trait，定义了服务的基本行为
 #[async_trait]
@@ -22,19 +35,20 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
     async fn new(endpoint: Endpoint) -> Result<Box<Self>>;
     async fn handle(
         &mut self,
-        name: &'static str,
+        name: String,
         role: ServiceRole,
-        msg: Box<Self::MessageType>,
+        msg: Self::MessageType,
     ) -> Result<()>;
     async fn stop(&mut self);
     async fn handle_sub_endpoint(&mut self, msg: Box<dyn AnyMessage>) -> Result<()>;
     async fn handle_tick(&mut self, tick: Instant) -> Result<()>;
+    async fn handle_resource(&mut self, resource: Resource) -> Result<()>;
     // 默认实现
     fn start(endpoint: Endpoint) -> Result<ServiceHandle> {
         let span = info_span!("", Name = %Self::name());
         let handle = tokio::spawn(
             async move {
-                let (sender, fail_msg) = endpoint.send_init_fail();
+                let (sender, fail_msg) = endpoint.send_once(Box::new(KernelServiceMessage::UploadStatus(ServiceSignal::InitFail)));
                 let mut service = match Self::new(endpoint).await {
                     Ok(service) => service,
                     Err(e) => {
@@ -43,10 +57,10 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                         return Err(anyhow::anyhow!("新建服务实例失败, 无法开始: {}", e));
                     }
                 };
-                let (from_bus, from_sub_endpoint) = service.endpoint().get_rx()?;
+                let (from_bus, from_sub_endpoint) = service.endpoint_mut().get_rx()?;
                 let mut tick_interval = interval(Duration::from_secs(1));
                 tick_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
-                service.endpoint().send_ready().await; // 通知 KernelService 自己初始化完成
+                service.send_ready().await; // 通知 KernelService 自己初始化完成
                 service
                     .launch(from_bus, from_sub_endpoint, tick_interval)
                     .await; // 启动循环
@@ -54,7 +68,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
             }
             .instrument(span),
         );
-        Ok(ServiceHandle::new(Self::name(), handle))
+        Ok(ServiceHandle::new(Self::name().to_string(), handle))
     }
     /// 控制 tokio::select! 的 loop 循环
     async fn launch(
@@ -76,7 +90,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                     };
                 }
                 tick = tick_interval.tick()=>{
-                    self.endpoint().send_alive().await;
+                    self.send_alive().await;
                     if let Err(e) = self.handle_tick(tick).await{
                         warn!("处理 Tick 错误: {}",e)
                     };
@@ -95,7 +109,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
         };
         match payload {
             Ok(message) => {
-                if let Err(e) = self.handle(msg.name, msg.role, message).await {
+                if let Err(e) = self.handle(msg.name, msg.role, *message).await {
                     warn!("处理消息时出错: {}", e);
                 }
             }
@@ -108,7 +122,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
     /// 处理通用信息
     async fn handle_common_message(
         &mut self,
-        _name: &'static str,
+        _name: String,
         role: ServiceRole,
         message: Box<CommonMessage>,
         run: &mut bool,
@@ -120,8 +134,13 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                     return;
                 }
                 self.stop().await;
-                self.endpoint().send_terminate().await;
+                self.send_terminate().await;
                 *run = false;
+            }
+            CommonMessage::Resource(resource) => {
+                if let Err(e) = self.handle_resource(resource).await {
+                    warn!("处理资源失败: {}", e)
+                }
             }
         }
     }
@@ -141,10 +160,43 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
             )),
         }
     }
+    async fn send_alive(&self) {
+        let _ = self.endpoint()
+            .send(
+                KERNEL_SERVICE,
+                KernelServiceMessage::UploadStatus(ServiceSignal::Alive),
+            )
+            .await;
+    }
+    async fn send_ready(&self) {
+        let _ = self.endpoint()
+            .send(
+                KERNEL_SERVICE,
+                KernelServiceMessage::UploadStatus(ServiceSignal::Ready),
+            )
+            .await;
+    }
+
+    async fn send_terminate(&self) {
+        let _ = self.endpoint()
+            .send(
+                KERNEL_SERVICE,
+                KernelServiceMessage::UploadStatus(ServiceSignal::Terminate),
+            )
+            .await;
+    }
+
+    async fn get_endpoint_from_kernel(&self,name:&str)->Result<Endpoint>{
+        let (tx,rx)=oneshot::channel();
+        let _ = self.endpoint().send(KERNEL_NAME, AdminCommand::NewEndpoint { name: name.to_string(), feedback: tx }).await;
+        rx.await.context("获取 Endpoint 错误")
+    }
+
 }
 
-pub trait HasEndpoint {
-    fn endpoint(&mut self) -> &mut Endpoint;
+pub trait HasEndpoint:Sync {
+    fn endpoint_mut(&mut self) -> &mut Endpoint;
+    fn endpoint(&self) -> &Endpoint;
 }
 
 pub trait HasName {
@@ -165,7 +217,7 @@ pub struct ServiceFactoryVec {
 
 inventory::collect!(ServiceFactory);
 
-pub fn get_factory(name: &'static str) -> Option<&'static ServiceFactory> {
+pub fn get_factory(name: &str) -> Option<&'static ServiceFactory> {
     inventory::iter::<ServiceFactory>
         .into_iter()
         .find(|&f| f.name == name)

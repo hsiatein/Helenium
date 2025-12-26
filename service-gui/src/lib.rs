@@ -2,13 +2,14 @@ use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::{
-    gui_service_message::GuiServiceMessage, message::AnyMessage, role::ServiceRole,
-};
+use heleny_service::GuiServiceMessage;
+use heleny_proto::message::AnyMessage;
+use heleny_proto::resource::Resource;
+use heleny_proto::role::ServiceRole;
 use heleny_service::Service;
 use tokio::time::Instant;
 
-#[base_service(deps=[])]
+#[base_service(deps=["UserService"])]
 pub struct GuiService {
     endpoint: Endpoint,
 }
@@ -25,9 +26,9 @@ impl Service for GuiService {
     }
     async fn handle(
         &mut self,
-        name: &'static str,
+        name: String,
         role: ServiceRole,
-        msg: Box<Self::MessageType>,
+        msg: GuiServiceMessage,
     ) -> Result<()> {
         Ok(())
     }
@@ -36,6 +37,9 @@ impl Service for GuiService {
         Ok(())
     }
     async fn handle_tick(&mut self, tick: Instant) -> Result<()> {
+        Ok(())
+    }
+    async fn handle_resource(&mut self, _resource: Resource) -> Result<()> {
         Ok(())
     }
 }

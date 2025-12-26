@@ -15,10 +15,11 @@ services:
 - [x] auth_service
 - [ ] stats_service
   - [x] 实现了最基础的Bus总流量统计用来测试
-- [ ] bridge_service(给gui提供资源)
+- [ ] bridge_service(给外部服务例如外部GUI提供资源)
+  - [ ] 从Bus获取代理endpoint
 - [ ] storage_service(调用db或fs)
 - [ ] gui_service(提供gui)
-
+- [ ] user_service(决定user获取什么资源并推送)
 
 
 todo:

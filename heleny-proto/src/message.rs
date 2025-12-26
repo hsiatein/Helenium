@@ -1,8 +1,7 @@
 use anyhow::Result;
-use std::{
-    any::{self, Any},
-    fmt::Debug,
-};
+use std::any::Any;
+use std::any::{self};
+use std::fmt::Debug;
 use uuid::Uuid;
 
 use crate::role::ServiceRole;
@@ -10,13 +9,13 @@ use crate::role::ServiceRole;
 /// Token消息 struct，定义Token消息的字段
 #[derive(Debug)]
 pub struct TokenMessage {
-    pub target: &'static str,
+    pub target: String,
     pub token: Uuid,
     pub payload: Box<dyn AnyMessage>,
 }
 
 impl TokenMessage {
-    pub fn new(target: &'static str, token: Uuid, payload: Box<dyn AnyMessage>) -> Self {
+    pub fn new(target: String, token: Uuid, payload: Box<dyn AnyMessage>) -> Self {
         Self {
             target,
             token,
@@ -24,7 +23,7 @@ impl TokenMessage {
         }
     }
 
-    pub fn sign(self, name: &'static str, role: ServiceRole) -> SignedMessage {
+    pub fn sign(self, name: String, role: ServiceRole) -> SignedMessage {
         SignedMessage::new(self.target, name, role, self.payload)
     }
 }
@@ -32,16 +31,16 @@ impl TokenMessage {
 /// 消息 struct，定义消息的字段
 #[derive(Debug)]
 pub struct SignedMessage {
-    pub target: &'static str,
-    pub name: &'static str,
+    pub target: String,
+    pub name: String,
     pub role: ServiceRole,
     pub payload: Box<dyn AnyMessage>,
 }
 
 impl SignedMessage {
     pub fn new(
-        target: &'static str,
-        name: &'static str,
+        target: String,
+        name: String,
         role: ServiceRole,
         payload: Box<dyn AnyMessage>,
     ) -> Self {

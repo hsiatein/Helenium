@@ -306,7 +306,9 @@ dependencies = [
  "service_config",
  "service_fs",
  "service_gui",
+ "service_hub",
  "service_stats",
+ "service_user",
  "tokio",
  "tracing",
  "uuid",
@@ -327,7 +329,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "ed25519-dalek",
  "serde_json",
  "tokio",
  "tracing",
@@ -352,6 +353,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "ed25519-dalek",
  "heleny_bus",
  "heleny_proto",
  "inventory",
@@ -745,6 +747,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "service_hub"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "heleny_bus",
+ "heleny_macros",
+ "heleny_proto",
+ "heleny_service",
+ "inventory",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "service_stats"
 version = "0.1.0"
 dependencies = [
@@ -757,6 +777,21 @@ dependencies = [
  "inventory",
  "serde",
  "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "service_user"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "heleny_bus",
+ "heleny_macros",
+ "heleny_proto",
+ "heleny_service",
+ "inventory",
  "tokio",
  "tracing",
 ]

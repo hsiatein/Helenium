@@ -3,12 +3,17 @@ use heleny_bus::endpoint::Endpoint;
 use heleny_proto::message::AnyMessage;
 use tokio::sync::oneshot;
 
-use heleny_proto::kernel_message::KernelMessage;
+use crate::KernelMessage;
 
 #[derive(Debug)]
 pub enum AdminCommand {
-    NewEndpoint(&'static str, oneshot::Sender<Endpoint>),
+    NewEndpoint{name:String, feedback:oneshot::Sender<Endpoint>},
     Shutdown(ShutdownStage),
+    NewProxyEndpoint{
+        name:String,
+        proxy:String,
+        feedback:oneshot::Sender<Endpoint>,
+    }
 }
 
 #[derive(Debug)]
@@ -18,7 +23,7 @@ pub enum ShutdownStage {
     StopKernel,
 }
 
-pub fn downcast(msg: Box<dyn AnyMessage>) -> Result<Result<Box<AdminCommand>, Box<KernelMessage>>> {
+pub fn kernel_downcast(msg: Box<dyn AnyMessage>) -> Result<Result<Box<AdminCommand>, Box<KernelMessage>>> {
     let command = match msg.as_any().downcast::<AdminCommand>() {
         Ok(command) => return Ok(Ok(command)),
         Err(command) => command,

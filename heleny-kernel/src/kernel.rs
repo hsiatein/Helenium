@@ -1,28 +1,40 @@
-use crate::command::{self, AdminCommand, ShutdownStage};
 use crate::health::new_kernel_health;
-use crate::service::KernelService;
-use anyhow::{Result, anyhow};
-use heleny_bus::{self, BusHandle, endpoint::Endpoint};
-use heleny_proto::common_message::CommonMessage;
+use anyhow::Result;
+use anyhow::anyhow;
+use heleny_bus::BusHandle;
+use heleny_bus::endpoint::Endpoint;
+use heleny_bus::{self};
+use heleny_proto::name::KERNEL_SERVICE;
+use heleny_service::CommonMessage;
 use heleny_proto::health::KernelHealth;
-use heleny_proto::kernel_message::KernelMessage;
-use heleny_proto::kernel_service_message::KernelServiceMessage;
-use heleny_proto::message::{AnyMessage, SignedMessage};
+use heleny_service::KernelMessage;
+use heleny_service::KernelServiceMessage;
+use heleny_proto::message::AnyMessage;
+use heleny_proto::message::SignedMessage;
 use heleny_proto::name::KERNEL_NAME;
 use heleny_proto::role::ServiceRole;
 use heleny_proto::service_handle::ServiceHandle;
-use heleny_service::{HasName, get_factory};
+use heleny_service::AdminCommand;
+use heleny_service::ShutdownStage;
+use heleny_service::kernel_downcast;
+use heleny_service::{self};
+use heleny_service::get_factory;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use std::sync::Mutex;
 use std::time::Duration;
 use tokio::sync::oneshot;
-use tokio::time::{MissedTickBehavior, interval, timeout};
-use tracing::{debug, info, warn};
+use tokio::time::MissedTickBehavior;
+use tokio::time::interval;
+use tokio::time::timeout;
+use tracing::debug;
+use tracing::info;
+use tracing::warn;
 
 pub struct Kernel {
     bus: BusHandle,
     endpoint: Endpoint,
-    services: Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
+    services: Arc<Mutex<HashMap<String, ServiceHandle>>>,
     health: Arc<Mutex<KernelHealth>>,
 
     service_buffer: usize,
@@ -30,11 +42,13 @@ pub struct Kernel {
     time_tick: usize,
 }
 
+static ADMIN_SERVICE: [&'static str; 2] = ["KernelService", "UserService"];
+
 impl Kernel {
     pub async fn new(kernel_buffer: usize, service_buffer: usize) -> Result<Self> {
         let mut bus = BusHandle::new(kernel_buffer);
         let endpoint = bus
-            .get_endpoint(KERNEL_NAME, service_buffer, ServiceRole::System)
+            .get_endpoint(KERNEL_NAME.to_string(), service_buffer, ServiceRole::System)
             .await?;
         let mut kernel = Self {
             bus,
@@ -54,20 +68,20 @@ impl Kernel {
     /// 给测试用的, 获取一个 Endpoint
     pub async fn get_endpoint(
         &mut self,
-        name: &'static str,
+        name: String,
         buffer: usize,
         role: ServiceRole,
     ) -> Result<Endpoint> {
         self.bus.get_endpoint(name, buffer, role).await
     }
 
-    pub async fn wait_for(&mut self, name: &'static str) -> oneshot::Receiver<Result<()>> {
+    pub async fn wait_for(&mut self, name: String) -> oneshot::Receiver<Result<()>> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .endpoint
             .send(
-                KernelService::name(),
-                Box::new(KernelServiceMessage::WaitFor { name, sender: tx }),
+                KERNEL_SERVICE,
+                KernelServiceMessage::WaitFor { name, sender: tx },
             )
             .await;
         rx
@@ -105,7 +119,7 @@ impl Kernel {
 
     /// 处理已签名消息
     async fn handle_msg(&mut self, msg: SignedMessage) -> Result<()> {
-        let command = command::downcast(msg.payload)?;
+        let command = kernel_downcast(msg.payload)?;
         match command {
             Ok(command) => match msg.role {
                 ServiceRole::System => self.handle_admin(*command, msg.name, msg.role).await,
@@ -124,7 +138,7 @@ impl Kernel {
     async fn init_necessary_services(&mut self) -> Result<()> {
         let _ = self
             .init_service(
-                KernelService::name(),
+                KERNEL_SERVICE.to_string(),
                 ServiceRole::System,
                 Some(Box::new(KernelServiceMessage::InitParams(
                     self.health.clone(),
@@ -143,22 +157,22 @@ impl Kernel {
     /// 初始化一个服务
     async fn init_service(
         &mut self,
-        name: &'static str,
+        name: String,
         role: ServiceRole,
         init_message: Option<Box<dyn AnyMessage>>,
     ) -> Result<()> {
         info!("初始化 {} 的 Endpoint", name);
         let endpoint = self
             .bus
-            .get_endpoint(name, self.service_buffer, role)
+            .get_endpoint(name.clone(), self.service_buffer, role)
             .await?;
         if let Some(msg) = init_message {
             info!("发送 {} 的初始化参数", name);
-            let _ = self.endpoint.send(name, msg).await;
+            let _ = self.endpoint.send_box(&name, msg).await;
             // let a=endpoint.recv().await;
         }
         info!("寻找 {} 的工厂函数", name);
-        let f = match get_factory(name) {
+        let f = match get_factory(&name) {
             Some(f) if f.deps.len() == 0 => f,
             Some(_) => {
                 return Err(anyhow::anyhow!("内核不能直接初始化有依赖的服务: {}", name));
@@ -185,13 +199,13 @@ impl Kernel {
     /// 发送消息给 KernelService
     async fn send_kernel_message(&self, payload: KernelServiceMessage) -> Result<()> {
         self.endpoint
-            .send(KernelService::name(), Box::new(payload))
+            .send(KERNEL_SERVICE, payload)
             .await
     }
 
     /// 发送 Admin 消息给 Kernel(自己)
     async fn send_admin_command(&self, payload: AdminCommand) -> Result<()> {
-        self.endpoint.send(KERNEL_NAME, Box::new(payload)).await
+        self.endpoint.send(KERNEL_NAME, payload).await
     }
 
     // 关机
@@ -226,7 +240,7 @@ impl Kernel {
                 info!("开始关闭内核");
                 let _ = self
                     .endpoint
-                    .send(KernelService::name(), Box::new(CommonMessage::Stop))
+                    .send(KERNEL_SERVICE, CommonMessage::Stop)
                     .await;
                 self.bus.abort();
                 self.run = false;
@@ -239,20 +253,34 @@ impl Kernel {
     async fn handle_admin(
         &mut self,
         command: AdminCommand,
-        _: &'static str,
+        _: String,
         _: ServiceRole,
     ) -> Result<()> {
         match command {
-            AdminCommand::NewEndpoint(name, sender) => {
+            AdminCommand::NewEndpoint{name, feedback} => {
+                let role = if ADMIN_SERVICE.contains(&name.as_str()) {
+                    ServiceRole::System
+                } else {
+                    ServiceRole::Standard
+                };
                 let endpoint = self
                     .bus
-                    .get_endpoint(name, self.service_buffer, ServiceRole::Standard)
+                    .get_endpoint(name, self.service_buffer, role)
                     .await?;
 
-                let _ = sender.send(endpoint);
+                let _ = feedback.send(endpoint);
                 Ok(())
             }
             AdminCommand::Shutdown(stage) => self.shutdown(stage).await,
+            AdminCommand::NewProxyEndpoint { name, proxy, feedback }=>{
+                let endpoint = self
+                    .bus
+                    .get_proxy_endpoint(name,proxy, ServiceRole::Standard)
+                    .await?;
+
+                let _ = feedback.send(endpoint);
+                Ok(())
+            }
         }
     }
 
@@ -260,7 +288,7 @@ impl Kernel {
     async fn handle(
         &mut self,
         command: KernelMessage,
-        source: &'static str,
+        source: String,
         role: ServiceRole,
     ) -> Result<()> {
         match command {
@@ -280,6 +308,16 @@ impl Kernel {
                 )),
             },
             KernelMessage::GetBusStatsRx { sender } => self.bus.register_stats(sender).await,
+            KernelMessage::SetUser { name } => {
+                if role != ServiceRole::System {
+                    return Err(anyhow::anyhow!(
+                        "{} 的身份为 {:?}, 无设置用户权限",
+                        source,
+                        role
+                    ));
+                }
+                self.bus.set_user(name).await
+            }
         }
     }
 

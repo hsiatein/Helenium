@@ -1,9 +1,9 @@
 use heleny_kernel::kernel::Kernel;
+use heleny_proto::name::HUB_SERVICE;
+use heleny_proto::resource::TOTAL_BUS_TRAFFIC;
 use heleny_proto::role::ServiceRole;
-use heleny_service::StatsServiceMessage;
+use heleny_service::HubServiceMessage;
 use heleny_utils::init_tracing;
-use std::time::Duration;
-use tokio::sync::oneshot;
 use tracing::info;
 use tracing::info_span;
 
@@ -16,7 +16,7 @@ async fn main() -> anyhow::Result<()> {
     let _guard = span.enter();
 
     let mut kernel = Kernel::new(64, 32).await.expect("kernel启动失败");
-    let endpoint = kernel
+    let mut endpoint = kernel
         .get_endpoint("Test".to_string(), 32, ServiceRole::Standard)
         .await
         .expect("未获取endpoint");
@@ -29,22 +29,12 @@ async fn main() -> anyhow::Result<()> {
     info!("wait for StatsService");
     rx.await.expect("等待失败").unwrap();
 
-    info!("sleeping for 10 seconds to gather stats");
-    tokio::time::sleep(Duration::from_secs(10)).await;
+    endpoint.send(HUB_SERVICE, HubServiceMessage::Subscribe { resource_name: TOTAL_BUS_TRAFFIC.to_string() }).await.expect("发送失败");
 
-    let (tx, rx) = oneshot::channel();
-
-    endpoint
-        .send(
-            "StatsService",
-            StatsServiceMessage::GetBusStats { sender: tx },
-        )
-        .await
-        .expect("StatsService通信失败");
-
-    let stats = rx.await?;
-    info!("received stats: {:?}", stats);
-    assert!(!stats.is_empty(), "stats should not be empty");
+    for _ in 0..5 {
+        let msg=endpoint.recv().await.expect("接收失败");
+        info!("订阅消息: {:?}",msg);
+    }
 
     info!("test pass!");
     Ok(())

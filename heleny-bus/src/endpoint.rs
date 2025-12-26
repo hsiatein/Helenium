@@ -1,10 +1,9 @@
-use anyhow::{Context, Result};
-use heleny_proto::{
-    kernel_service_message::KernelServiceMessage,
-    kernel_service_message::ServiceSignal,
-    message::{AnyMessage, SignedMessage, TokenMessage},
-    name::KERNEL_SERVICE,
-};
+use anyhow::Context;
+use anyhow::Result;
+use heleny_proto::message::AnyMessage;
+use heleny_proto::message::SignedMessage;
+use heleny_proto::message::TokenMessage;
+use heleny_proto::name::KERNEL_SERVICE;
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
@@ -13,7 +12,7 @@ pub struct Endpoint {
     token: Uuid,
     to_bus: mpsc::Sender<TokenMessage>,
     from_bus: Option<mpsc::Receiver<SignedMessage>>,
-    to_self: mpsc::Sender<Box<dyn AnyMessage>>,
+    to_self: Option<mpsc::Sender<Box<dyn AnyMessage>>>,
     from_sub_endpoint: Option<mpsc::Receiver<Box<dyn AnyMessage>>>,
 }
 
@@ -29,59 +28,57 @@ impl Endpoint {
             token,
             to_bus,
             from_bus: Some(from_bus),
-            to_self,
+            to_self:Some(to_self),
             from_sub_endpoint: Some(from_sub_endpoint),
         }
     }
 
-    pub async fn send(
+    pub fn new_minimal(
+        token: Uuid,
+        to_bus: mpsc::Sender<TokenMessage>,
+    ) -> Self {
+        Self {
+            token,
+            to_bus,
+            from_bus: None,
+            to_self:None,
+            from_sub_endpoint: None,
+        }
+    }
+
+    pub async fn send_box(
         &self,
-        target: &'static str,
+        target: &str,
         payload: Box<dyn AnyMessage + 'static>,
     ) -> Result<()> {
-        let msg = TokenMessage::new(target, self.token, payload);
+        let msg = TokenMessage::new(target.to_string(), self.token, payload);
         self.to_bus
             .send(msg)
             .await
             .map_err(|e| anyhow::anyhow!("发送消息到 Kernel 失败: {}", e))
     }
 
-    pub fn get_sub_endpoint(&self) -> mpsc::Sender<Box<dyn AnyMessage>> {
-        self.to_self.clone()
+    pub async fn send<T:AnyMessage>(
+        &self,
+        target: &str,
+        payload: T,
+    ) -> Result<()> {
+        self.send_box(target, Box::new(payload)).await
     }
 
-    pub async fn send_alive(&self) {
-        let _ = self
-            .send(
-                KERNEL_SERVICE,
-                Box::new(KernelServiceMessage::UploadStatus(ServiceSignal::Alive)),
-            )
-            .await;
+    pub fn create_sub_endpoint(&self) -> Result<mpsc::Sender<Box<dyn AnyMessage>>> {
+        self.to_self.clone().context("最小化启动的 Endpoint 不能使用 SubEndpoint")
     }
 
-    pub async fn send_ready(&self) {
-        let _ = self
-            .send(
-                KERNEL_SERVICE,
-                Box::new(KernelServiceMessage::UploadStatus(ServiceSignal::Ready)),
-            )
-            .await;
+    pub fn create_sender_endpoint(&self) -> Endpoint {
+        Endpoint::new_minimal(self.token, self.to_bus.clone())
     }
 
-    pub async fn send_terminate(&self) {
-        let _ = self
-            .send(
-                KERNEL_SERVICE,
-                Box::new(KernelServiceMessage::UploadStatus(ServiceSignal::Terminate)),
-            )
-            .await;
-    }
-
-    pub fn send_init_fail(&self) -> (mpsc::Sender<TokenMessage>, TokenMessage) {
+    pub fn send_once(&self,payload:Box<dyn AnyMessage>) -> (mpsc::Sender<TokenMessage>, TokenMessage) {
         let msg = TokenMessage::new(
-            KERNEL_SERVICE,
+            KERNEL_SERVICE.to_string(),
             self.token,
-            Box::new(KernelServiceMessage::UploadStatus(ServiceSignal::InitFail)),
+            payload,
         );
         (self.to_bus.clone(), msg)
     }

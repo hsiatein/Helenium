@@ -1,23 +1,31 @@
 mod auth_config;
 
-use anyhow::{Context, Result};
+use anyhow::Context;
+use anyhow::Result;
 use async_trait::async_trait;
-use ed25519_dalek::{Signature, VerifyingKey, pkcs8::DecodePublicKey};
+use ed25519_dalek::Signature;
+use ed25519_dalek::VerifyingKey;
+use ed25519_dalek::pkcs8::DecodePublicKey;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::{
-    auth_service_message::AuthServiceMessage,
-    config_service_message::ConfigServiceMessage,
-    message::{AnyMessage, downcast},
-    role::ServiceRole,
-};
-use heleny_service::{Service, get_from_config_service};
+use heleny_proto::name::CONFIG_SERVICE;
+use heleny_service::AuthServiceMessage;
+use heleny_service::ConfigServiceMessage;
+use heleny_proto::message::AnyMessage;
+use heleny_proto::message::downcast;
+use heleny_proto::resource::Resource;
+use heleny_proto::role::ServiceRole;
+use heleny_service::Service;
+use heleny_service::get_from_config_service;
 use rand::RngCore;
 use rand::rngs::OsRng;
 use serde_json::Value;
 use std::collections::HashSet;
-use tokio::{sync::oneshot, task::JoinHandle, time::Instant};
-use tracing::{debug, warn};
+use tokio::sync::oneshot;
+use tokio::task::JoinHandle;
+use tokio::time::Instant;
+use tracing::debug;
+use tracing::warn;
 
 use crate::auth_config::AuthConfig;
 
@@ -54,7 +62,7 @@ impl Service for AuthService {
                 },
             )
             .collect();
-        debug!("AuthService 公钥: {:?}", pub_keys);
+        // debug!("AuthService 公钥: {:?}", pub_keys);
 
         let instance = Self {
             endpoint,
@@ -66,11 +74,11 @@ impl Service for AuthService {
     }
     async fn handle(
         &mut self,
-        _name: &'static str,
+        _name: String,
         _role: ServiceRole,
-        msg: Box<Self::MessageType>,
+        msg: AuthServiceMessage,
     ) -> Result<()> {
-        match *msg {
+        match msg {
             AuthServiceMessage::GetChallenge { msg_sender } => {
                 let challenge = generate_challenge();
                 let _ = msg_sender.send(challenge);
@@ -105,6 +113,9 @@ impl Service for AuthService {
     async fn handle_tick(&mut self, _tick: Instant) -> Result<()> {
         Ok(())
     }
+    async fn handle_resource(&mut self, _resource: Resource) -> Result<()> {
+        Ok(())
+    }
 }
 
 fn generate_challenge() -> [u8; 32] {
@@ -125,12 +136,12 @@ impl AuthService {
                 self.post_update().await?;
             }
         }
-        let sub_endpoint = self.endpoint.get_sub_endpoint();
+        let sub_endpoint = self.endpoint.create_sub_endpoint()?;
         let (tx, rx) = oneshot::channel();
         self.endpoint
             .send(
-                "ConfigService",
-                Box::new(ConfigServiceMessage::Get { sender: tx }),
+                CONFIG_SERVICE,
+                ConfigServiceMessage::Get { sender: tx },
             )
             .await
             .context("AuthService 获取 ConfigService 的资源发送失败")?;

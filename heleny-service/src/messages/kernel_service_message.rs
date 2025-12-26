@@ -1,12 +1,12 @@
 use anyhow::Result;
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 use tokio::sync::oneshot;
 
-use crate::{health::KernelHealth, service_handle::ServiceHandle};
+use heleny_proto::health::KernelHealth;
+use heleny_proto::service_handle::ServiceHandle;
 
 #[derive(Debug)]
 pub enum ServiceSignal {
@@ -23,13 +23,13 @@ pub enum KernelServiceMessage {
     Init,
     InitParams(
         Arc<Mutex<KernelHealth>>,
-        Arc<Mutex<HashMap<&'static str, ServiceHandle>>>,
+        Arc<Mutex<HashMap<String, ServiceHandle>>>,
     ),
     // Standard
     GetHealth(oneshot::Sender<KernelHealth>),
     UploadStatus(ServiceSignal),
     WaitFor {
-        name: &'static str,
+        name: String,
         sender: oneshot::Sender<Result<()>>,
     },
 }

@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{ItemStruct, parse_macro_input};
+use syn::ItemStruct;
+use syn::parse_macro_input;
 
 #[proc_macro_attribute]
 pub fn base_service(args: TokenStream, input: TokenStream) -> TokenStream {
@@ -36,8 +37,11 @@ pub fn base_service(args: TokenStream, input: TokenStream) -> TokenStream {
 
         use heleny_service::HasEndpoint;
         impl HasEndpoint for #name {
-            fn endpoint(&mut self) -> &mut heleny_bus::endpoint::Endpoint {
+            fn endpoint_mut(&mut self) -> &mut heleny_bus::endpoint::Endpoint {
                 &mut self.endpoint
+            }
+            fn endpoint(&self) -> &heleny_bus::endpoint::Endpoint {
+                &self.endpoint
             }
         }
 

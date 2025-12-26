@@ -1,10 +1,11 @@
 use ed25519_dalek::SigningKey;
+use ed25519_dalek::VerifyingKey;
 use ed25519_dalek::ed25519::signature::SignerMut;
 use ed25519_dalek::pkcs8::DecodePrivateKey;
+use ed25519_dalek::pkcs8::DecodePublicKey;
 use ed25519_dalek::pkcs8::EncodePrivateKey;
 use ed25519_dalek::pkcs8::EncodePublicKey;
 use ed25519_dalek::pkcs8::spki::der::pem::LineEnding;
-use ed25519_dalek::{VerifyingKey, pkcs8::DecodePublicKey};
 use rand::rngs::OsRng;
 
 use crate::generate_challenge;
@@ -65,7 +66,8 @@ fn test_read_key() {
 
 #[test]
 fn test_read_key_loopback() {
-    use ed25519_dalek::pkcs8::{DecodePrivateKey, EncodePrivateKey};
+    use ed25519_dalek::pkcs8::DecodePrivateKey;
+    use ed25519_dalek::pkcs8::EncodePrivateKey;
     use rand::rngs::OsRng;
 
     // 1. 生成
@@ -91,7 +93,8 @@ fn test_read_key_loopback() {
 
 #[test]
 fn test_key_file_io_loopback() {
-    use ed25519_dalek::pkcs8::{DecodePrivateKey, EncodePrivateKey};
+    use ed25519_dalek::pkcs8::DecodePrivateKey;
+    use ed25519_dalek::pkcs8::EncodePrivateKey;
     use std::fs;
     use std::io::Read;
 

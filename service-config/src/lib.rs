@@ -1,18 +1,26 @@
-use anyhow::{Context, Result};
+use anyhow::Context;
+use anyhow::Result;
 use async_trait::async_trait;
-use chrono::{DateTime, Local};
+use chrono::DateTime;
+use chrono::Local;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::{
-    config_service_message::ConfigServiceMessage,
-    message::{AnyMessage, downcast},
-    role::ServiceRole,
-};
+use heleny_service::ConfigServiceMessage;
+use heleny_proto::message::AnyMessage;
+use heleny_proto::message::downcast;
+use heleny_proto::resource::Resource;
+use heleny_proto::role::ServiceRole;
 use heleny_service::Service;
-use serde_json::{Map, Value};
-use std::{path::PathBuf, str::FromStr};
-use tokio::{fs, task::JoinHandle, time::Instant};
-use tracing::{debug, info, warn};
+use serde_json::Map;
+use serde_json::Value;
+use std::path::PathBuf;
+use std::str::FromStr;
+use tokio::fs;
+use tokio::task::JoinHandle;
+use tokio::time::Instant;
+use tracing::debug;
+use tracing::info;
+use tracing::warn;
 
 #[base_service(deps=[])]
 pub struct ConfigService {
@@ -69,13 +77,13 @@ impl Service for ConfigService {
     }
     async fn handle(
         &mut self,
-        name: &'static str,
+        name: String,
         _role: ServiceRole,
-        msg: Box<Self::MessageType>,
+        msg: ConfigServiceMessage,
     ) -> Result<()> {
-        match *msg {
+        match msg {
             ConfigServiceMessage::Get { sender } => {
-                let _ = sender.send(self.config_value.get(name).cloned());
+                let _ = sender.send(self.config_value.get(&name).cloned());
                 Ok(())
             }
             ConfigServiceMessage::Set { value } => {
@@ -108,6 +116,9 @@ impl Service for ConfigService {
         }
         Ok(())
     }
+    async fn handle_resource(&mut self, _resource: Resource) -> Result<()> {
+        Ok(())
+    }
 }
 
 impl ConfigService {
@@ -122,7 +133,7 @@ impl ConfigService {
                 }
             }
             None => {
-                let sub = self.endpoint.get_sub_endpoint();
+                let sub = self.endpoint.create_sub_endpoint()?;
                 let value =
                     serde_json::to_string_pretty(&self.config_value).context("配置转字符串错误")?;
                 let tmp_path = self
@@ -183,7 +194,7 @@ impl ConfigService {
                 }
             }
             None => {
-                let sub = self.endpoint.get_sub_endpoint();
+                let sub = self.endpoint.create_sub_endpoint()?;
                 let path = self.config_path.clone();
                 let handle = tokio::spawn(async move {
                     let str = match fs::read_to_string(path).await.context("读取配置文件时出错")

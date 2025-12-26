@@ -1,10 +1,14 @@
-use std::{
-    collections::{HashMap, VecDeque},
-    sync::{Arc, Mutex},
-};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 use anyhow::Result;
-use tokio::{sync::mpsc, task::JoinHandle};
+use heleny_proto::resource::ResourcePayload;
+use tokio::sync::mpsc;
+use tokio::sync::watch;
+use tokio::task::JoinHandle;
+use tracing::debug;
 use tracing::warn;
 
 /// 主要职责是监控Bus的流量进行统计
@@ -16,25 +20,26 @@ pub struct BusWatcher {
 impl BusWatcher {
     pub fn new(
         duration: usize,
-        mut bus_rx: mpsc::Receiver<HashMap<&'static str, usize>>,
-    ) -> Result<BusWatcher> {
+        mut bus_rx: mpsc::Receiver<HashMap<String, usize>>,
+    ) -> Result<(BusWatcher,watch::Receiver<ResourcePayload>)> {
+        let (tx,rx)=watch::channel(ResourcePayload::TotolBusTraffic(VecDeque::new()));
         let total_traffic = Arc::new(Mutex::new(VecDeque::new()));
         let total_traffic_ = total_traffic.clone();
         let handle = tokio::spawn(async move {
             loop {
                 tokio::select! {
                     Some(msg) = bus_rx.recv()=>{
-                        if let Err(e) =handle(duration,&total_traffic_,msg).await {
+                        if let Err(e) =handle(duration,&total_traffic_,msg,&tx).await {
                             warn!("BusWatcher: {}",e)
                         }
                     }
                 }
             }
         });
-        Ok(Self {
-            _handle:handle,
+        Ok((Self {
+            _handle: handle,
             total_traffic,
-        })
+        },rx))
     }
 
     pub fn _abort(&self) {
@@ -52,7 +57,8 @@ impl BusWatcher {
 async fn handle(
     duration: usize,
     total_traffic: &Arc<Mutex<VecDeque<usize>>>,
-    msg: HashMap<&'static str, usize>,
+    msg: HashMap<String, usize>,
+    tx:&watch::Sender<ResourcePayload>,
 ) -> Result<()> {
     match total_traffic.lock() {
         Ok(mut traffic) => {
@@ -61,6 +67,8 @@ async fn handle(
             if traffic.len() > duration {
                 traffic.pop_front();
             }
+            debug!("{:?}",traffic.to_owned());
+            tx.send(ResourcePayload::TotolBusTraffic(traffic.to_owned()))?;
             Ok(())
         }
         Err(e) => Err(anyhow::anyhow!("{}", e)),

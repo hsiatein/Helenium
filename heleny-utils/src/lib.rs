@@ -1,5 +1,8 @@
 use std::path::PathBuf;
-use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::EnvFilter;
+use tracing_subscriber::fmt;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
 
 /// 初始化 tracing 订阅者
 /// 返回一个 guard，必须在 main 函数中一直持有它，否则日志无法写入文件

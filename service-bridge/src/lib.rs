@@ -2,9 +2,10 @@ use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::{
-    bridge_service_message::BridgeServiceMessage, message::AnyMessage, role::ServiceRole,
-};
+use heleny_service::BridgeServiceMessage;
+use heleny_proto::message::AnyMessage;
+use heleny_proto::resource::Resource;
+use heleny_proto::role::ServiceRole;
 use heleny_service::Service;
 use tokio::time::Instant;
 
@@ -25,9 +26,9 @@ impl Service for BridgeService {
     }
     async fn handle(
         &mut self,
-        name: &'static str,
+        name: String,
         role: ServiceRole,
-        msg: Box<Self::MessageType>,
+        msg: BridgeServiceMessage,
     ) -> Result<()> {
         Ok(())
     }
@@ -36,6 +37,9 @@ impl Service for BridgeService {
         Ok(())
     }
     async fn handle_tick(&mut self, tick: Instant) -> Result<()> {
+        Ok(())
+    }
+    async fn handle_resource(&mut self, _resource: Resource) -> Result<()> {
         Ok(())
     }
 }

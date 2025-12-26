@@ -1,5 +1,5 @@
 [workspace]
-members = [ "heleny-bus", "heleny-frontend","heleny-kernel", "heleny-macros", "heleny-proto", "heleny-server", "heleny-service", "heleny-utils", "script", "service-auth", "service-bridge", "service-config", "service-fs", "service-gui", "service-stats", "tests"]
+members = [ "heleny-bus", "heleny-frontend","heleny-kernel", "heleny-macros", "heleny-proto", "heleny-server", "heleny-service", "heleny-utils", "script", "service-auth", "service-bridge", "service-config", "service-fs", "service-gui", "service-hub", "service-stats", "service-user", "tests"]
 resolver = "3"
 
 [workspace.dependencies]

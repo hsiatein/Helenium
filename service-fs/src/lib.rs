@@ -2,7 +2,10 @@ use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::{fs_service_message::FsServiceMessage, message::AnyMessage, role::ServiceRole};
+use heleny_service::FsServiceMessage;
+use heleny_proto::message::AnyMessage;
+use heleny_proto::resource::Resource;
+use heleny_proto::role::ServiceRole;
 use heleny_service::Service;
 use tokio::time::Instant;
 
@@ -20,9 +23,9 @@ impl Service for FsService {
     }
     async fn handle(
         &mut self,
-        name: &'static str,
+        name: String,
         role: ServiceRole,
-        msg: Box<Self::MessageType>,
+        msg: FsServiceMessage,
     ) -> Result<()> {
         Ok(())
     }
@@ -31,6 +34,9 @@ impl Service for FsService {
         Ok(())
     }
     async fn handle_tick(&mut self, tick: Instant) -> Result<()> {
+        Ok(())
+    }
+    async fn handle_resource(&mut self, _resource: Resource) -> Result<()> {
         Ok(())
     }
 }

@@ -1,1 +1,1 @@
-"target/debug/new_service.exe" "bridge"
+./target/debug/new_service.exe "user"

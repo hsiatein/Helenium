@@ -6,6 +6,9 @@ use tokio::sync::mpsc;
 pub enum KernelMessage {
     Shutdown,
     GetBusStatsRx {
-        sender: mpsc::Sender<HashMap<&'static str, usize>>,
+        sender: mpsc::Sender<HashMap<String, usize>>,
+    },
+    SetUser {
+        name: String,
     },
 }

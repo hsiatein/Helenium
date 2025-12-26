@@ -25,3 +25,7 @@ heleny_service ={path ="../heleny-service"}
 name="test_stats"
 path="src/test_stats.rs"
 
+[[bin]]
+name="test_hub"
+path="src/test_hub.rs"
+

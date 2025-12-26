@@ -1,17 +1,20 @@
 use std::time::Duration;
 
-use anyhow::{Context, Result};
+use anyhow::Context;
+use anyhow::Result;
 use heleny_bus::endpoint::Endpoint;
-use heleny_proto::{config_service_message::ConfigServiceMessage, name::CONFIG_SERVICE};
+use crate::ConfigServiceMessage;
+use heleny_proto::name::CONFIG_SERVICE;
 use serde::de::DeserializeOwned;
-use tokio::{sync::oneshot, time::timeout};
+use tokio::sync::oneshot;
+use tokio::time::timeout;
 
 pub async fn get_from_config_service<T: DeserializeOwned>(endpoint: &Endpoint) -> Result<T> {
     let (tx, rx) = oneshot::channel();
     endpoint
         .send(
             CONFIG_SERVICE,
-            Box::new(ConfigServiceMessage::Get { sender: tx }),
+            ConfigServiceMessage::Get { sender: tx },
         )
         .await
         .context("获取 ConfigService 的资源发送失败")?;
@@ -22,3 +25,4 @@ pub async fn get_from_config_service<T: DeserializeOwned>(endpoint: &Endpoint) -
         .context("获取 ConfigService 的资源为空")?;
     serde_json::from_value(config).context("获取到 ConfigService 的资源, 但是解析失败")
 }
+

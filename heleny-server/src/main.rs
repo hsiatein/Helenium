@@ -3,7 +3,9 @@ use heleny_kernel;
 use heleny_utils::init_tracing;
 use std::env;
 use tokio;
-use tracing::{error, info, info_span};
+use tracing::error;
+use tracing::info;
+use tracing::info_span;
 
 #[tokio::main]
 async fn main() {

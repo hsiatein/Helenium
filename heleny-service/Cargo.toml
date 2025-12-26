@@ -13,3 +13,4 @@ inventory ={ workspace = true}
 tracing = { workspace = true }
 serde_json = {workspace = true}
 serde = {workspace = true}
+ed25519-dalek = {workspace = true}

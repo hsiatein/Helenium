@@ -1,21 +1,24 @@
-use anyhow::{Context, Result};
-use heleny_proto::health::{HealthStatus, KernelHealth};
-use std::collections::{HashMap, HashSet};
+use anyhow::Context;
+use anyhow::Result;
+use heleny_proto::health::HealthStatus;
+use heleny_proto::health::KernelHealth;
+use std::collections::HashMap;
+use std::collections::HashSet;
 use tracing::debug;
 
 pub struct DepsRelation {
-    deps_map: HashMap<&'static str, HashSet<&'static str>>,
-    rev_map: HashMap<&'static str, HashSet<&'static str>>,
-    all_deps_map: HashMap<&'static str, HashSet<&'static str>>,
-    all_rev_map: HashMap<&'static str, HashSet<&'static str>>,
-    _init_seqs: HashMap<&'static str, Vec<&'static str>>,
-    _stop_seqs: HashMap<&'static str, Vec<&'static str>>,
-    init_cache: Option<HashMap<&'static str, HashSet<&'static str>>>,
-    stop_cache: Option<HashMap<&'static str, HashSet<&'static str>>>,
+    deps_map: HashMap<String, HashSet<String>>,
+    rev_map: HashMap<String, HashSet<String>>,
+    all_deps_map: HashMap<String, HashSet<String>>,
+    all_rev_map: HashMap<String, HashSet<String>>,
+    _init_seqs: HashMap<String, Vec<String>>,
+    _stop_seqs: HashMap<String, Vec<String>>,
+    init_cache: Option<HashMap<String, HashSet<String>>>,
+    stop_cache: Option<HashMap<String, HashSet<String>>>,
 }
 
 impl DepsRelation {
-    pub fn new(deps_map: HashMap<&'static str, HashSet<&'static str>>) -> Result<Self> {
+    pub fn new(deps_map: HashMap<String, HashSet<String>>) -> Result<Self> {
         if !deps_exist(&deps_map) {
             return Err(anyhow::anyhow!("服务依赖里含有未知服务名"));
         }
@@ -25,26 +28,26 @@ impl DepsRelation {
         let mut init_seqs = HashMap::new();
         let mut stop_seqs = HashMap::new();
         let order = cal_order(deps_map.clone())?;
-        for &name in deps_map.keys() {
+        for name in deps_map.keys() {
             // 依赖相关
-            let all_deps = find_reachable_nodes(name, &deps_map);
+            let all_deps = find_reachable_nodes(name.clone(), &deps_map);
             let init_seq = order
                 .iter()
-                .copied()
-                .filter(|&name| all_deps.contains(name))
-                .collect::<Vec<&'static str>>();
-            init_seqs.insert(name, init_seq);
-            all_deps_map.insert(name, all_deps);
+                .cloned()
+                .filter(|name| all_deps.contains(name))
+                .collect::<Vec<String>>();
+            init_seqs.insert(name.clone(), init_seq);
+            all_deps_map.insert(name.clone(), all_deps);
             // 反向依赖相关
-            let all_rev = find_reachable_nodes(name, &rev_map);
+            let all_rev = find_reachable_nodes(name.clone(), &rev_map);
             let stop_seq = order
                 .iter()
                 .rev()
-                .copied()
-                .filter(|&name| all_rev.contains(name))
-                .collect::<Vec<&'static str>>();
-            stop_seqs.insert(name, stop_seq);
-            all_rev_map.insert(name, all_rev);
+                .cloned()
+                .filter(|name| all_rev.contains(name))
+                .collect::<Vec<String>>();
+            stop_seqs.insert(name.clone(), stop_seq);
+            all_rev_map.insert(name.clone(), all_rev);
         }
         Ok(Self {
             deps_map,
@@ -63,17 +66,17 @@ impl DepsRelation {
         &mut self,
         health: KernelHealth,
         init: bool,
-    ) -> Result<HashSet<&'static str>> {
-        let want_op: HashSet<&'static str> = health.services.keys().copied().collect();
+    ) -> Result<HashSet<String>> {
+        let want_op: HashSet<String> = health.services.keys().cloned().collect();
         self.prepare_services(want_op, health, init)
     }
 
     /// 刷新缓存
     pub fn refresh_cache(
         &mut self,
-        finish: &'static str,
+        finish: &str,
         init: bool,
-    ) -> Result<HashSet<&'static str>> {
+    ) -> Result<HashSet<String>> {
         let mut cache = match init {
             true => self.init_cache.take().context("未初始化 Init 缓存")?,
             false => self.stop_cache.take().context("未初始化 Stop 缓存")?,
@@ -97,10 +100,10 @@ impl DepsRelation {
     /// 准备操作若干个应用的缓存
     pub fn prepare_services(
         &mut self,
-        want_op: HashSet<&'static str>,
+        want_op: HashSet<String>,
         health: KernelHealth,
         init: bool,
-    ) -> Result<HashSet<&'static str>> {
+    ) -> Result<HashSet<String>> {
         let (op, status) = match init {
             true => ("初始化", HealthStatus::Healthy),
             false => ("关闭", HealthStatus::Stopped),
@@ -117,8 +120,8 @@ impl DepsRelation {
                     == status
             });
         debug!("已经{}: {:?}, 需要{}: {:?}", op, already_op, op, need_op);
-        let already_op: HashSet<&'static str> = already_op.into_keys().collect();
-        let need_op: HashMap<&'static str, HashSet<&'static str>> = need_op
+        let already_op: HashSet<String> = already_op.into_keys().collect();
+        let need_op: HashMap<String, HashSet<String>> = need_op
             .into_iter()
             .map(|(name, pre)| (name, &pre - &already_op))
             .collect();
@@ -135,18 +138,18 @@ impl DepsRelation {
     /// 输入所有想初始化/关闭的服务名字, 返回涉及到的所有服务名字对应的依赖表或被依赖表, init=true代表初始化, 否则代表关闭
     pub fn prepare_cache(
         &self,
-        names: HashSet<&'static str>,
+        names: HashSet<String>,
         init: bool,
-    ) -> Result<HashMap<&'static str, HashSet<&'static str>>> {
+    ) -> Result<HashMap<String, HashSet<String>>> {
         let (all_map, normal_map) = match init {
             true => (&self.all_deps_map, &self.deps_map),
             false => (&self.all_rev_map, &self.rev_map),
         };
-        let all_deps: HashSet<&'static str> = names
+        let all_deps: HashSet<String> = names
             .into_iter()
             .try_fold(HashSet::new(), |mut current, name| {
-                let all_deps = match all_map.get(name) {
-                    Some(all_deps) => all_deps,
+                let all_deps = match all_map.get(&name) {
+                    Some(all_deps) => all_deps.to_owned(),
                     None => return None,
                 };
                 current.extend(all_deps);
@@ -154,10 +157,10 @@ impl DepsRelation {
                 Some(current)
             })
             .context("没有对应服务名, 生成初始化缓存失败")?;
-        let init_cache: HashMap<&'static str, HashSet<&'static str>> = normal_map
+        let init_cache: HashMap<String, HashSet<String>> = normal_map
             .iter()
             .filter_map(|(name, dep)| match all_deps.contains(name) {
-                true => Some((*name, dep.clone())),
+                true => Some((name.clone(), dep.clone())),
                 false => None,
             })
             .collect();
@@ -166,7 +169,7 @@ impl DepsRelation {
 }
 
 /// 检查所有依赖是否存在
-fn deps_exist(deps_map: &HashMap<&'static str, HashSet<&'static str>>) -> bool {
+fn deps_exist(deps_map: &HashMap<String, HashSet<String>>) -> bool {
     !deps_map
         .values()
         .flatten()
@@ -175,19 +178,20 @@ fn deps_exist(deps_map: &HashMap<&'static str, HashSet<&'static str>>) -> bool {
 
 /// 计算反向依赖
 fn cal_rev_map(
-    deps_map: &HashMap<&'static str, HashSet<&'static str>>,
-) -> HashMap<&'static str, HashSet<&'static str>> {
-    let mut rev_map: HashMap<&str, HashSet<&str>> = deps_map
+    deps_map: &HashMap<String, HashSet<String>>,
+) -> HashMap<String, HashSet<String>> {
+    let mut rev_map: HashMap<String, HashSet<String>> = deps_map
         .keys()
+        .cloned()
         .into_iter()
-        .map(|&name| (name, HashSet::new()))
+        .map(|name| (name, HashSet::new()))
         .collect();
     for (name, deps) in deps_map {
         for dep in deps {
             rev_map
                 .get_mut(dep)
                 .expect("经过了依赖存在性检查, 不应该有未知依赖")
-                .insert(&name);
+                .insert(name.clone());
         }
     }
     rev_map
@@ -195,37 +199,37 @@ fn cal_rev_map(
 
 /// 计算所有依赖
 fn find_reachable_nodes(
-    name: &'static str,
-    deps_map: &HashMap<&'static str, HashSet<&'static str>>,
-) -> HashSet<&'static str> {
+    name: String,
+    deps_map: &HashMap<String, HashSet<String>>,
+) -> HashSet<String> {
     let mut all_deps = HashSet::new();
-    let mut stack = vec![name];
+    let mut stack = vec![&name];
     while let Some(current) = stack.pop() {
         if let Some(deps) = deps_map.get(current) {
-            for &dep in deps {
-                if all_deps.insert(dep) {
+            for dep in deps {
+                if all_deps.insert(dep.clone()) {
                     stack.push(dep);
                 }
             }
         }
     }
-    assert!(!all_deps.contains(name));
+    assert!(!all_deps.contains(&name));
     all_deps
 }
 
 /// 计算依赖顺序
 fn cal_order(
-    mut dag_map: HashMap<&'static str, HashSet<&'static str>>,
-) -> Result<Vec<&'static str>> {
+    mut dag_map: HashMap<String, HashSet<String>>,
+) -> Result<Vec<String>> {
     let mut order = Vec::new();
     let mut last_len = 0;
     while last_len != dag_map.len() {
         last_len = dag_map.len();
         let (new, remain): (
-            HashMap<&'static str, HashSet<&'static str>>,
-            HashMap<&'static str, HashSet<&'static str>>,
+            HashMap<String, HashSet<String>>,
+            HashMap<String, HashSet<String>>,
         ) = dag_map.into_iter().partition(|(_, deps)| deps.len() == 0);
-        let new = new.keys().copied().collect::<HashSet<&'static str>>();
+        let new = new.into_keys().collect::<HashSet<String>>();
         dag_map = remain
             .into_iter()
             .map(|(k, deps)| (k, &deps - &new))
@@ -242,10 +246,11 @@ fn cal_order(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashMap;
+    use std::collections::HashSet;
 
     // 辅助函数：快速创建 HashSet
-    fn set(deps: Vec<&'static str>) -> HashSet<&'static str> {
+    fn set(deps: Vec<String>) -> HashSet<String> {
         deps.into_iter().collect()
     }
 
@@ -253,9 +258,9 @@ mod tests {
     fn test_linear_dependency() {
         // 依赖链：db -> network -> kernel
         let mut dag = HashMap::new();
-        dag.insert("kernel", set(vec!["network"]));
-        dag.insert("network", set(vec!["db"]));
-        dag.insert("db", set(vec![]));
+        dag.insert("kernel".to_string(), set(vec!["network".to_string()]));
+        dag.insert("network".to_string(), set(vec!["db".to_string()]));
+        dag.insert("db".to_string(), set(vec![]));
 
         let result = cal_order(dag).unwrap();
         println!("{:?}", result);
@@ -271,15 +276,15 @@ mod tests {
         // 依赖树：A -> [B, C], B -> D, C -> D
         // D 必须第一，B和C顺序随机但必须在D之后，A必须最后
         let mut dag = HashMap::new();
-        dag.insert("A", set(vec!["B", "C"]));
-        dag.insert("B", set(vec!["D"]));
-        dag.insert("C", set(vec!["D"]));
-        dag.insert("D", set(vec![]));
+        dag.insert("A".to_string(), set(vec!["B".to_string(), "C".to_string()]));
+        dag.insert("B".to_string(), set(vec!["D".to_string()]));
+        dag.insert("C".to_string(), set(vec!["D".to_string()]));
+        dag.insert("D".to_string(), set(vec![]));
 
         let result = cal_order(dag).unwrap();
         println!("{:?}", result);
         // 验证相对位置
-        let pos = |name| result.iter().position(|&x| x == name).unwrap();
+        let pos = |name| result.iter().position(|x| x == name).unwrap();
 
         assert!(pos("D") < pos("B"));
         assert!(pos("D") < pos("C"));
@@ -291,8 +296,8 @@ mod tests {
     fn test_circular_dependency() {
         // 循环依赖：A -> B, B -> A
         let mut dag = HashMap::new();
-        dag.insert("A", set(vec!["B"]));
-        dag.insert("B", set(vec!["A"]));
+        dag.insert("A".to_string(), set(vec!["B".to_string()]));
+        dag.insert("B".to_string(), set(vec!["A".to_string()]));
 
         let result = cal_order(dag);
         assert!(result.is_err());
@@ -303,14 +308,14 @@ mod tests {
     fn test_complex_mixed() {
         // 混合场景：某些服务无依赖，某些有深度依赖
         let mut dag = HashMap::new();
-        dag.insert("S1", set(vec![]));
-        dag.insert("S2", set(vec![]));
-        dag.insert("S3", set(vec!["S1", "S2"]));
-        dag.insert("S4", set(vec!["S3"]));
+        dag.insert("S1".to_string(), set(vec![]));
+        dag.insert("S2".to_string(), set(vec![]));
+        dag.insert("S3".to_string(), set(vec!["S1".to_string(), "S2".to_string()]));
+        dag.insert("S4".to_string(), set(vec!["S3".to_string()]));
 
         let result = cal_order(dag).unwrap();
         println!("{:?}", result);
-        let pos = |name| result.iter().position(|&x| x == name).unwrap();
+        let pos = |name| result.iter().position(|x| x == name).unwrap();
         assert!(pos("S1") < pos("S3"));
         assert!(pos("S2") < pos("S3"));
         assert!(pos("S3") < pos("S4"));
@@ -325,9 +330,9 @@ mod tests {
         // L1: Mid  (依赖 Base)
         // L2: Top  (同时依赖 Mid 和 Base) -> 重点在这里！
 
-        dag.insert("Base", set(vec![]));
-        dag.insert("Mid", set(vec!["Base"]));
-        dag.insert("Top", set(vec!["Mid", "Base"]));
+        dag.insert("Base".to_string(), set(vec![]));
+        dag.insert("Mid".to_string(), set(vec!["Base".to_string()]));
+        dag.insert("Top".to_string(), set(vec!["Mid".to_string(), "Base".to_string()]));
 
         let result = cal_order(dag);
         println!("{:?}", result);
@@ -349,7 +354,7 @@ mod tests {
 
         // S1 依赖了一个不存在的服务 "Ghost"
         // 按照逻辑，S1 永远不应该启动，最后应该报错输出 "S1"
-        dag.insert("S1", set(vec!["Ghost"]));
+        dag.insert("S1".to_string(), set(vec!["Ghost".to_string()]));
 
         let result = cal_order(dag);
 

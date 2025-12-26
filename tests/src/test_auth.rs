@@ -1,12 +1,14 @@
+use ed25519_dalek::Signer;
+use ed25519_dalek::SigningKey;
 use ed25519_dalek::pkcs8::DecodePrivateKey;
-use ed25519_dalek::{Signer, SigningKey};
 use heleny_kernel::kernel::Kernel;
-use heleny_proto::auth_service_message::AuthServiceMessage;
+use heleny_service::AuthServiceMessage;
 use heleny_proto::role::ServiceRole;
 use heleny_utils::init_tracing;
 use std::fs;
 use tokio::sync::oneshot;
-use tracing::{info, info_span};
+use tracing::info;
+use tracing::info_span;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -22,10 +24,10 @@ async fn main() -> anyhow::Result<()> {
 
     let mut kernel = Kernel::new(64, 32).await.expect("kernel启动失败");
     let endpoint = kernel
-        .get_endpoint("Test", 32, ServiceRole::Standard)
+        .get_endpoint("Test".to_string(), 32, ServiceRole::Standard)
         .await
         .expect("未获取endpoint");
-    let rx = kernel.wait_for("AuthService").await;
+    let rx = kernel.wait_for("AuthService".to_string()).await;
 
     tokio::spawn(async move {
         kernel.run().await;
@@ -39,7 +41,7 @@ async fn main() -> anyhow::Result<()> {
     endpoint
         .send(
             "AuthService",
-            Box::new(AuthServiceMessage::GetChallenge { msg_sender: tx }),
+            AuthServiceMessage::GetChallenge { msg_sender: tx },
         )
         .await
         .expect("AuthService通信失败1");
@@ -51,11 +53,11 @@ async fn main() -> anyhow::Result<()> {
     endpoint
         .send(
             "AuthService",
-            Box::new(AuthServiceMessage::Verify {
+            AuthServiceMessage::Verify {
                 msg: challenge,
                 signature,
                 pass: tx,
-            }),
+            },
         )
         .await
         .expect("AuthService通信失败2");

@@ -10,7 +10,7 @@ pub fn new_kernel_health() -> KernelHealth {
                  name,
                  deps: _,
                  launch: _,
-             }| (*name, (HealthStatus::Stopped, None)),
+             }| (name.to_string(), (HealthStatus::Stopped, None)),
         )
         .collect();
     KernelHealth {

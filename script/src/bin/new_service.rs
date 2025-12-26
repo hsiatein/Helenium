@@ -1,4 +1,6 @@
-use std::{path::PathBuf, thread::sleep, time::Duration};
+use std::path::PathBuf;
+use std::thread::sleep;
+use std::time::Duration;
 
 fn capitalize(s: &str) -> String {
     let mut c = s.chars();
@@ -51,10 +53,11 @@ serde = {workspace = true}
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_service::Service;
-use heleny_proto::{{pattern}_service_message::{PATTERN}ServiceMessage, message::AnyMessage, role::ServiceRole};
+use heleny_service::{PATTERN}ServiceMessage,
+use heleny_proto::{message::AnyMessage, role::ServiceRole};
 use async_trait::async_trait;
 use anyhow::Result;
-
+use heleny_proto::resource::Resource;
 
 
 #[base_service(deps=[])]
@@ -63,7 +66,7 @@ pub struct {PATTERN}Service{
 }
 
 #[derive(Debug)]
-enum WorkerMessage{
+enum _WorkerMessage{
     
 }
 
@@ -72,28 +75,30 @@ impl Service for {PATTERN}Service {
     type MessageType= {PATTERN}ServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>>{
         let instance=Self {
-            endpoint
+            endpoint,
         };
         Ok(Box::new(instance))
     }
     async fn handle(
         &mut self,
-        name: &'static str,
-        role: ServiceRole,
-        msg: Box<Self::MessageType>,
+        _name: String,
+        _role: ServiceRole,
+        _msg: {PATTERN}ServiceMessage,
     ) -> Result<()>{
         Ok(())
     }
     async fn stop(&mut self){
 
     }
-    async fn handle_sub_endpoint(&mut self, msg: Box<dyn AnyMessage>) -> Result<()>{
+    async fn handle_sub_endpoint(&mut self, _msg: Box<dyn AnyMessage>) -> Result<()>{
         Ok(())
     }
-    async fn handle_tick(&mut self, tick:Instant) -> Result<()>{
+    async fn handle_tick(&mut self, _tick:Instant) -> Result<()>{
         Ok(())
     }
-    
+    async fn handle_resource(&mut self, _resource: Resource) -> Result<()> {
+        Ok(())
+    }
 }
 
 impl {PATTERN}Service {
@@ -110,19 +115,20 @@ pub enum {PATTERN}ServiceMessage {
 }"#;
     let message = message.replace("{PATTERN}", &capitalize(&name));
     std::fs::write(
-        PathBuf::from("heleny-proto")
+        PathBuf::from("heleny-service")
             .join("src")
+            .join("messages")
             .join(format!("{}_service_message.rs", name)),
         message,
     )
     .expect("写入message枚举失败");
 
-    let message_lib =
-        std::fs::read_to_string(&PathBuf::from("heleny-proto").join("src").join("lib.rs"))
+    let path=&PathBuf::from("heleny-service").join("src").join("messages").join("mod.rs");
+    let message_lib =std::fs::read_to_string(path)
             .expect("读取失败");
-    let message_lib = message_lib + "\npub mod " + name + "_service_message;";
+    let message_lib = message_lib + "\nmod " + name + "_service_message;\npub use "+name+"_service_message::*;";
     std::fs::write(
-        &PathBuf::from("heleny-proto").join("src").join("lib.rs"),
+        path,
         message_lib,
     )
     .expect("写入mod声明失败");
