@@ -1,1 +1,1 @@
-./target/debug/new_service.exe "user"
+./target/debug/new_service.exe "webui"

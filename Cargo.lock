@@ -273,10 +273,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "heleny-frontend"
-version = "0.1.0"
-
-[[package]]
 name = "heleny_bus"
 version = "0.1.0"
 dependencies = [
@@ -305,10 +301,10 @@ dependencies = [
  "service_bridge",
  "service_config",
  "service_fs",
- "service_gui",
  "service_hub",
  "service_stats",
  "service_user",
+ "service_webui",
  "tokio",
  "tracing",
  "uuid",
@@ -732,21 +728,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "service_gui"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "heleny_bus",
- "heleny_macros",
- "heleny_proto",
- "heleny_service",
- "inventory",
- "tokio",
- "tracing",
-]
-
-[[package]]
 name = "service_hub"
 version = "0.1.0"
 dependencies = [
@@ -792,6 +773,23 @@ dependencies = [
  "heleny_proto",
  "heleny_service",
  "inventory",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "service_webui"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "heleny_bus",
+ "heleny_macros",
+ "heleny_proto",
+ "heleny_service",
+ "inventory",
+ "serde",
+ "serde_json",
  "tokio",
  "tracing",
 ]

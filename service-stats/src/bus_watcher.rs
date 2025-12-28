@@ -67,7 +67,7 @@ async fn handle(
             if traffic.len() > duration {
                 traffic.pop_front();
             }
-            debug!("{:?}",traffic.to_owned());
+            // debug!("{:?}",traffic.to_owned());
             tx.send(ResourcePayload::TotolBusTraffic(traffic.to_owned()))?;
             Ok(())
         }

@@ -7,10 +7,11 @@ extern crate service_config;
 extern crate service_fs;
 
 extern crate service_bridge;
-extern crate service_gui;
 extern crate service_stats;
 
 extern crate service_user;
 
 pub use kernel::*;
 extern crate service_hub;
+
+extern crate service_webui;

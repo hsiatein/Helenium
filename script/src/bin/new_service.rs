@@ -53,7 +53,7 @@ serde = {workspace = true}
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_service::Service;
-use heleny_service::{PATTERN}ServiceMessage,
+use heleny_service::{PATTERN}ServiceMessage;
 use heleny_proto::{message::AnyMessage, role::ServiceRole};
 use async_trait::async_trait;
 use anyhow::Result;

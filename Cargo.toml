@@ -1,5 +1,5 @@
 [workspace]
-members = [ "heleny-bus", "heleny-frontend","heleny-kernel", "heleny-macros", "heleny-proto", "heleny-server", "heleny-service", "heleny-utils", "script", "service-auth", "service-bridge", "service-config", "service-fs", "service-gui", "service-hub", "service-stats", "service-user", "tests"]
+members = [ "heleny-bus", "heleny-kernel", "heleny-macros", "heleny-proto", "heleny-server", "heleny-service", "heleny-utils", "script", "service-auth", "service-bridge", "service-config", "service-fs", "service-hub", "service-stats", "service-user", "service-webui", "tests"]
 resolver = "3"
 
 [workspace.dependencies]
@@ -8,7 +8,6 @@ serde_json = {version = "1.0.147"}
 tokio = {version = "1.48.0", features = ["macros", "time","rt-multi-thread","sync","fs"]}
 dotenvy = "0.15.7"
 inventory = "0.3.21"
-iced = "0.14.0"
 async-trait = "0.1.89"
 anyhow = "1.0.100"
 uuid = { version = "1.19.0", features = ["v4"] }
