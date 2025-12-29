@@ -104,13 +104,20 @@ impl Service for WebuiService {
     async fn handle_tick(&mut self, _tick:Instant) -> Result<()>{
         Ok(())
     }
-    async fn handle_resource(&mut self, _resource: Resource) -> Result<()> {
-        Ok(())
+    async fn handle_resource(&mut self, resource: Resource) -> Result<()> {
+        self.send_to_all_sessions(ServiceMessage::UpdateResource(resource)).await
     }
 }
 
 impl WebuiService {
-    
+    async fn send_to_all_sessions(&self,msg:ServiceMessage)->Result<()>{
+        for (_token,tx) in &self.router {
+            if let Err(e) = tx.send(msg.clone()).await {
+                warn!("发给所有 User 失败: {}",e)
+            };
+        }
+        Ok(())
+    }
 }
 
 async fn ws_handler(ws: WebSocketUpgrade,State(register): State<Register>) -> Response {

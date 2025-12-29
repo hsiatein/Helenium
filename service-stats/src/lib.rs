@@ -17,7 +17,7 @@ use tokio::sync::mpsc;
 use tokio::time::Instant;
 use tracing::debug;
 
-use crate::bus_watcher::BusWatcher;
+use crate::bus_watcher::BusWatcherHandle;
 use crate::stats_config::StatsConfig;
 
 mod bus_watcher;
@@ -27,7 +27,7 @@ mod stats_config;
 pub struct StatsService {
     endpoint: Endpoint,
     _stats_config: StatsConfig,
-    bus_watcher: BusWatcher,
+    bus_watcher: BusWatcherHandle,
 }
 
 #[derive(Debug)]
@@ -47,7 +47,7 @@ impl Service for StatsService {
                 KernelMessage::GetBusStatsRx { sender: tx },
             )
             .await?;
-        let (bus_watcher,bus_watch_rx) = BusWatcher::new(config.duration, rx)?;
+        let (bus_watcher,bus_watch_rx) = BusWatcherHandle::new(config.duration, rx)?;
         endpoint.send(HUB_SERVICE, HubServiceMessage::Publish { provider: Self::name().to_string(), resource_name: TOTAL_BUS_TRAFFIC.to_string(), receiver: bus_watch_rx }).await?;
         let instance = Self {
             endpoint,

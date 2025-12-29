@@ -4,9 +4,10 @@ use std::sync::Mutex;
 use std::sync::MutexGuard;
 
 use chrono::Local;
+use serde::Serialize;
 use tracing::warn;
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug,Serialize)]
 pub enum HealthStatus {
     Starting,
     Healthy,
@@ -15,7 +16,7 @@ pub enum HealthStatus {
     Stopped,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug,Serialize)]
 pub struct KernelHealth {
     pub kernel: HealthStatus,
     pub services: HashMap<String, (HealthStatus, Option<chrono::prelude::DateTime<Local>>)>,

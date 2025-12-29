@@ -5,6 +5,7 @@ use heleny_macros::base_service;
 use heleny_proto::name::HUB_SERVICE;
 use heleny_proto::resource::ResourcePayload;
 use heleny_proto::resource::TOTAL_BUS_TRAFFIC;
+use heleny_service::CommonMessage;
 use heleny_service::HubServiceMessage;
 use heleny_service::KernelMessage;
 use heleny_proto::message::AnyMessage;
@@ -14,6 +15,7 @@ use heleny_proto::role::ServiceRole;
 use heleny_service::UserServiceMessage;
 use heleny_service::Service;
 use tokio::time::Instant;
+use tracing::warn;
 
 use crate::user::User;
 
@@ -70,16 +72,18 @@ impl Service for UserService {
         Ok(())
     }
     async fn handle_resource(&mut self, resource: Resource) -> Result<()> {
-        let Resource { name, payload }=resource;
-        match payload {
-            ResourcePayload::TotolBusTraffic(_)=>{
-                Ok(())
-            }
-            ResourcePayload::Health(_)=>{
-                Ok(())
-            }
-        }
+        self.send_to_all_users(CommonMessage::Resource(resource)).await
     }
+
 }
 
-impl UserService {}
+impl UserService {
+    async fn send_to_all_users<T: AnyMessage+ Clone>(&self,msg:T)->Result<()>{
+        for user in &self.users {
+            if let Err(e) = self.endpoint.send(&user.name, msg.clone()).await {
+                warn!("发给所有 User 失败: {}",e)
+            };
+        }
+        Ok(())
+    }
+}

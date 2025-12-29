@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local};
+use heleny_proto::resource::Resource;
 use serde::Serialize;
 use tokio::sync::{mpsc, oneshot};
 use uuid::Uuid;
@@ -14,10 +14,7 @@ pub enum SessionMessage{
 
 #[derive(Debug,Clone,Serialize)]
 pub enum ServiceMessage{
-    UpdateBusTraffic {
-        time:DateTime<Local>,
-        strength:usize,
-    }
+    UpdateResource(Resource)
 }
 
 #[derive(Debug)]

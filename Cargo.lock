@@ -461,6 +461,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
+ "serde",
  "serde_json",
  "tokio",
  "tracing",
@@ -485,6 +486,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "chrono",
  "ed25519-dalek",
  "heleny_bus",
  "heleny_proto",
@@ -1114,6 +1116,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "chrono",
  "heleny_bus",
  "heleny_macros",
  "heleny_proto",

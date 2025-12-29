@@ -11,9 +11,6 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
-use tokio::time::Instant;
-use tokio::time::MissedTickBehavior;
-use tokio::time::interval;
 use tokio::time::timeout;
 use tracing::Instrument;
 use tracing::debug;
@@ -39,7 +36,7 @@ pub enum BusMessage {
         feedback:oneshot::Sender<()>,
     },
     RegisterStats {
-        sender: mpsc::Sender<HashMap<String, usize>>,
+        sender: mpsc::Sender<(String,String)>,
     },
     SetUser {
         name: String,
@@ -57,8 +54,7 @@ pub struct Bus {
     from_handle: Option<mpsc::Receiver<BusMessage>>,
     router: HashMap<String, mpsc::Sender<SignedMessage>>,
     tokens: HashMap<Uuid, (String, ServiceRole)>,
-    stats_table: Option<HashMap<String, usize>>,
-    stats_tx: Option<mpsc::Sender<HashMap<String, usize>>>,
+    stats_tx: Option<mpsc::Sender<(String,String)>>,
 }
 
 impl Bus {
@@ -73,7 +69,6 @@ impl Bus {
             from_handle: Some(from_handle),
             router: address_map,
             tokens,
-            stats_table: Some(HashMap::new()),
             stats_tx: None,
         }
     }
@@ -82,8 +77,6 @@ impl Bus {
         let span = info_span!("Bus");
         tokio::spawn(
             async move {
-                let mut tick_interval = interval(Duration::from_secs(1));
-                tick_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
                 let mut from_endpoints = match bus.from_endpoints.take() {
                     Some(rx) => rx,
                     None => {
@@ -110,25 +103,11 @@ impl Bus {
                                 warn!("{}",e);
                             };
                         }
-                        tick = tick_interval.tick() => {
-                            if let Err(e) = bus.handle_tick(tick){
-                                warn!("{}",e);
-                            };
-                        }
                     }
                 }
             }
             .instrument(span),
         )
-    }
-
-    pub fn handle_tick(&mut self, _tick: Instant) -> Result<()> {
-        let table = self.stats_table.take().context("没有路由统计表")?;
-        if let Some(tx) = &self.stats_tx {
-            tx.try_send(table)?
-        }
-        self.stats_table = Some(HashMap::new());
-        Ok(())
     }
 
     pub async fn handle_bus_message(&mut self, msg: BusMessage) -> Result<()> {
@@ -175,8 +154,8 @@ impl Bus {
 
     pub async fn send(&mut self, msg: SignedMessage) -> Result<()> {
         let target = msg.target.clone();
-        if let Some(table) = self.stats_table.as_mut() {
-            *table.entry(target.clone()).or_insert(0) += 1;
+        if let Some(tx) = &self.stats_tx {
+            tx.send((msg.name.clone(),msg.target.clone()));
         }
         let tx = self
             .router
@@ -254,7 +233,7 @@ impl BusHandle {
 
     pub async fn register_stats(
         &mut self,
-        sender: mpsc::Sender<HashMap<String, usize>>,
+        sender: mpsc::Sender<(String,String)>,
     ) -> Result<()> {
         self.handle_to_bus
             .send(BusMessage::RegisterStats { sender })
