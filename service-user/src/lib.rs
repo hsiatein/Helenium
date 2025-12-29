@@ -2,6 +2,10 @@ use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
+use heleny_proto::name::HUB_SERVICE;
+use heleny_proto::resource::ResourcePayload;
+use heleny_proto::resource::TOTAL_BUS_TRAFFIC;
+use heleny_service::HubServiceMessage;
 use heleny_service::KernelMessage;
 use heleny_proto::message::AnyMessage;
 use heleny_proto::name::KERNEL_NAME;
@@ -15,7 +19,7 @@ use crate::user::User;
 
 mod user;
 
-#[base_service(deps=[])]
+#[base_service(deps=["HubService"])]
 pub struct UserService {
     endpoint: Endpoint,
     users: Vec<User>,
@@ -28,6 +32,7 @@ enum _WorkerMessage {}
 impl Service for UserService {
     type MessageType = UserServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>> {
+        endpoint.send(HUB_SERVICE, HubServiceMessage::Subscribe { resource_name: TOTAL_BUS_TRAFFIC.to_string() }).await?;
         let instance = Self {
             endpoint,
             users: Vec::new(),
@@ -64,8 +69,16 @@ impl Service for UserService {
     async fn handle_tick(&mut self, _tick: Instant) -> Result<()> {
         Ok(())
     }
-    async fn handle_resource(&mut self, _resource: Resource) -> Result<()> {
-        Ok(())
+    async fn handle_resource(&mut self, resource: Resource) -> Result<()> {
+        let Resource { name, payload }=resource;
+        match payload {
+            ResourcePayload::TotolBusTraffic(_)=>{
+                Ok(())
+            }
+            ResourcePayload::Health(_)=>{
+                Ok(())
+            }
+        }
     }
 }
 

@@ -9,7 +9,10 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
 use axum::routing::any;
+use heleny_proto::frontend_type::FrontendType;
 use heleny_proto::message::downcast;
+use heleny_proto::name::USER_SERVICE;
+use heleny_service::UserServiceMessage;
 use heleny_service::get_from_config_service;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
@@ -22,12 +25,13 @@ use heleny_proto::{message::AnyMessage, role::ServiceRole};
 use async_trait::async_trait;
 use anyhow::Result;
 use heleny_proto::resource::Resource;
+use tower_http::services::ServeFile;
 use tracing::debug;
 use tracing::error;
 use tracing::info;
 use tracing::warn;
 use uuid::Uuid;
-
+use tower_http::services::ServeDir;
 use crate::message::ServiceMessage;
 use crate::message::SessionToService;
 use crate::register::Register;
@@ -40,7 +44,7 @@ mod register;
 mod message;
 
 
-#[base_service(deps=["ConfigService"])]
+#[base_service(deps=["ConfigService","UserService"])]
 pub struct WebuiService{
     endpoint:Endpoint,
     router:HashMap<Uuid,mpsc::Sender<ServiceMessage>>,
@@ -52,8 +56,13 @@ impl Service for WebuiService {
     type MessageType= WebuiServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>>{
         let config=get_from_config_service::<WebuiConfig>(&endpoint).await?;
+        // 向User服务注册
+        endpoint.send(USER_SERVICE, UserServiceMessage::Login(FrontendType::WEB)).await?;
+        // 开启 Web 服务
+        let serve_dir = ServeDir::new("heleny-webui/dist").not_found_service(ServeFile::new("heleny-webui/dist/index.html"));
         let register=Register::new(endpoint.create_sub_endpoint()?, config.session_buffer);
-        let router=Router::new().route("/ws", any(ws_handler)).with_state(register);
+        let router=Router::new().fallback_service(serve_dir)
+        .route("/ws", any(ws_handler)).with_state(register);
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}",config.port)).await.context("新建端口监听失败")?;
         info!("正则监听 {} 端口",config.port);
         let app_handle=tokio::spawn(async move{
@@ -61,6 +70,8 @@ impl Service for WebuiService {
                 error!("Axum 服务错误: {}",e);
             };
         });
+        open::that(format!("http://127.0.0.1:{}",config.port))?;
+        // 新建实例
         let instance=Self {
             endpoint,
             router:HashMap::new(),
