@@ -14,5 +14,8 @@
     },
     "StatsService":{
         "duration":60
+    },
+    "WebuiService":{
+        "port":"4080"
     }
 }
