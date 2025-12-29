@@ -20,6 +20,7 @@ services:
 - [ ] storage_service(调用db或fs)
 - [ ] gui_service(提供gui)
 - [ ] user_service(决定user获取什么资源并推送)
+- [ ] webui_service
 
 
 todo:
@@ -44,3 +45,4 @@ todo:
 - [x] 19.bus单独一个线程转发
 - [ ] 20.广播变量状态变化给依赖自己的服务
 - [ ] 21.心跳加随机延迟来错峰
+- [ ] 22.修改bus交通统计的实现
