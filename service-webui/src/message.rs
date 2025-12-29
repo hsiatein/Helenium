@@ -9,12 +9,13 @@ pub enum SessionMessage{
     Register{
         sender:mpsc::Sender<ServiceMessage>,
         feedback:oneshot::Sender<()>,
-    }
+    },
+    Logout,
 }
 
 #[derive(Debug,Clone,Serialize)]
 pub enum ServiceMessage{
-    UpdateResource(Resource)
+    UpdateResource(Resource),
 }
 
 #[derive(Debug)]

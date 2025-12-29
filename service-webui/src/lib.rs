@@ -99,6 +99,10 @@ impl Service for WebuiService {
                 let _=feedback.send(());
                 Ok(())
             },
+            SessionMessage::Logout=>{
+                self.router.remove(&token);
+                Ok(())
+            }
         }
     }
     async fn handle_tick(&mut self, _tick:Instant) -> Result<()>{
@@ -134,18 +138,39 @@ async fn ws_handler(ws: WebSocketUpgrade,State(register): State<Register>) -> Re
 async fn handle_socket(mut socket: WebSocket, mut endpoint:SessionEndpoint){
     loop{
         tokio::select! {
-            Some(Ok(msg)) = socket.recv()=>{
-                if let Err(e) = handle_ws_msg(&mut socket, &endpoint, msg.clone()).await {
-                    warn!("处理 msg [{:?}] 失败: {}",msg,e);
+            res = socket.recv() => {
+                match res {
+                    Some(Ok(msg)) => {
+                        if let Err(e) = handle_ws_msg(&mut socket, &endpoint, msg).await {
+                            warn!("处理消息失败: {}", e);
+                        }
+                    }
+                    Some(Err(e)) => {
+                        debug!("WebSocket 出错: {}", e);
+                        break;
+                    }
+                    None => {
+                        info!("前端已断开连接，正在关闭 session");
+                        break;
+                    }
                 }
             }
-            Some(msg) = endpoint.recv()=>{
-                if let Err(e) = handle_service_msg(&mut socket, &endpoint, msg.clone()).await {
-                    warn!("处理 msg [{:?}] 失败: {}",msg,e);
+            msg = endpoint.recv() => {
+                match msg {
+                    Some(msg) => {
+                        if let Err(e) = handle_service_msg(&mut socket, &endpoint, msg).await {
+                            warn!("处理消息失败: {}", e);
+                        }
+                    }
+                    None => {
+                        debug!("服务层 endpoint 已关闭");
+                        break;
+                    }
                 }
             }
         }
     }
+    let _=endpoint.send(SessionMessage::Logout).await;
 }
 
 async fn handle_ws_msg(_socket:&mut WebSocket, _endpoint:&SessionEndpoint,msg:Message)->Result<()>{
