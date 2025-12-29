@@ -16,6 +16,7 @@
         "duration":60
     },
     "WebuiService":{
-        "port":"4080"
+        "port":"4080",
+        "session_buffer":32
     }
 }

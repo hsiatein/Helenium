@@ -1,10 +1,17 @@
+use std::collections::HashMap;
 use anyhow::Context;
 use axum::Router;
+use axum::extract::State;
 use axum::extract::WebSocketUpgrade;
+use axum::extract::ws::Message;
 use axum::extract::ws::WebSocket;
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
 use axum::response::Response;
 use axum::routing::any;
+use heleny_proto::message::downcast;
 use heleny_service::get_from_config_service;
+use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 use heleny_bus::endpoint::Endpoint;
@@ -15,31 +22,40 @@ use heleny_proto::{message::AnyMessage, role::ServiceRole};
 use async_trait::async_trait;
 use anyhow::Result;
 use heleny_proto::resource::Resource;
+use tracing::debug;
 use tracing::error;
+use tracing::info;
+use tracing::warn;
+use uuid::Uuid;
 
+use crate::message::ServiceMessage;
+use crate::message::SessionToService;
+use crate::register::Register;
+use crate::register::SessionEndpoint;
 use crate::webui_config::WebuiConfig;
+use message::SessionMessage;
 
 mod webui_config;
+mod register;
+mod message;
 
 
 #[base_service(deps=["ConfigService"])]
 pub struct WebuiService{
     endpoint:Endpoint,
+    router:HashMap<Uuid,mpsc::Sender<ServiceMessage>>,
     app_handle:JoinHandle<()>,
-}
-
-#[derive(Debug)]
-enum _WorkerMessage{
-    
 }
 
 #[async_trait]
 impl Service for WebuiService {
     type MessageType= WebuiServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>>{
-        let router:Router<()>=Router::new().route("/ws", any(handler));
         let config=get_from_config_service::<WebuiConfig>(&endpoint).await?;
+        let register=Register::new(endpoint.create_sub_endpoint()?, config.session_buffer);
+        let router=Router::new().route("/ws", any(ws_handler)).with_state(register);
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}",config.port)).await.context("新建端口监听失败")?;
+        info!("正则监听 {} 端口",config.port);
         let app_handle=tokio::spawn(async move{
             if let Err(e) = axum::serve(listener, router).await {
                 error!("Axum 服务错误: {}",e);
@@ -47,6 +63,7 @@ impl Service for WebuiService {
         });
         let instance=Self {
             endpoint,
+            router:HashMap::new(),
             app_handle,
         };
         Ok(Box::new(instance))
@@ -60,10 +77,18 @@ impl Service for WebuiService {
         Ok(())
     }
     async fn stop(&mut self){
-
+        self.app_handle.abort();
     }
-    async fn handle_sub_endpoint(&mut self, _msg: Box<dyn AnyMessage>) -> Result<()>{
-        Ok(())
+    async fn handle_sub_endpoint(&mut self, msg: Box<dyn AnyMessage>) -> Result<()>{
+        let worker_message = downcast::<SessionToService>(msg)?;
+        let SessionToService { token, payload }=worker_message;
+        match payload {
+            SessionMessage::Register { sender,feedback }=>{
+                self.router.insert(token, sender);
+                let _=feedback.send(());
+                Ok(())
+            },
+        }
     }
     async fn handle_tick(&mut self, _tick:Instant) -> Result<()>{
         Ok(())
@@ -77,10 +102,40 @@ impl WebuiService {
     
 }
 
-async fn handler(ws: WebSocketUpgrade) -> Response {
-    ws.on_upgrade(handle_ws)
+async fn ws_handler(ws: WebSocketUpgrade,State(register): State<Register>) -> Response {
+    let endpoint = match register.get_session_endpoint().await {
+        Ok(endpoint) => endpoint,
+        Err(e) => {
+            warn!("新建 ws 握手失败: {}",e);
+            return StatusCode::NOT_FOUND.into_response();
+        }
+    };
+    ws.on_upgrade(move |socket| handle_socket(socket,endpoint))
 }
 
-async fn handle_ws(mut socket: WebSocket){
+async fn handle_socket(mut socket: WebSocket, mut endpoint:SessionEndpoint){
+    loop{
+        tokio::select! {
+            Some(Ok(msg)) = socket.recv()=>{
+                if let Err(e) = handle_ws_msg(&mut socket, &endpoint, msg.clone()).await {
+                    warn!("处理 msg [{:?}] 失败: {}",msg,e);
+                }
+            }
+            Some(msg) = endpoint.recv()=>{
+                if let Err(e) = handle_service_msg(&mut socket, &endpoint, msg.clone()).await {
+                    warn!("处理 msg [{:?}] 失败: {}",msg,e);
+                }
+            }
+        }
+    }
+}
 
+async fn handle_ws_msg(_socket:&mut WebSocket, _endpoint:&SessionEndpoint,msg:Message)->Result<()>{
+    debug!("{:?}",msg);
+    Ok(())
+}
+
+async fn handle_service_msg(socket:&mut WebSocket, _endpoint:&SessionEndpoint,msg:ServiceMessage)->Result<()>{
+    let data = serde_json::to_string(&msg)?;
+    socket.send(data.into()).await.context("发送 ws 消息失败")
 }
