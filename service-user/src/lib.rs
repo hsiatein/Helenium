@@ -3,7 +3,6 @@ use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::name::HUB_SERVICE;
-use heleny_proto::resource::ResourcePayload;
 use heleny_proto::resource::TOTAL_BUS_TRAFFIC;
 use heleny_service::CommonMessage;
 use heleny_service::HubServiceMessage;

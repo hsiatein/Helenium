@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -13,7 +12,7 @@ use tokio::sync::watch;
 use tokio::task::JoinHandle;
 use tokio::time::MissedTickBehavior;
 use tokio::time::interval;
-use tracing::debug;
+// use tracing::debug;
 use tracing::warn;
 
 /// 主要职责是监控Bus的流量进行统计
@@ -96,6 +95,7 @@ impl BusWatcher {
                 }
                 // debug!("{:?}",traffic.to_owned());
                 self.current_time=Local::now();
+                self.count=0;
                 self.tx.send(ResourcePayload::TotolBusTraffic(traffic.to_owned()))?;
                 Ok(())
             }

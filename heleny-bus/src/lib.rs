@@ -155,7 +155,7 @@ impl Bus {
     pub async fn send(&mut self, msg: SignedMessage) -> Result<()> {
         let target = msg.target.clone();
         if let Some(tx) = &self.stats_tx {
-            tx.send((msg.name.clone(),msg.target.clone()));
+            tx.send((msg.name.clone(),msg.target.clone())).await?;
         }
         let tx = self
             .router

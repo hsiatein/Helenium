@@ -61,7 +61,7 @@
 本项目测试大多数使用AI生成, 在测试以外使用AI生成的还有:
 1. heleny-utils::init_tracing函数 (6-31行).
 2. heleny-macros::base_service宏 (1-63行).
-3. 前端Vue代码, heleny-webui/src/router.ts, heleny-webui/src/main.ts.
+3. 大部分前端代码, ( Vue, heleny-webui/src/router.ts, heleny-webui/src/main.ts ).
 
 <p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 
