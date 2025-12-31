@@ -1,33 +1,33 @@
-use std::collections::HashMap;
-use std::collections::HashSet;
-use std::sync::Arc;
-use std::sync::Mutex;
 use anyhow::Context;
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::Local;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::name::KERNEL_SERVICE;
-use heleny_proto::resource::Resource;
-use heleny_service::CommonMessage;
-use heleny_service::KernelServiceMessage;
-use heleny_service::ServiceSignal;
+use heleny_proto::health::HealthStatus;
+use heleny_proto::health::KernelHealth;
 use heleny_proto::message::AnyMessage;
 use heleny_proto::message::SignedMessage;
 use heleny_proto::name::KERNEL_NAME;
+use heleny_proto::name::KERNEL_SERVICE;
+use heleny_proto::resource::Resource;
 use heleny_proto::role::ServiceRole;
 use heleny_proto::service_handle::ServiceHandle;
+use heleny_service::AdminCommand;
+use heleny_service::CommonMessage;
+use heleny_service::KernelServiceMessage;
 use heleny_service::Service;
 use heleny_service::ServiceFactory;
 use heleny_service::ServiceFactoryVec;
+use heleny_service::ServiceSignal;
+use heleny_service::ShutdownStage;
 use inventory;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::Arc;
+use std::sync::Mutex;
 use tokio::sync::oneshot;
 use tokio::time::Instant;
-use heleny_proto::health::HealthStatus;
-use heleny_proto::health::KernelHealth;
-use heleny_service::AdminCommand;
-use heleny_service::ShutdownStage;
 use tracing::debug;
 use tracing::info;
 use tracing::warn;
@@ -69,7 +69,10 @@ impl Service for KernelService {
             .map(|f| {
                 (
                     f.name.to_string(),
-                    f.deps.iter().map(|str|str.to_string()).collect::<HashSet<String>>(),
+                    f.deps
+                        .iter()
+                        .map(|str| str.to_string())
+                        .collect::<HashSet<String>>(),
                 )
             })
             .collect::<HashMap<String, HashSet<String>>>();
@@ -104,9 +107,10 @@ impl Service for KernelService {
                 return Err(anyhow::anyhow!("未收到初始化参数: {}", e));
             }
         };
-        KernelHealth::get_mut(&health)
-            .services
-            .insert(KERNEL_SERVICE.to_string(), (HealthStatus::Healthy, Some(Local::now())));
+        KernelHealth::get_mut(&health).services.insert(
+            KERNEL_SERVICE.to_string(),
+            (HealthStatus::Healthy, Some(Local::now())),
+        );
         // 构建完成
         Ok(Box::new(Self {
             endpoint,
@@ -250,7 +254,6 @@ impl Service for KernelService {
 }
 
 impl KernelService {
-
     /// 初始化一个列表里的各个服务
     async fn init_services(&mut self, can_init: HashSet<String>) {
         info!("开始代理启动服务");
@@ -279,26 +282,29 @@ impl KernelService {
                 Some(factory) => factory,
                 None => {
                     warn!("未找到 {} 的工厂函数, 忽略", name);
-                    KernelHealth::get_mut(&self.health)
-                        .services
-                        .insert(name.to_string(), (HealthStatus::Stopped, Some(Local::now())));
+                    KernelHealth::get_mut(&self.health).services.insert(
+                        name.to_string(),
+                        (HealthStatus::Stopped, Some(Local::now())),
+                    );
                     continue;
                 }
             };
             if !self.is_deps_ready(&factory.deps) {
                 warn!("{} 依赖未准备完成, 跳过初始化", name);
-                KernelHealth::get_mut(&self.health)
-                    .services
-                    .insert(name.to_string(), (HealthStatus::Stopped, Some(Local::now())));
+                KernelHealth::get_mut(&self.health).services.insert(
+                    name.to_string(),
+                    (HealthStatus::Stopped, Some(Local::now())),
+                );
                 continue;
             }
             let endpoint = match self.get_endpoint_from_kernel(&name).await {
                 Ok(endpoint) => endpoint,
                 Err(e) => {
                     warn!("无法获取 Endpoint, {} 启动失败: {}", name, e);
-                    KernelHealth::get_mut(&self.health)
-                        .services
-                        .insert(name.to_string(), (HealthStatus::Stopped, Some(Local::now())));
+                    KernelHealth::get_mut(&self.health).services.insert(
+                        name.to_string(),
+                        (HealthStatus::Stopped, Some(Local::now())),
+                    );
                     continue;
                 }
             };
@@ -306,9 +312,10 @@ impl KernelService {
                 Ok(handle) => handle,
                 Err(e) => {
                     warn!("初始化 {} 失败: {}", name, e);
-                    KernelHealth::get_mut(&self.health)
-                        .services
-                        .insert(name.to_string(), (HealthStatus::Stopped, Some(Local::now())));
+                    KernelHealth::get_mut(&self.health).services.insert(
+                        name.to_string(),
+                        (HealthStatus::Stopped, Some(Local::now())),
+                    );
                     continue;
                 }
             };
@@ -329,9 +336,10 @@ impl KernelService {
             {
                 let mut health = KernelHealth::get_mut(&self.health);
                 match health.services.get(&name) {
-                    Some((HealthStatus::Healthy, _)) => health
-                        .services
-                        .insert(name.to_string(), (HealthStatus::Stopping, Some(Local::now()))),
+                    Some((HealthStatus::Healthy, _)) => health.services.insert(
+                        name.to_string(),
+                        (HealthStatus::Stopping, Some(Local::now())),
+                    ),
                     _ => {
                         warn!("{} 非健康状态, 强制杀死", name);
                         match self
@@ -343,9 +351,10 @@ impl KernelService {
                         {
                             Some(handle) => {
                                 handle.abort();
-                                health
-                                    .services
-                                    .insert(name.to_string(), (HealthStatus::Stopped, Some(Local::now())));
+                                health.services.insert(
+                                    name.to_string(),
+                                    (HealthStatus::Stopped, Some(Local::now())),
+                                );
                                 info!("强制终止 {} 句柄", name);
                             }
                             None => (),
@@ -354,10 +363,7 @@ impl KernelService {
                     }
                 };
             }
-            let _ = self
-                .endpoint
-                .send(&name, CommonMessage::Stop)
-                .await;
+            let _ = self.endpoint.send(&name, CommonMessage::Stop).await;
         }
     }
 

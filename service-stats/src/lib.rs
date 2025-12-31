@@ -2,16 +2,16 @@ use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::name::HUB_SERVICE;
-use heleny_proto::resource::TOTAL_BUS_TRAFFIC;
-use heleny_service::HubServiceMessage;
-use heleny_service::KernelMessage;
 use heleny_proto::message::AnyMessage;
+use heleny_proto::name::HUB_SERVICE;
 use heleny_proto::name::KERNEL_NAME;
 use heleny_proto::resource::Resource;
+use heleny_proto::resource::TOTAL_BUS_TRAFFIC;
 use heleny_proto::role::ServiceRole;
-use heleny_service::StatsServiceMessage;
+use heleny_service::HubServiceMessage;
+use heleny_service::KernelMessage;
 use heleny_service::Service;
+use heleny_service::StatsServiceMessage;
 use heleny_service::get_from_config_service;
 use tokio::sync::mpsc;
 use tokio::time::Instant;
@@ -42,13 +42,19 @@ impl Service for StatsService {
 
         let (tx, rx) = mpsc::channel(32);
         let _ = endpoint
+            .send(KERNEL_NAME, KernelMessage::GetBusStatsRx { sender: tx })
+            .await?;
+        let (bus_watcher, bus_watch_rx) = BusWatcherHandle::new(config.duration, rx)?;
+        endpoint
             .send(
-                KERNEL_NAME,
-                KernelMessage::GetBusStatsRx { sender: tx },
+                HUB_SERVICE,
+                HubServiceMessage::Publish {
+                    provider: Self::name().to_string(),
+                    resource_name: TOTAL_BUS_TRAFFIC.to_string(),
+                    receiver: bus_watch_rx,
+                },
             )
             .await?;
-        let (bus_watcher,bus_watch_rx) = BusWatcherHandle::new(config.duration, rx)?;
-        endpoint.send(HUB_SERVICE, HubServiceMessage::Publish { provider: Self::name().to_string(), resource_name: TOTAL_BUS_TRAFFIC.to_string(), receiver: bus_watch_rx }).await?;
         let instance = Self {
             endpoint,
             _stats_config: config,

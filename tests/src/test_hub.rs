@@ -29,11 +29,19 @@ async fn main() -> anyhow::Result<()> {
     info!("wait for StatsService");
     rx.await.expect("等待失败").unwrap();
 
-    endpoint.send(HUB_SERVICE, HubServiceMessage::Subscribe { resource_name: TOTAL_BUS_TRAFFIC.to_string() }).await.expect("发送失败");
+    endpoint
+        .send(
+            HUB_SERVICE,
+            HubServiceMessage::Subscribe {
+                resource_name: TOTAL_BUS_TRAFFIC.to_string(),
+            },
+        )
+        .await
+        .expect("发送失败");
 
     for _ in 0..5 {
-        let msg=endpoint.recv().await.expect("接收失败");
-        info!("订阅消息: {:?}",msg);
+        let msg = endpoint.recv().await.expect("接收失败");
+        info!("订阅消息: {:?}", msg);
     }
 
     info!("test pass!");

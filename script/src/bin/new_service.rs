@@ -123,15 +123,18 @@ pub enum {PATTERN}ServiceMessage {
     )
     .expect("写入message枚举失败");
 
-    let path=&PathBuf::from("heleny-service").join("src").join("messages").join("mod.rs");
-    let message_lib =std::fs::read_to_string(path)
-            .expect("读取失败");
-    let message_lib = message_lib + "\nmod " + name + "_service_message;\npub use "+name+"_service_message::*;";
-    std::fs::write(
-        path,
-        message_lib,
-    )
-    .expect("写入mod声明失败");
+    let path = &PathBuf::from("heleny-service")
+        .join("src")
+        .join("messages")
+        .join("mod.rs");
+    let message_lib = std::fs::read_to_string(path).expect("读取失败");
+    let message_lib = message_lib
+        + "\nmod "
+        + name
+        + "_service_message;\npub use "
+        + name
+        + "_service_message::*;";
+    std::fs::write(path, message_lib).expect("写入mod声明失败");
 
     let manifest_path = current_dir.join("heleny-kernel").join("Cargo.toml");
     let manifest =

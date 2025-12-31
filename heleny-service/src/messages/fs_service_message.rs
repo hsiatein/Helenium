@@ -1,2 +1,17 @@
+use std::path::PathBuf;
+
+use tokio::sync::oneshot;
+
 #[derive(Debug)]
-pub enum FsServiceMessage {}
+pub enum FsServiceMessage {
+    Read {
+        path: PathBuf,
+        feedback: oneshot::Sender<String>,
+    },
+    Write {
+        path: PathBuf,
+        content: String,
+        feedback: oneshot::Sender<()>,
+    },
+    Update,
+}

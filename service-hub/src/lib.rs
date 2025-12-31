@@ -1,13 +1,14 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+use std::collections::HashSet;
 
-use anyhow::{Result};
+use anyhow::Result;
 use async_trait::async_trait;
-use heleny_bus::endpoint::{Endpoint};
+use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_service::HubServiceMessage;
 use heleny_proto::message::AnyMessage;
 use heleny_proto::resource::Resource;
 use heleny_proto::role::ServiceRole;
+use heleny_service::HubServiceMessage;
 use heleny_service::Service;
 use tokio::time::Instant;
 use tracing::info;
@@ -22,7 +23,7 @@ pub struct HubService {
     // 资源提供者
     providers: HashMap<String, Provider>,
     // 正在等待资源的服务
-    pending: HashMap<String,HashSet<String>>,
+    pending: HashMap<String, HashSet<String>>,
 }
 
 #[derive(Debug)]
@@ -55,38 +56,41 @@ impl Service for HubService {
                     Err(anyhow::anyhow!("已经有服务注册了"))
                 }
                 _ => {
-                    let endpoint=self.endpoint.create_sender_endpoint();
-                    let subsribers=match self.pending.remove(&resource_name){
-                        Some(subsribers)=>subsribers,
-                        None=>HashSet::new(),
+                    let endpoint = self.endpoint.create_sender_endpoint();
+                    let subsribers = match self.pending.remove(&resource_name) {
+                        Some(subsribers) => subsribers,
+                        None => HashSet::new(),
                     };
-                    self.providers
-                        .insert(resource_name.clone(), Provider::new(provider,resource_name.clone(),endpoint, receiver,subsribers)?);
-                    info!("{} 已发布",resource_name);
+                    self.providers.insert(
+                        resource_name.clone(),
+                        Provider::new(
+                            provider,
+                            resource_name.clone(),
+                            endpoint,
+                            receiver,
+                            subsribers,
+                        )?,
+                    );
+                    info!("{} 已发布", resource_name);
                     Ok(())
                 }
             },
-            HubServiceMessage::Subscribe {
-                resource_name,
-            } => {
+            HubServiceMessage::Subscribe { resource_name } => {
                 match self.providers.get_mut(&resource_name) {
-                    Some(provider)=>{
-                        provider.subscribe(name).await
-                    }
-                    None=>{
-                        self.pending.entry(resource_name).or_insert(HashSet::new()).insert(name);
+                    Some(provider) => provider.subscribe(name).await,
+                    None => {
+                        self.pending
+                            .entry(resource_name)
+                            .or_insert(HashSet::new())
+                            .insert(name);
                         Ok(())
                     }
                 }
             }
             HubServiceMessage::Unsubscribe { resource_name } => {
                 match self.providers.get_mut(&resource_name) {
-                    Some(provider)=>{
-                        provider.unsubscribe(name).await
-                    }
-                    None=>{
-                        Ok(())
-                    }
+                    Some(provider) => provider.unsubscribe(name).await,
+                    None => Ok(()),
                 }
             }
         }

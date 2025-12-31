@@ -58,7 +58,7 @@ pub trait AnyMessage: Send + Sync + Any + Debug {
     fn as_any(self: Box<Self>) -> Box<dyn Any>;
 }
 
-impl<T: Any + Send + Sync + Debug > AnyMessage for T {
+impl<T: Any + Send + Sync + Debug> AnyMessage for T {
     fn as_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }

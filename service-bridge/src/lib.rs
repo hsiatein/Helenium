@@ -2,10 +2,10 @@ use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_service::BridgeServiceMessage;
 use heleny_proto::message::AnyMessage;
 use heleny_proto::resource::Resource;
 use heleny_proto::role::ServiceRole;
+use heleny_service::BridgeServiceMessage;
 use heleny_service::Service;
 use tokio::time::Instant;
 

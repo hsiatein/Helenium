@@ -18,19 +18,19 @@ use tracing::warn;
 /// 主要职责是监控Bus的流量进行统计
 pub struct BusWatcherHandle {
     _handle: JoinHandle<Result<()>>,
-    total_traffic: Arc<Mutex<VecDeque<(DateTime<Local>,usize)>>>,
+    total_traffic: Arc<Mutex<VecDeque<(DateTime<Local>, usize)>>>,
 }
 
 impl BusWatcherHandle {
     pub fn new(
         duration: usize,
-        mut bus_rx: mpsc::Receiver<(String,String)>,
-    ) -> Result<(BusWatcherHandle,watch::Receiver<ResourcePayload>)> {
-        let (tx,rx)=watch::channel(ResourcePayload::TotolBusTraffic(VecDeque::new()));
+        mut bus_rx: mpsc::Receiver<(String, String)>,
+    ) -> Result<(BusWatcherHandle, watch::Receiver<ResourcePayload>)> {
+        let (tx, rx) = watch::channel(ResourcePayload::TotolBusTraffic(VecDeque::new()));
         let total_traffic = Arc::new(Mutex::new(VecDeque::new()));
         let total_traffic_ = total_traffic.clone();
         let handle = tokio::spawn(async move {
-            let mut bus_watcher=BusWatcher::new(duration, total_traffic_, tx);
+            let mut bus_watcher = BusWatcher::new(duration, total_traffic_, tx);
             let mut tick_interval = interval(Duration::from_secs(1));
             tick_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
             loop {
@@ -48,17 +48,20 @@ impl BusWatcherHandle {
                 }
             }
         });
-        Ok((Self {
-            _handle: handle,
-            total_traffic,
-        },rx))
+        Ok((
+            Self {
+                _handle: handle,
+                total_traffic,
+            },
+            rx,
+        ))
     }
 
     pub fn _abort(&self) {
         self._handle.abort();
     }
 
-    pub fn get_total_traffic(&self) -> Result<VecDeque<(DateTime<Local>,usize)>> {
+    pub fn get_total_traffic(&self) -> Result<VecDeque<(DateTime<Local>, usize)>> {
         match self.total_traffic.lock() {
             Ok(traffic) => Ok(traffic.to_owned()),
             Err(e) => Err(anyhow::anyhow!("{}", e)),
@@ -70,57 +73,45 @@ pub struct BusWatcher {
     duration: usize,
     current_time: DateTime<Local>,
     count: usize,
-    total_traffic: Arc<Mutex<VecDeque<(DateTime<Local>,usize)>>>,
-    tx:watch::Sender<ResourcePayload>,
+    total_traffic: Arc<Mutex<VecDeque<(DateTime<Local>, usize)>>>,
+    tx: watch::Sender<ResourcePayload>,
 }
 
 impl BusWatcher {
-    pub fn new(duration: usize,
-    total_traffic: Arc<Mutex<VecDeque<(DateTime<Local>,usize)>>>,
-    tx:watch::Sender<ResourcePayload>,)->Self{
-        Self { duration, current_time: Local::now(), count: 0, total_traffic, tx }
+    pub fn new(
+        duration: usize,
+        total_traffic: Arc<Mutex<VecDeque<(DateTime<Local>, usize)>>>,
+        tx: watch::Sender<ResourcePayload>,
+    ) -> Self {
+        Self {
+            duration,
+            current_time: Local::now(),
+            count: 0,
+            total_traffic,
+            tx,
+        }
     }
 
-    pub fn handle(&mut self,_msg: (String,String))-> Result<()> {
-        self.count=self.count+1;
+    pub fn handle(&mut self, _msg: (String, String)) -> Result<()> {
+        self.count = self.count + 1;
         Ok(())
     }
 
-    pub fn handle_tick(&mut self)-> Result<()> {
+    pub fn handle_tick(&mut self) -> Result<()> {
         match self.total_traffic.lock() {
             Ok(mut traffic) => {
-                traffic.push_back((self.current_time,self.count));
+                traffic.push_back((self.current_time, self.count));
                 if traffic.len() > self.duration {
                     traffic.pop_front();
                 }
                 // debug!("{:?}",traffic.to_owned());
-                self.current_time=Local::now();
-                self.count=0;
-                self.tx.send(ResourcePayload::TotolBusTraffic(traffic.to_owned()))?;
+                self.current_time = Local::now();
+                self.count = 0;
+                self.tx
+                    .send(ResourcePayload::TotolBusTraffic(traffic.to_owned()))?;
                 Ok(())
             }
             Err(e) => Err(anyhow::anyhow!("{}", e)),
         }
     }
 }
-
-// async fn handle(
-//     duration: usize,
-//     total_traffic: &Arc<Mutex<VecDeque<(DateTime<Local>,usize)>>>,
-//     msg: (String,String),
-//     tx:&watch::Sender<ResourcePayload>,
-// ) -> Result<()> {
-//     match total_traffic.lock() {
-//         Ok(mut traffic) => {
-//             let total = msg.values().cloned().sum();
-//             traffic.push_back(total);
-//             if traffic.len() > duration {
-//                 traffic.pop_front();
-//             }
-//             // debug!("{:?}",traffic.to_owned());
-//             tx.send(ResourcePayload::TotolBusTraffic(traffic.to_owned()))?;
-//             Ok(())
-//         }
-//         Err(e) => Err(anyhow::anyhow!("{}", e)),
-//     }
-// }

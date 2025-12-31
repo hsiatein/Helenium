@@ -8,10 +8,7 @@ pub struct ServiceHandle {
 }
 
 impl ServiceHandle {
-    pub fn new(
-        service_name: String,
-        thread_handle: JoinHandle<Result<(), anyhow::Error>>,
-    ) -> Self {
+    pub fn new(service_name: String, thread_handle: JoinHandle<Result<(), anyhow::Error>>) -> Self {
         Self {
             service_name,
             thread_handle,

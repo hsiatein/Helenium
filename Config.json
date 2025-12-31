@@ -18,5 +18,36 @@
     "WebuiService":{
         "port":"4080",
         "session_buffer":32
+    },
+    "ChatService":{
+        "api":[
+            {
+                "base_url":"https://api.x.ai/v1",
+                "model":"grok-4-1-fast-non-reasoning",
+                "api_key_env_var":"GROK_API_KEY"
+            },
+            {
+                "base_url":"https://generativelanguage.googleapis.com/v1beta/openai/",
+                "model":"gemini-2.5-flash",
+                "api_key_env_var":"GEMINI_API_KEY"
+            }
+        ],
+        "heleny":{
+            "api":0,
+            "preset_path":"assets/presets/heleny.txt"
+        },
+        "planner":{
+            "api":1,
+            "preset_path":"assets/presets/planner.txt"
+        },
+        "executor":{
+            "api":1,
+            "preset_path":"assets/presets/executor.txt"
+        }
+    },
+    "MemoryService":{
+        "short_term_length":20,
+        "storage_dir":"./storage",
+        "display_length":20
     }
 }

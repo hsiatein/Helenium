@@ -21,22 +21,22 @@ use uuid::Uuid;
 use crate::endpoint::Endpoint;
 
 pub enum BusMessage {
-    AddEndpoint{
-        token:Uuid,
-        name:String,
-        role:ServiceRole,
-        address:mpsc::Sender<SignedMessage>,
-        feedback:oneshot::Sender<()>,
+    AddEndpoint {
+        token: Uuid,
+        name: String,
+        role: ServiceRole,
+        address: mpsc::Sender<SignedMessage>,
+        feedback: oneshot::Sender<()>,
     },
-    AddProxyEndpoint{
-        token:Uuid,
-        name:String,
-        role:ServiceRole,
-        proxy:String,
-        feedback:oneshot::Sender<()>,
+    AddProxyEndpoint {
+        token: Uuid,
+        name: String,
+        role: ServiceRole,
+        proxy: String,
+        feedback: oneshot::Sender<()>,
     },
     RegisterStats {
-        sender: mpsc::Sender<(String,String)>,
+        sender: mpsc::Sender<(String, String)>,
     },
     SetUser {
         name: String,
@@ -54,7 +54,7 @@ pub struct Bus {
     from_handle: Option<mpsc::Receiver<BusMessage>>,
     router: HashMap<String, mpsc::Sender<SignedMessage>>,
     tokens: HashMap<Uuid, (String, ServiceRole)>,
-    stats_tx: Option<mpsc::Sender<(String,String)>>,
+    stats_tx: Option<mpsc::Sender<(String, String)>>,
 }
 
 impl Bus {
@@ -112,7 +112,13 @@ impl Bus {
 
     pub async fn handle_bus_message(&mut self, msg: BusMessage) -> Result<()> {
         match msg {
-            BusMessage::AddEndpoint { token, name, role, address, feedback } => {
+            BusMessage::AddEndpoint {
+                token,
+                name,
+                role,
+                address,
+                feedback,
+            } => {
                 self.tokens.insert(token, (name.clone(), role));
                 self.router.insert(name, address);
                 let _ = feedback.send(());
@@ -126,11 +132,21 @@ impl Bus {
                     .context("未找到该用户")?;
                 user.1.1 = ServiceRole::User;
             }
-            BusMessage::AddProxyEndpoint { token, name, role, proxy, feedback }=>{
+            BusMessage::AddProxyEndpoint {
+                token,
+                name,
+                role,
+                proxy,
+                feedback,
+            } => {
                 self.tokens.insert(token, (name.clone(), role));
-                let tx=self.router.get(&proxy).context(format!("找不到代理 {} 的地址",proxy))?.clone();
+                let tx = self
+                    .router
+                    .get(&proxy)
+                    .context(format!("找不到代理 {} 的地址", proxy))?
+                    .clone();
                 self.router.insert(name, tx);
-                let _=feedback.send(());
+                let _ = feedback.send(());
             }
         }
         Ok(())
@@ -155,7 +171,7 @@ impl Bus {
     pub async fn send(&mut self, msg: SignedMessage) -> Result<()> {
         let target = msg.target.clone();
         if let Some(tx) = &self.stats_tx {
-            tx.send((msg.name.clone(),msg.target.clone())).await?;
+            tx.send((msg.name.clone(), msg.target.clone())).await?;
         }
         let tx = self
             .router
@@ -191,8 +207,13 @@ impl BusHandle {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .handle_to_bus
-            .send(BusMessage::AddEndpoint { token, name, role, address: mpsc_tx.clone(), feedback: tx }
-            )
+            .send(BusMessage::AddEndpoint {
+                token,
+                name,
+                role,
+                address: mpsc_tx.clone(),
+                feedback: tx,
+            })
             .await;
         let _ = timeout(Duration::from_secs(5), rx)
             .await
@@ -206,7 +227,8 @@ impl BusHandle {
         ))
     }
 
-    pub async fn get_proxy_endpoint(&mut self,
+    pub async fn get_proxy_endpoint(
+        &mut self,
         name: String,
         proxy: String,
         role: ServiceRole,
@@ -215,26 +237,26 @@ impl BusHandle {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .handle_to_bus
-            .send(BusMessage::AddProxyEndpoint { token, name, role, proxy, feedback: tx })
+            .send(BusMessage::AddProxyEndpoint {
+                token,
+                name,
+                role,
+                proxy,
+                feedback: tx,
+            })
             .await;
         timeout(Duration::from_secs(5), rx)
             .await
             .context("推送 Proxy Endpoint 信息超时")?
             .context("推送 Proxy Endpoint 信息错误")?;
-        Ok(Endpoint::new_minimal(
-            token,
-            self.endpoint_to_bus.clone(),
-        ))
+        Ok(Endpoint::new_minimal(token, self.endpoint_to_bus.clone()))
     }
 
     pub fn abort(&self) {
         self.handle.abort();
     }
 
-    pub async fn register_stats(
-        &mut self,
-        sender: mpsc::Sender<(String,String)>,
-    ) -> Result<()> {
+    pub async fn register_stats(&mut self, sender: mpsc::Sender<(String, String)>) -> Result<()> {
         self.handle_to_bus
             .send(BusMessage::RegisterStats { sender })
             .await

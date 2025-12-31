@@ -29,3 +29,7 @@ path="src/test_stats.rs"
 name="test_hub"
 path="src/test_hub.rs"
 
+[[bin]]
+name="test_fs"
+path="src/test_fs.rs"
+

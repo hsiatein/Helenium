@@ -25,3 +25,5 @@ service_stats ={ path = "../service-stats"}
 service_user ={ path = "../service-user"}
 service_hub ={ path = "../service-hub"}
 service_webui ={ path = "../service-webui"}
+service_chat ={ path = "../service-chat"}
+service_memory ={ path = "../service-memory"}

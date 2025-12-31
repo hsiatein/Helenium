@@ -7,6 +7,7 @@ import { ChatboxEllipsesOutline, CalendarOutline, TerminalOutline, DocumentTextO
 
 const themeOverrides: GlobalThemeOverrides = {
   common: {
+    borderRadius: '10px',
     primaryColor: '#1f6feb',
     primaryColorHover: '#1456c3',
     primaryColorPressed: '#1f6feb',
@@ -113,7 +114,9 @@ watch(
   flex-shrink: 0;
 }
 .sidebar-title {
-  color: #08315c;
+  color: aliceblue;
+  font-size: 36px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 :deep(.menu-icon) {
   flex-shrink: 0;

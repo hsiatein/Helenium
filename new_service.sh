@@ -1,4 +1,4 @@
 #!/bin/bash
-name="hub"
+name="db"
 
 ./target/debug/new_service ${name}

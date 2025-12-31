@@ -4,21 +4,21 @@ use anyhow::anyhow;
 use heleny_bus::BusHandle;
 use heleny_bus::endpoint::Endpoint;
 use heleny_bus::{self};
-use heleny_proto::name::KERNEL_SERVICE;
-use heleny_service::CommonMessage;
 use heleny_proto::health::KernelHealth;
-use heleny_service::KernelMessage;
-use heleny_service::KernelServiceMessage;
 use heleny_proto::message::AnyMessage;
 use heleny_proto::message::SignedMessage;
 use heleny_proto::name::KERNEL_NAME;
+use heleny_proto::name::KERNEL_SERVICE;
 use heleny_proto::role::ServiceRole;
 use heleny_proto::service_handle::ServiceHandle;
 use heleny_service::AdminCommand;
+use heleny_service::CommonMessage;
+use heleny_service::KernelMessage;
+use heleny_service::KernelServiceMessage;
 use heleny_service::ShutdownStage;
+use heleny_service::get_factory;
 use heleny_service::kernel_downcast;
 use heleny_service::{self};
-use heleny_service::get_factory;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -198,9 +198,7 @@ impl Kernel {
 
     /// 发送消息给 KernelService
     async fn send_kernel_message(&self, payload: KernelServiceMessage) -> Result<()> {
-        self.endpoint
-            .send(KERNEL_SERVICE, payload)
-            .await
+        self.endpoint.send(KERNEL_SERVICE, payload).await
     }
 
     /// 发送 Admin 消息给 Kernel(自己)
@@ -257,7 +255,7 @@ impl Kernel {
         _: ServiceRole,
     ) -> Result<()> {
         match command {
-            AdminCommand::NewEndpoint{name, feedback} => {
+            AdminCommand::NewEndpoint { name, feedback } => {
                 let role = if ADMIN_SERVICE.contains(&name.as_str()) {
                     ServiceRole::System
                 } else {
@@ -272,10 +270,14 @@ impl Kernel {
                 Ok(())
             }
             AdminCommand::Shutdown(stage) => self.shutdown(stage).await,
-            AdminCommand::NewProxyEndpoint { name, proxy, feedback }=>{
+            AdminCommand::NewProxyEndpoint {
+                name,
+                proxy,
+                feedback,
+            } => {
                 let endpoint = self
                     .bus
-                    .get_proxy_endpoint(name,proxy, ServiceRole::Standard)
+                    .get_proxy_endpoint(name, proxy, ServiceRole::Standard)
                     .await?;
 
                 let _ = feedback.send(endpoint);

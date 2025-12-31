@@ -28,20 +28,17 @@ impl Endpoint {
             token,
             to_bus,
             from_bus: Some(from_bus),
-            to_self:Some(to_self),
+            to_self: Some(to_self),
             from_sub_endpoint: Some(from_sub_endpoint),
         }
     }
 
-    pub fn new_minimal(
-        token: Uuid,
-        to_bus: mpsc::Sender<TokenMessage>,
-    ) -> Self {
+    pub fn new_minimal(token: Uuid, to_bus: mpsc::Sender<TokenMessage>) -> Self {
         Self {
             token,
             to_bus,
             from_bus: None,
-            to_self:None,
+            to_self: None,
             from_sub_endpoint: None,
         }
     }
@@ -58,28 +55,25 @@ impl Endpoint {
             .map_err(|e| anyhow::anyhow!("发送消息到 Kernel 失败: {}", e))
     }
 
-    pub async fn send<T:AnyMessage>(
-        &self,
-        target: &str,
-        payload: T,
-    ) -> Result<()> {
+    pub async fn send<T: AnyMessage>(&self, target: &str, payload: T) -> Result<()> {
         self.send_box(target, Box::new(payload)).await
     }
 
     pub fn create_sub_endpoint(&self) -> Result<mpsc::Sender<Box<dyn AnyMessage>>> {
-        self.to_self.clone().context("最小化启动的 Endpoint 不能使用 SubEndpoint")
+        self.to_self
+            .clone()
+            .context("最小化启动的 Endpoint 不能使用 SubEndpoint")
     }
 
     pub fn create_sender_endpoint(&self) -> Endpoint {
         Endpoint::new_minimal(self.token, self.to_bus.clone())
     }
 
-    pub fn send_once(&self,payload:Box<dyn AnyMessage>) -> (mpsc::Sender<TokenMessage>, TokenMessage) {
-        let msg = TokenMessage::new(
-            KERNEL_SERVICE.to_string(),
-            self.token,
-            payload,
-        );
+    pub fn send_once(
+        &self,
+        payload: Box<dyn AnyMessage>,
+    ) -> (mpsc::Sender<TokenMessage>, TokenMessage) {
+        let msg = TokenMessage::new(KERNEL_SERVICE.to_string(), self.token, payload);
         (self.to_bus.clone(), msg)
     }
 

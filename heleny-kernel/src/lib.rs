@@ -14,4 +14,7 @@ extern crate service_user;
 pub use kernel::*;
 extern crate service_hub;
 
+extern crate service_chat;
 extern crate service_webui;
+
+extern crate service_memory;

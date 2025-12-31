@@ -1,4 +1,4 @@
-use heleny_proto::resource::{ResourcePayload};
+use heleny_proto::resource::ResourcePayload;
 use tokio::sync::watch;
 
 #[derive(Debug)]

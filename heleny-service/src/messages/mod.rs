@@ -22,3 +22,8 @@ mod bridge_service_message;
 pub use bridge_service_message::*;
 mod webui_service_message;
 pub use webui_service_message::*;
+mod chat_service_message;
+pub use chat_service_message::*;
+
+mod memory_service_message;
+pub use memory_service_message::*;

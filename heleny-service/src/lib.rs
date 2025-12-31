@@ -48,7 +48,9 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
         let span = info_span!("", Name = %Self::name());
         let handle = tokio::spawn(
             async move {
-                let (sender, fail_msg) = endpoint.send_once(Box::new(KernelServiceMessage::UploadStatus(ServiceSignal::InitFail)));
+                let (sender, fail_msg) = endpoint.send_once(Box::new(
+                    KernelServiceMessage::UploadStatus(ServiceSignal::InitFail),
+                ));
                 let mut service = match Self::new(endpoint).await {
                     Ok(service) => service,
                     Err(e) => {
@@ -161,7 +163,8 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
         }
     }
     async fn send_alive(&self) {
-        let _ = self.endpoint()
+        let _ = self
+            .endpoint()
             .send(
                 KERNEL_SERVICE,
                 KernelServiceMessage::UploadStatus(ServiceSignal::Alive),
@@ -169,7 +172,8 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
             .await;
     }
     async fn send_ready(&self) {
-        let _ = self.endpoint()
+        let _ = self
+            .endpoint()
             .send(
                 KERNEL_SERVICE,
                 KernelServiceMessage::UploadStatus(ServiceSignal::Ready),
@@ -178,7 +182,8 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
     }
 
     async fn send_terminate(&self) {
-        let _ = self.endpoint()
+        let _ = self
+            .endpoint()
             .send(
                 KERNEL_SERVICE,
                 KernelServiceMessage::UploadStatus(ServiceSignal::Terminate),
@@ -186,15 +191,23 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
             .await;
     }
 
-    async fn get_endpoint_from_kernel(&self,name:&str)->Result<Endpoint>{
-        let (tx,rx)=oneshot::channel();
-        let _ = self.endpoint().send(KERNEL_NAME, AdminCommand::NewEndpoint { name: name.to_string(), feedback: tx }).await;
+    async fn get_endpoint_from_kernel(&self, name: &str) -> Result<Endpoint> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self
+            .endpoint()
+            .send(
+                KERNEL_NAME,
+                AdminCommand::NewEndpoint {
+                    name: name.to_string(),
+                    feedback: tx,
+                },
+            )
+            .await;
         rx.await.context("获取 Endpoint 错误")
     }
-
 }
 
-pub trait HasEndpoint:Sync {
+pub trait HasEndpoint: Sync {
     fn endpoint_mut(&mut self) -> &mut Endpoint;
     fn endpoint(&self) -> &Endpoint;
 }

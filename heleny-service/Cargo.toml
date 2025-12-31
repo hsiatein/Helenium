@@ -15,3 +15,4 @@ serde_json = {workspace = true}
 serde = {workspace = true}
 ed25519-dalek = {workspace = true}
 chrono = {workspace = true}
+async-openai = {workspace = true}

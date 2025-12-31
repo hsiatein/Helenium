@@ -8,13 +8,13 @@ use ed25519_dalek::VerifyingKey;
 use ed25519_dalek::pkcs8::DecodePublicKey;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::name::CONFIG_SERVICE;
-use heleny_service::AuthServiceMessage;
-use heleny_service::ConfigServiceMessage;
 use heleny_proto::message::AnyMessage;
 use heleny_proto::message::downcast;
+use heleny_proto::name::CONFIG_SERVICE;
 use heleny_proto::resource::Resource;
 use heleny_proto::role::ServiceRole;
+use heleny_service::AuthServiceMessage;
+use heleny_service::ConfigServiceMessage;
 use heleny_service::Service;
 use heleny_service::get_from_config_service;
 use rand::RngCore;
@@ -139,10 +139,7 @@ impl AuthService {
         let sub_endpoint = self.endpoint.create_sub_endpoint()?;
         let (tx, rx) = oneshot::channel();
         self.endpoint
-            .send(
-                CONFIG_SERVICE,
-                ConfigServiceMessage::Get { sender: tx },
-            )
+            .send(CONFIG_SERVICE, ConfigServiceMessage::Get { sender: tx })
             .await
             .context("AuthService 获取 ConfigService 的资源发送失败")?;
         let handle = tokio::spawn(async move {

@@ -1,26 +1,33 @@
 use std::collections::VecDeque;
 
-use chrono::{DateTime, Local};
+use chrono::DateTime;
+use chrono::Local;
 use serde::Serialize;
 
+use crate::memory::DisplayMessage;
 use crate::health::KernelHealth;
 
-#[derive(Debug,Clone,Serialize)]
-pub struct Resource{
-    pub name:String,
-    pub payload:ResourcePayload
+#[derive(Debug, Clone, Serialize)]
+pub struct Resource {
+    pub name: String,
+    pub payload: ResourcePayload,
 }
 
 impl Resource {
-    pub fn new(name:&str,payload:ResourcePayload)->Self{
-        Self{name:name.to_string(),payload}
+    pub fn new(name: &str, payload: ResourcePayload) -> Self {
+        Self {
+            name: name.to_string(),
+            payload,
+        }
     }
 }
 
-pub static TOTAL_BUS_TRAFFIC:&'static str="TotalBusTraffic";
+pub static TOTAL_BUS_TRAFFIC: &'static str = "TotalBusTraffic";
+pub static DISPLAY_MESSAGES: &'static str = "DisplayMessages";
 
-#[derive(Debug,Clone,Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub enum ResourcePayload {
     Health(KernelHealth),
-    TotolBusTraffic(VecDeque<(DateTime<Local>,usize)>),
+    TotolBusTraffic(VecDeque<(DateTime<Local>, usize)>),
+    DisplayMessages(Vec<DisplayMessage>)
 }

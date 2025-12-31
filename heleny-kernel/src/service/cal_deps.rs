@@ -72,11 +72,7 @@ impl DepsRelation {
     }
 
     /// 刷新缓存
-    pub fn refresh_cache(
-        &mut self,
-        finish: &str,
-        init: bool,
-    ) -> Result<HashSet<String>> {
+    pub fn refresh_cache(&mut self, finish: &str, init: bool) -> Result<HashSet<String>> {
         let mut cache = match init {
             true => self.init_cache.take().context("未初始化 Init 缓存")?,
             false => self.stop_cache.take().context("未初始化 Stop 缓存")?,
@@ -177,9 +173,7 @@ fn deps_exist(deps_map: &HashMap<String, HashSet<String>>) -> bool {
 }
 
 /// 计算反向依赖
-fn cal_rev_map(
-    deps_map: &HashMap<String, HashSet<String>>,
-) -> HashMap<String, HashSet<String>> {
+fn cal_rev_map(deps_map: &HashMap<String, HashSet<String>>) -> HashMap<String, HashSet<String>> {
     let mut rev_map: HashMap<String, HashSet<String>> = deps_map
         .keys()
         .cloned()
@@ -218,9 +212,7 @@ fn find_reachable_nodes(
 }
 
 /// 计算依赖顺序
-fn cal_order(
-    mut dag_map: HashMap<String, HashSet<String>>,
-) -> Result<Vec<String>> {
+fn cal_order(mut dag_map: HashMap<String, HashSet<String>>) -> Result<Vec<String>> {
     let mut order = Vec::new();
     let mut last_len = 0;
     while last_len != dag_map.len() {
@@ -310,7 +302,10 @@ mod tests {
         let mut dag = HashMap::new();
         dag.insert("S1".to_string(), set(vec![]));
         dag.insert("S2".to_string(), set(vec![]));
-        dag.insert("S3".to_string(), set(vec!["S1".to_string(), "S2".to_string()]));
+        dag.insert(
+            "S3".to_string(),
+            set(vec!["S1".to_string(), "S2".to_string()]),
+        );
         dag.insert("S4".to_string(), set(vec!["S3".to_string()]));
 
         let result = cal_order(dag).unwrap();
@@ -332,7 +327,10 @@ mod tests {
 
         dag.insert("Base".to_string(), set(vec![]));
         dag.insert("Mid".to_string(), set(vec!["Base".to_string()]));
-        dag.insert("Top".to_string(), set(vec!["Mid".to_string(), "Base".to_string()]));
+        dag.insert(
+            "Top".to_string(),
+            set(vec!["Mid".to_string(), "Base".to_string()]),
+        );
 
         let result = cal_order(dag);
         println!("{:?}", result);

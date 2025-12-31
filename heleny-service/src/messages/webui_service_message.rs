@@ -1,4 +1,2 @@
 #[derive(Debug)]
-pub enum WebuiServiceMessage {
-
-}
+pub enum WebuiServiceMessage {}

@@ -1,5 +1,6 @@
 services:
-- [ ] file_service
+- [ ] fs_service
+  - [ ] 初步实现，但是还没有并发优化
 - [ ] log_service
 - [x] kernel_service
 - [ ] scheduler_service
@@ -45,4 +46,9 @@ todo:
 - [x] 19.bus单独一个线程转发
 - [ ] 20.广播变量状态变化给依赖自己的服务
 - [ ] 21.心跳加随机延迟来错峰
-- [ ] 22.修改bus交通统计的实现
+- [x] 22.修改bus交通统计的实现
+- [ ] 23.从memory服务获取短期记忆
+- [ ] 24.给heleny模型实现post到memory服务
+- [ ] 25.memory服务更新后推送到前端
+- [ ] 26.处理用户输入命令
+- [ ] 27.need_help时开启任务
