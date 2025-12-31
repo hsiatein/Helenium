@@ -31,7 +31,7 @@
         <n-input
           v-model:value="message"
           type="textarea"
-          placeholder="发送消息... (Shift+Enter / Ctrl+Enter 换行)"
+          placeholder="发送消息..."
           :autosize="{
             minRows: 1,
             maxRows: 5,
@@ -72,8 +72,9 @@ watch(() => store.messages.length, () => {
 });
 
 const sendMessage = () => {
-  if (!message.value.trim()) return;
-  socket.send(message.value.trim());
+  let msg=message.value.trim();
+  if (msg.length === 0) return;
+  socket.send(msg);
   message.value = '';
 };
 

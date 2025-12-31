@@ -16,7 +16,7 @@ export const socket: WebSocket = new WebSocket("ws://127.0.0.1:"+wsPort+"/ws");
 
 socket.onopen = (event: Event) => {
   console.log("✅ 已连接到 Rust 后端");
-  socket.send("!get_history 1000000000")
+  socket.send("!get_history 1000000000");
 };
 
 socket.onmessage = (event: MessageEvent) => {
