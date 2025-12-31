@@ -15,9 +15,9 @@ async fn main() {
         info!("HELENIUM_CONFIG: {}", val);
     }
     // 初始化日志
-    let _ = init_tracing("./logs".into());
+    let _log_guard = init_tracing("./logs".into());
     let span = info_span!("Kernel");
-    let _guard = span.enter();
+    let _span_guard = span.enter();
     // 启动内核
     info!("启动 Heleny 内核...");
     let mut kernel = match heleny_kernel::kernel::Kernel::new(128, 64).await {
