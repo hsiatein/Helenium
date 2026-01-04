@@ -87,8 +87,25 @@ impl KernelService {
         let Some(tx)=&self.health_tx else {
             return Ok(());
         };
-        let health=KernelHealth::get_mut(&self.health).to_owned();
-        tx.send(ResourcePayload::Health(health)).context("发送 Health 信息失败")?;
+        let new_health=KernelHealth::get_mut(&self.health).to_owned();
+        tx.send_if_modified(|health|{
+            match health {
+                ResourcePayload::Health(health)=>{
+                    if new_health.is_same(health) {
+                        false
+                    }
+                    else {
+                        *health=new_health;
+                        true
+                    }
+                }
+                _=>{
+                    *health=ResourcePayload::Health(new_health);
+                    true
+                }
+            }
+        });
+        // tx.send(ResourcePayload::Health(new_health)).context("发送 Health 信息失败")?;
         Ok(())
     }
 }

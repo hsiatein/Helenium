@@ -41,6 +41,19 @@ impl KernelHealth {
             }
         }
     }
+    
+    pub fn is_same(&self,other:&KernelHealth)->bool{
+        if self.kernel!=other.kernel {return false;};
+        if self.services.len()!=other.services.len() {return false;};
+        self.services.keys().all(|key|{
+            match (self.services.get(key),other.services.get(key)) {
+                (Some(a),Some(b))=>{
+                    a.0==b.0
+                }
+                _=>false,
+            }
+        })
+    }
 
     pub fn set_alive(&mut self, name: &str) {
         let (status, time) = match self.services.get_mut(name) {

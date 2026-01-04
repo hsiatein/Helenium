@@ -7,6 +7,7 @@ use heleny_proto::resource::Resource;
 use heleny_proto::resource::ResourcePayload;
 use heleny_service::CommonMessage;
 use tokio::sync::mpsc;
+use tokio::sync::oneshot;
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
 use tracing::warn;
@@ -21,6 +22,7 @@ pub struct Provider {
 enum Command {
     Add(String),
     Delete(String),
+    Get(oneshot::Sender<ResourcePayload>),
 }
 
 impl Provider {
@@ -50,6 +52,10 @@ impl Provider {
                             Command::Delete(name)=>{
                                 worker.subscribers.remove(&name);
                             }
+                            Command::Get(feedback)=>{
+                                let resource=worker.receiver.borrow().to_owned();
+                                let _=feedback.send(resource);
+                            }
                         };
                     }
 
@@ -70,11 +76,14 @@ impl Provider {
             .await
             .context("发送失败")
     }
+    pub async fn get(&self, feedback:oneshot::Sender<ResourcePayload>)->Result<()>{
+        self.tx.send(Command::Get(feedback)).await.context("发送失败")
+    }
 }
 
 struct ProviderWorker {
     endpoint: Endpoint,
-    receiver: watch::Receiver<ResourcePayload>,
+    pub receiver: watch::Receiver<ResourcePayload>,
     pub subscribers: HashSet<String>,
     resource_name: String,
 }

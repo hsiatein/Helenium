@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
+use anyhow::Context;
 use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
@@ -92,6 +93,10 @@ impl Service for HubService {
                     Some(provider) => provider.unsubscribe(name).await,
                     None => Ok(()),
                 }
+            }
+            HubServiceMessage::Get { resource_name, feedback }=>{
+                let (_,provider)=self.providers.iter().find(|(r,_)|{*r==&resource_name}).context("未找到对应资源")?;
+                provider.get(feedback).await
             }
         }
     }

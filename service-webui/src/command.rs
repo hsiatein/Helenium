@@ -1,6 +1,6 @@
 use anyhow::Result;
-use heleny_proto::{FrontendMessage, name::{KERNEL_NAME, MEMORY_SERVICE}, resource::{DISPLAY_MESSAGES, Resource, ResourcePayload}};
-use heleny_service::{KernelMessage, MemoryServiceMessage};
+use heleny_proto::{FrontendMessage, name::{HUB_SERVICE, KERNEL_NAME, MEMORY_SERVICE}, resource::{DISPLAY_MESSAGES, HEALTH, Resource, ResourcePayload}};
+use heleny_service::{HubServiceMessage, KernelMessage, MemoryServiceMessage};
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
@@ -21,6 +21,12 @@ impl WebuiService {
         }
         else if arg0==Some("shutdown") {
             self.endpoint.send(KERNEL_NAME, KernelMessage::Shutdown).await?;
+        }
+        else if arg0==Some("get_health") {
+            let (tx,rx)=oneshot::channel();
+            self.endpoint.send(HUB_SERVICE, HubServiceMessage::Get { resource_name: HEALTH.to_string(), feedback: tx }).await?;
+            let health=rx.await?;
+            self.send_to_session(token, FrontendMessage::UpdateResource(Resource { name: HEALTH.to_string(), payload: health})).await?;
         }
         Ok(())
     }
