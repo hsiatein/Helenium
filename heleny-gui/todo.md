@@ -1,5 +1,2 @@
-heleny-gui/src/lib.rs里面的ResourcePayload::Health(health)=>{
-                    debug!("{:?}",health);
-                }
-收到的数据形如KernelHealth { kernel: Healthy, services: {"StatsService": (Healthy, Some(2026-01-04T17:54:07.081295999+08:00)), "HubService": (Healthy, Some(2026-01-04T17:54:07.081224368+08:00)), "MemoryService": (Healthy, Some(2026-01-04T17:54:07.082383310+08:00)), "WebuiService": (Healthy, Some(2026-01-04T17:54:07.082400490+08:00)), "BridgeService": (Healthy, Some(2026-01-04T17:54:07.081237664+08:00)), "ChatService": (Healthy, Some(2026-01-04T17:54:07.108262088+08:00)), "KernelService": (Healthy, Some(2026-01-04T17:54:07.081268704+08:00)), "ConfigService": (Healthy, Some(2026-01-04T17:54:07.081308900+08:00)), "AuthService": (Healthy, Some(2026-01-04T17:54:07.081321977+08:00)), "FsService": (Healthy, Some(2026-01-04T17:54:07.081254088+08:00)), "UserService": (Healthy, Some(2026-01-04T17:54:07.081282231+08:00))} }，
-我的要求是在heleny-gui/ui/terminal.slint的总线总流量下面，加一个各服务services健康度的可视化，Healthy的话用绿色小圆点，Unhealthy用黄色，Stopped用红色，Stopping用紫色，Starting用蓝色，每行最多3个服务的状态，用圆角气泡来显示，只显示服务名称，健康度和小圆点
+- [x] 1.让ChatView那里也可以用键盘enter键发送，然后ctrl+enter或shift+enter换行
+- [x] 2.让ChatView的聊天框文字可以被鼠标选中复制
