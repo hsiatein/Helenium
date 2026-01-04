@@ -64,8 +64,29 @@ pub async fn handle_frontend_message(msg:FrontendMessage,ui_weak:Weak<AppWindow>
                         }
                     }).context("绘图 bus_stats_chart 失败")?;
                 }
-                ResourcePayload::Health(_health)=>{
+                ResourcePayload::Health(health)=>{
+                    debug!("{:?}",health);
+                    let mut services: Vec<ServiceHealthItem> = health.services.into_iter().map(|(name, (status, _))| {
+                        let status_str = match status {
+                            heleny_proto::health::HealthStatus::Starting => "Starting",
+                            heleny_proto::health::HealthStatus::Healthy => "Healthy",
+                            heleny_proto::health::HealthStatus::Unhealthy => "Unhealthy",
+                            heleny_proto::health::HealthStatus::Stopping => "Stopping",
+                            heleny_proto::health::HealthStatus::Stopped => "Stopped",
+                        };
+                        ServiceHealthItem {
+                            name: name.into(),
+                            status: status_str.into(),
+                        }
+                    }).collect();
+                    
+                    // Sort services by name for consistent display
+                    services.sort_by(|a, b| a.name.cmp(&b.name));
 
+                    ui_weak.upgrade_in_event_loop(move |ui| {
+                        let model = ModelRc::new(slint::VecModel::from(services));
+                        ui.set_services_health(model);
+                    }).context("更新服务健康度失败")?;
                 }
             }
         }

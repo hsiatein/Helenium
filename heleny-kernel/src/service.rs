@@ -1,4 +1,3 @@
-use anyhow::Context;
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::Local;
@@ -11,6 +10,7 @@ use heleny_proto::message::SignedMessage;
 use heleny_proto::name::KERNEL_NAME;
 use heleny_proto::name::KERNEL_SERVICE;
 use heleny_proto::resource::Resource;
+use heleny_proto::resource::ResourcePayload;
 use heleny_proto::role::ServiceRole;
 use heleny_proto::service_handle::ServiceHandle;
 use heleny_service::AdminCommand;
@@ -19,9 +19,9 @@ use heleny_service::KernelServiceMessage;
 use heleny_service::Service;
 use heleny_service::ServiceFactory;
 use heleny_service::ServiceFactoryVec;
-use heleny_service::ServiceSignal;
 use heleny_service::ShutdownStage;
 use inventory;
+use tokio::sync::watch;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -33,6 +33,7 @@ use tracing::info;
 use tracing::warn;
 
 mod cal_deps;
+mod handle_status;
 
 #[base_service(deps=[])]
 pub struct KernelService {
@@ -42,6 +43,7 @@ pub struct KernelService {
     services: Arc<Mutex<HashMap<String, ServiceHandle>>>,
     health: Arc<Mutex<KernelHealth>>,
     is_waiting: HashMap<String, Vec<oneshot::Sender<Result<()>>>>,
+    health_tx: Option<watch::Sender<ResourcePayload>>,
 }
 
 #[async_trait]
@@ -119,6 +121,7 @@ impl Service for KernelService {
             services,
             health,
             is_waiting: HashMap::new(),
+            health_tx: None,
         }))
     }
     async fn handle(
@@ -149,70 +152,7 @@ impl Service for KernelService {
             (KernelServiceMessage::GetHealth(sender), _) => {
                 let _ = sender.send(KernelHealth::get_mut(&self.health).to_owned());
             }
-            (KernelServiceMessage::UploadStatus(status), _) => match status {
-                ServiceSignal::Alive => {
-                    self.notify(&name);
-                    KernelHealth::get_mut(&self.health).set_alive(&name);
-                }
-                ServiceSignal::InitFail => {
-                    KernelHealth::get_mut(&self.health).set_dead(&name);
-                    let mut services = match self.services.as_ref().lock() {
-                        Ok(service) => service,
-                        Err(e) => {
-                            return Err(anyhow::anyhow!(
-                                "无法获取 {} 的锁, 导致无法 Abort: {}",
-                                name,
-                                e
-                            ));
-                        }
-                    };
-                    services
-                        .get(&name)
-                        .context(format!("未找到 {} 的句柄, 导致无法 Abort", name))?
-                        .abort();
-                    services.remove(&name);
-                }
-                ServiceSignal::Ready => {
-                    self.notify(&name);
-                    if name == Self::name() {
-                        return Ok(());
-                    }
-                    info!("{} 成功初始化", name);
-                    KernelHealth::get_mut(&self.health).set_alive(&name);
-                    let can_init = self.deps_relation.refresh_cache(&name, true)?;
-                    if !can_init.is_empty() {
-                        self.init_services(can_init).await;
-                    }
-                }
-                ServiceSignal::Terminate => {
-                    info!("{} 成功退出", name);
-                    KernelHealth::get_mut(&self.health).set_dead(&name);
-                    {
-                        let mut services = match self.services.as_ref().lock() {
-                            Ok(service) => service,
-                            Err(e) => {
-                                return Err(anyhow::anyhow!(
-                                    "无法获取 {} 的锁, 导致无法清理: {}",
-                                    name,
-                                    e
-                                ));
-                            }
-                        };
-                        services
-                            .get(&name)
-                            .context(format!("未找到 {} 的句柄, 导致无法清理", name))?
-                            .abort();
-                        services.remove(&name);
-                    }
-                    let can_stop = self.deps_relation.refresh_cache(&name, false)?;
-                    if can_stop.contains(KernelService::name()) {
-                        self.send_admin_message(AdminCommand::Shutdown(ShutdownStage::StopKernel))
-                            .await;
-                    } else if !can_stop.is_empty() {
-                        self.stop_services(can_stop).await;
-                    }
-                }
-            },
+            (KernelServiceMessage::UploadStatus(status), _) => self.handle_status(status,name).await?,
             (KernelServiceMessage::WaitFor { name, sender }, _) => {
                 debug!("开始等待: {}", name);
                 let health = match KernelHealth::get_mut(&self.health).services.get(&name) {

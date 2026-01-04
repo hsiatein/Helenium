@@ -326,9 +326,6 @@ impl Kernel {
     /// 处理 Tick
     async fn handle_tick(&mut self) -> Result<()> {
         self.time_tick = self.time_tick + 1;
-        // if self.time_tick == 2 {
-        //     self.send_kernel_command(KernelMessage::Shutdown).await?;
-        // }
         // debug!("{:?}", KernelHealth::get_mut(&self.health));
         Ok(())
     }

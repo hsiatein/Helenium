@@ -7,7 +7,7 @@ import {
 import { HelenyButton } from "utils.slint";
 import { ChatView,MessageItem } from "chat.slint";
 import "SourceHanSans-Medium.ttf";
-import { TerminalView } from "terminal.slint";
+import { TerminalView, ServiceHealthItem } from "terminal.slint";
 
 
 export component AppWindow inherits Window {
@@ -26,6 +26,7 @@ export component AppWindow inherits Window {
     in-out property <string> bus_y_max;
     in-out property <string> bus_x_start;
     in-out property <string> bus_x_end;
+    in-out property <[ServiceHealthItem]> services_health: [];
     callback send(string);
     callback load_more_history([MessageItem]);
     public function scroll_to_bottom() {
@@ -149,6 +150,7 @@ export component AppWindow inherits Window {
                 y_max: root.bus_y_max;
                 x_start: root.bus_x_start;
                 x_end: root.bus_x_end;
+                services_health: root.services_health;
             }
         }
         

@@ -6,6 +6,7 @@ use heleny_proto::message::AnyMessage;
 use heleny_proto::name::HUB_SERVICE;
 use heleny_proto::name::KERNEL_NAME;
 use heleny_proto::resource::DISPLAY_MESSAGES;
+use heleny_proto::resource::HEALTH;
 use heleny_proto::resource::Resource;
 use heleny_proto::resource::TOTAL_BUS_TRAFFIC;
 use heleny_proto::role::ServiceRole;
@@ -47,6 +48,14 @@ impl Service for UserService {
                 HUB_SERVICE,
                 HubServiceMessage::Subscribe {
                     resource_name: DISPLAY_MESSAGES.to_string(),
+                },
+            )
+            .await?;
+        endpoint
+            .send(
+                HUB_SERVICE,
+                HubServiceMessage::Subscribe {
+                    resource_name: HEALTH.to_string(),
                 },
             )
             .await?;
@@ -111,6 +120,23 @@ impl Service for UserService {
                 "{} 退订 {} 失败: {}",
                 Self::name(),
                 TOTAL_BUS_TRAFFIC,
+                e
+            );
+        }
+        if let Err(e) = self
+            .endpoint
+            .send(
+                HUB_SERVICE,
+                HubServiceMessage::Unsubscribe {
+                    resource_name: HEALTH.to_string(),
+                },
+            )
+            .await
+        {
+            warn!(
+                "{} 退订 {} 失败: {}",
+                Self::name(),
+                HEALTH,
                 e
             );
         }
