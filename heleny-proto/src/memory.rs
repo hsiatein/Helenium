@@ -3,7 +3,7 @@ use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use anyhow::Result;
 
-#[derive(Debug, Serialize,Deserialize,Clone)]
+#[derive(Debug, Serialize,Deserialize,Clone,PartialEq)]
 pub enum ChatRole {
     System,
     Assistant,

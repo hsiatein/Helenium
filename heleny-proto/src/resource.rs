@@ -2,12 +2,13 @@ use std::collections::VecDeque;
 
 use chrono::DateTime;
 use chrono::Local;
+use serde::Deserialize;
 use serde::Serialize;
 
 use crate::memory::DisplayMessage;
 use crate::health::KernelHealth;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize,Deserialize)]
 pub struct Resource {
     pub name: String,
     pub payload: ResourcePayload,
@@ -25,9 +26,9 @@ impl Resource {
 pub static TOTAL_BUS_TRAFFIC: &'static str = "TotalBusTraffic";
 pub static DISPLAY_MESSAGES: &'static str = "DisplayMessages";
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize,Deserialize)]
 pub enum ResourcePayload {
     Health(KernelHealth),
-    TotolBusTraffic(VecDeque<(DateTime<Local>, usize)>),
-    DisplayMessages(Vec<DisplayMessage>)
+    TotalBusTraffic(VecDeque<(DateTime<Local>, usize)>),
+    DisplayMessages{new:bool,messages:Vec<DisplayMessage>},
 }

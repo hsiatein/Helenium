@@ -1,9 +1,14 @@
 <template>
   <n-layout style="height: 100%; position: relative;">
-    <n-layout-content ref="contentRef" content-style="padding: 24px; padding-bottom: 80px; overflow-y: auto;" class="chat-content">
+    <n-layout-content 
+      ref="contentRef" 
+      content-style="padding: 24px; padding-bottom: 80px; overflow-y: auto;" 
+      class="chat-content"
+    >
       <div 
-        v-for="msg in store.messages" 
+        v-for="(msg, index) in store.messages" 
         :key="msg.id" 
+        :ref="(el) => setTopMessageRef(el as HTMLElement, index)"
         class="message-row"
         :class="{ 'is-user': msg.role === 'User' }"
       >
@@ -31,7 +36,7 @@
         <n-input
           v-model:value="message"
           type="textarea"
-          placeholder="发送消息... (Shift+Enter / Ctrl+Enter 换行)"
+          placeholder="发送消息..."
           :autosize="{
             minRows: 1,
             maxRows: 5,
@@ -46,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, watch } from 'vue';
+import { ref, nextTick, watch, onMounted, onUnmounted } from 'vue';
 import { 
   NLayout, NLayoutContent, NLayoutFooter, NInput, NText, NButton, 
   NAvatar 
@@ -56,24 +61,132 @@ import { store } from '../store'
 
 const message = ref('');
 const contentRef = ref<InstanceType<typeof NLayoutContent> | null>(null);
+const lastRequestedIdMin = ref<number | null>(null);
+const previousFirstMsgId = ref<number | null>(null);
+const isInitialLoadDone = ref(false);
 
+// Intersection Observer logic
+let observer: IntersectionObserver | null = null;
+const topMessageElement = ref<HTMLElement | null>(null);
 
-const scrollToBottom = () => {
-  nextTick(() => {
-    const contentEl = contentRef.value?.$el as HTMLElement;
-    if (contentEl) {
-      contentEl.scrollTop = contentEl.scrollHeight;
-    }
+const setTopMessageRef = (el: HTMLElement, index: number) => {
+  if (index === 0) {
+    topMessageElement.value = el;
+  }
+};
+
+const initObserver = () => {
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      // Don't trigger history load during initial render/scroll
+      if (!isInitialLoadDone.value) return;
+
+      if (entry.isIntersecting && store.messages.length > 0) {
+        const firstMsg = store.messages[0];
+        if (firstMsg) {
+          const id_min = firstMsg.id; 
+          if (id_min !== lastRequestedIdMin.value) {
+            console.log('Top message visible. Sending history request for id:', id_min);
+            lastRequestedIdMin.value = id_min;
+            socket.send(`!get_history ${id_min}`);
+          }
+        }
+      }
+    });
+  }, {
+    root: contentRef.value?.$el as HTMLElement,
+    threshold: 0.1
   });
 };
 
-watch(() => store.messages.length, () => {
-  scrollToBottom();
+watch(topMessageElement, (newEl, oldEl) => {
+  if (observer) {
+    if (oldEl) observer.unobserve(oldEl);
+    if (newEl) observer.observe(newEl);
+  }
+});
+
+onMounted(() => {
+  initObserver();
+  console.log('ChatView mounted. Observer initialized.');
+
+  // Handle case where messages are already loaded before mount
+  if (store.messages.length > 0) {
+    nextTick(() => {
+      const el = contentRef.value?.$el as HTMLElement;
+      if (el) {
+        console.log('Initial load in onMounted: Scrolling to bottom');
+        el.scrollTop = el.scrollHeight;
+        isInitialLoadDone.value = true;
+        const firstMsg = store.messages[0];
+        if (firstMsg) previousFirstMsgId.value = firstMsg.id;
+      }
+    });
+  }
+});
+
+// onUnmounted(() => {
+//   if (observer) {
+//     observer.disconnect();
+//     observer = null;
+//   }
+// });
+
+watch(() => store.messages.length, (newLen, oldLen) => {
+  const el = contentRef.value?.$el as HTMLElement;
+  if (!el) return;
+
+  const firstMsg = store.messages[0];
+  const currentFirstId = firstMsg ? firstMsg.id : null;
+  
+  // Capture state before DOM update
+  const oldScrollHeight = el.scrollHeight;
+  const oldScrollTop = el.scrollTop;
+  const oldClientHeight = el.clientHeight;
+
+  nextTick(() => {
+    const newScrollHeight = el.scrollHeight;
+
+    if (!isInitialLoadDone.value) {
+      // First batch of messages: Force scroll to bottom
+      el.scrollTop = newScrollHeight;
+      isInitialLoadDone.value = true;
+      if (currentFirstId !== null) previousFirstMsgId.value = currentFirstId;
+      console.log('Initial load in watcher: Scrolled to bottom');
+      return;
+    }
+
+    const isHistoryPrepend = 
+      previousFirstMsgId.value !== null && 
+      currentFirstId !== null && 
+      currentFirstId < previousFirstMsgId.value;
+    
+    // Update tracking ID
+    if (currentFirstId !== null) {
+      previousFirstMsgId.value = currentFirstId;
+    }
+
+    if (isHistoryPrepend) {
+      // Maintain relative position
+      const heightDiff = newScrollHeight - oldScrollHeight;
+      if (heightDiff > 0) {
+        el.scrollTop = oldScrollTop + heightDiff;
+      }
+    } else {
+      // New messages (append)
+      // Auto-scroll if near bottom
+      const wasNearBottom = oldScrollHeight - oldScrollTop - oldClientHeight < 150;
+      if (wasNearBottom) {
+        el.scrollTop = newScrollHeight;
+      }
+    }
+  });
 });
 
 const sendMessage = () => {
-  if (!message.value.trim()) return;
-  socket.send(message.value.trim());
+  let msg=message.value.trim();
+  if (msg.length === 0) return;
+  socket.send(msg);
   message.value = '';
 };
 

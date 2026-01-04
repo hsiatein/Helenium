@@ -160,7 +160,7 @@ impl Bus {
             .context("消息携带未知 token, 忽略")?
             .clone();
         let msg = msg.sign(name, role);
-        debug!("已签名: {:?}", msg);
+        // debug!("已签名: {:?}", msg);
         let target = msg.target.clone();
         self.send(msg)
             .await

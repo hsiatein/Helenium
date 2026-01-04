@@ -329,7 +329,7 @@ impl Kernel {
         // if self.time_tick == 2 {
         //     self.send_kernel_command(KernelMessage::Shutdown).await?;
         // }
-        debug!("{:?}", KernelHealth::get_mut(&self.health));
+        // debug!("{:?}", KernelHealth::get_mut(&self.health));
         Ok(())
     }
 }

@@ -1,0 +1,156 @@
+import {
+    Button,
+    VerticalBox,
+    HorizontalBox,
+    ListView,
+} from "std-widgets.slint";
+import { HelenyButton } from "utils.slint";
+import { ChatView,MessageItem } from "chat.slint";
+import "SourceHanSans-Medium.ttf";
+import { TerminalView } from "terminal.slint";
+
+
+export component AppWindow inherits Window {
+    background: #f0f8ff;
+    full-screen: false;
+    max-height: 1080px;
+    max-width: 1920px;
+    min-height: 600px;
+    min-width: 960px;
+    default-font-family: "Source Han Sans Medium, Source Han Sans";
+    title: "Helenium";
+    in-out property <int> active-tab: 0;
+    in-out property <[MessageItem]> chat_model: [
+    ];
+    in-out property <string> bus_stats_chart;
+    in-out property <string> bus_y_max;
+    in-out property <string> bus_x_start;
+    in-out property <string> bus_x_end;
+    callback send(string);
+    callback load_more_history([MessageItem]);
+    public function scroll_to_bottom() {
+        chat_view.scroll_to_bottom()
+    }
+    public function prepare_history_scroll() {
+        chat_view.prepare_history_scroll()
+    }
+    public function finish_history_scroll() {
+        chat_view.finish_history_scroll()
+    }
+    HorizontalLayout {
+        Rectangle {
+            background: #9ec6ff;
+            drop-shadow-color: #3688ff;
+            width: 20%;
+            VerticalBox {
+                alignment: LayoutAlignment.start;
+                padding: 16px;
+                spacing: 8px;
+                width: 100%;
+                HorizontalBox {
+                    alignment: LayoutAlignment.center;
+                    Rectangle {
+                        border-radius: 20px;
+                        clip: true;
+                        height: 120px;
+                        width: 120px;
+                        Image {
+                            source: @image-url("icons/icon.png");
+                            width: 120px;
+                        }
+                    }
+                }
+
+                Text {
+                    color: #f0f8ff;
+                    font-italic: false;
+                    font-size: 36px;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                    text: "Heleny";
+                    vertical-alignment: TextVerticalAlignment.center;
+                }
+
+                Rectangle {
+                    height: 6%;
+                    HelenyButton {
+                        text: "聊天";
+                        icon: @image-url("icons/chat_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                        btn-color: root.active-tab == 0 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 0;debug(root.active-tab); }
+                    }
+                }
+
+                Rectangle {
+                    height: 6%;
+                    HelenyButton {
+                        text: "日程";
+                        icon: @image-url("icons/schedule_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                        btn-color: root.active-tab == 1 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 1;debug(root.active-tab); }
+                    }
+                }
+
+                Rectangle {
+                    height: 6%;
+                    HelenyButton {
+                        text: "终端";
+                        icon: @image-url("icons/terminal_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                        btn-color: root.active-tab == 2 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 2;debug(root.active-tab); }
+                    }
+                }
+
+                Rectangle {
+                    height: 6%;
+                    HelenyButton {
+                        text: "任务";
+                        icon: @image-url("icons/task_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                        btn-color: root.active-tab == 3 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 3;debug(root.active-tab); }
+                    }
+                }
+
+                Rectangle {
+                    height: 6%;
+                    HelenyButton {
+                        text: "审批";
+                        icon: @image-url("icons/approval_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                        btn-color: root.active-tab == 4 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 4;debug(root.active-tab); }
+                    }
+                }
+
+                Rectangle {
+                    height: 6%;
+                    HelenyButton {
+                        text: "设置";
+                        icon: @image-url("icons/settings_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                        btn-color: root.active-tab == 5 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 5;debug(root.active-tab); }
+                    }
+                }
+
+            }
+        }
+        Rectangle {
+            chat_view := ChatView {
+                visible: root.active-tab==0;
+                chat_model: root.chat_model;
+                send(msg) => {root.send(msg)};
+                load_more_history => {root.load_more_history(root.chat_model)};
+            }
+            
+            Rectangle{
+                visible: root.active-tab==1;
+            }
+            TerminalView {
+                visible: root.active-tab==2;
+                bus_stats_chart: root.bus_stats_chart;
+                y_max: root.bus_y_max;
+                x_start: root.bus_x_start;
+                x_end: root.bus_x_end;
+            }
+        }
+        
+    }
+}
