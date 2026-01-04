@@ -25,7 +25,7 @@ socket.onmessage = (event: MessageEvent) => {
     if (data.UpdateResource) {
       switch (data.UpdateResource.name) {
         case 'TotalBusTraffic':
-          store.totalBusTraffic = data.UpdateResource.payload.TotolBusTraffic;
+          store.totalBusTraffic = data.UpdateResource.payload.TotalBusTraffic;
           break;
         case 'DisplayMessages':
           const newMessages = data.UpdateResource.payload.DisplayMessages;

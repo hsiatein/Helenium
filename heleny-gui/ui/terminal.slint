@@ -1,0 +1,68 @@
+import { Button, VerticalBox } from "std-widgets.slint";
+
+export component TerminalView inherits Rectangle {
+    in property <string> bus_stats_chart;
+    in property <string> y_max: "100";
+    in property <string> x_start: "00:00:00";
+    in property <string> x_end: "00:00:00";
+
+    VerticalBox {
+        accessible-role: AccessibleRole.none;
+        alignment: LayoutAlignment.start;
+        Text {
+            text: "总线总流量 (Byte/s)";
+            font-size: 20px;
+            horizontal-alignment: center;
+        }
+
+        HorizontalLayout {
+            spacing: 5px;
+            height: 400px;
+            // Y-Axis Labels
+            VerticalLayout {
+                width: 50px;
+                alignment: space-between;
+                Text { 
+                    text: root.y_max; 
+                    font-size: 12px; 
+                    horizontal-alignment: right;
+                }
+                Text { 
+                    text: "0"; 
+                    font-size: 12px; 
+                    horizontal-alignment: right;
+                }
+            }
+
+            // Chart Area + X-Axis
+            VerticalLayout {
+                Rectangle {
+                    background: #f0f0f0;
+                    border-color: #cccccc;
+                    border-width: 1px;
+                    
+                    Path {
+                        width: 100%;
+                        height: 100%;
+                        stroke: #007bff;
+                        stroke-width: 2px;
+                        commands: root.bus_stats_chart;
+                    }
+                }
+
+                // X-Axis Labels
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { 
+                        text: root.x_start; 
+                        font-size: 12px; 
+                    }
+                    Text { 
+                        text: root.x_end; 
+                        font-size: 12px; 
+                    }
+                }
+            }
+        }
+    }
+}

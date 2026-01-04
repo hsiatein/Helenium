@@ -1,4 +1,3 @@
-use crate::message::ServiceMessage;
 use crate::message::SessionToService;
 use crate::register::Register;
 use crate::register::SessionEndpoint;
@@ -17,6 +16,7 @@ use axum::response::Response;
 use axum::routing::any;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
+use heleny_proto::FrontendMessage;
 use heleny_proto::frontend_type::FrontendType;
 use heleny_proto::message::AnyMessage;
 use heleny_proto::message::downcast;
@@ -50,7 +50,7 @@ mod command;
 #[base_service(deps=["ConfigService","UserService"])]
 pub struct WebuiService {
     endpoint: Endpoint,
-    router: HashMap<Uuid, mpsc::Sender<ServiceMessage>>,
+    router: HashMap<Uuid, mpsc::Sender<FrontendMessage>>,
     app_handle: JoinHandle<()>,
 }
 
@@ -129,13 +129,13 @@ impl Service for WebuiService {
         Ok(())
     }
     async fn handle_resource(&mut self, resource: Resource) -> Result<()> {
-        self.send_to_all_sessions(ServiceMessage::UpdateResource(resource))
+        self.send_to_all_sessions(FrontendMessage::UpdateResource(resource))
             .await
     }
 }
 
 impl WebuiService {
-    async fn send_to_all_sessions(&self, msg: ServiceMessage) -> Result<()> {
+    async fn send_to_all_sessions(&self, msg: FrontendMessage) -> Result<()> {
         for (_token, tx) in &self.router {
             if let Err(e) = tx.send(msg.clone()).await {
                 warn!("发给所有 User 失败: {}", e)
@@ -143,7 +143,7 @@ impl WebuiService {
         }
         Ok(())
     }
-    async fn send_to_session(&self, session:Uuid, msg: ServiceMessage) -> Result<()> {
+    async fn send_to_session(&self, session:Uuid, msg: FrontendMessage) -> Result<()> {
         let _=&self.router.iter().find(|(id,_tx)| **id==session).context("没找到对应 Session")?.1.send(msg).await?;
         Ok(())
     }
@@ -215,7 +215,7 @@ async fn handle_ws_msg(
 async fn handle_service_msg(
     socket: &mut WebSocket,
     _endpoint: &SessionEndpoint,
-    msg: ServiceMessage,
+    msg: FrontendMessage,
 ) -> Result<()> {
     let data = serde_json::to_string(&msg)?;
     socket.send(data.into()).await.context("发送 ws 消息失败")

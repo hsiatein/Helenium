@@ -1,11 +1,11 @@
 use anyhow::Context;
 use anyhow::Result;
+use heleny_proto::FrontendMessage;
 use heleny_proto::message::AnyMessage;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
-use crate::message::ServiceMessage;
 use crate::message::SessionMessage;
 use crate::message::SessionToService;
 
@@ -40,14 +40,14 @@ impl Register {
 pub struct SessionEndpoint {
     token: Uuid,
     to_service: mpsc::Sender<Box<dyn AnyMessage>>,
-    from_service: mpsc::Receiver<ServiceMessage>,
+    from_service: mpsc::Receiver<FrontendMessage>,
 }
 
 impl SessionEndpoint {
     pub fn new(
         token: Uuid,
         to_service: mpsc::Sender<Box<dyn AnyMessage>>,
-        from_service: mpsc::Receiver<ServiceMessage>,
+        from_service: mpsc::Receiver<FrontendMessage>,
     ) -> Self {
         Self {
             token,
@@ -66,7 +66,7 @@ impl SessionEndpoint {
             .context("Session 发送消息给 Webui Service 失败")
     }
 
-    pub async fn recv(&mut self) -> Option<ServiceMessage> {
+    pub async fn recv(&mut self) -> Option<FrontendMessage> {
         self.from_service.recv().await
     }
 }

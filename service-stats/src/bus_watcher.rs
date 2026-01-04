@@ -26,7 +26,7 @@ impl BusWatcherHandle {
         duration: usize,
         mut bus_rx: mpsc::Receiver<(String, String)>,
     ) -> Result<(BusWatcherHandle, watch::Receiver<ResourcePayload>)> {
-        let (tx, rx) = watch::channel(ResourcePayload::TotolBusTraffic(VecDeque::new()));
+        let (tx, rx) = watch::channel(ResourcePayload::TotalBusTraffic(VecDeque::new()));
         let total_traffic = Arc::new(Mutex::new(VecDeque::new()));
         let total_traffic_ = total_traffic.clone();
         let handle = tokio::spawn(async move {
@@ -108,7 +108,7 @@ impl BusWatcher {
                 self.current_time = Local::now();
                 self.count = 0;
                 self.tx
-                    .send(ResourcePayload::TotolBusTraffic(traffic.to_owned()))?;
+                    .send(ResourcePayload::TotalBusTraffic(traffic.to_owned()))?;
                 Ok(())
             }
             Err(e) => Err(anyhow::anyhow!("{}", e)),

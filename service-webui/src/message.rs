@@ -1,5 +1,4 @@
-use heleny_proto::resource::Resource;
-use serde::Serialize;
+use heleny_proto::FrontendMessage;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use uuid::Uuid;
@@ -7,7 +6,7 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub enum SessionMessage {
     Register {
-        sender: mpsc::Sender<ServiceMessage>,
+        sender: mpsc::Sender<FrontendMessage>,
         feedback: oneshot::Sender<()>,
     },
     UserInput {
@@ -16,10 +15,7 @@ pub enum SessionMessage {
     Logout,
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub enum ServiceMessage {
-    UpdateResource(Resource),
-}
+
 
 #[derive(Debug)]
 pub struct SessionToService {

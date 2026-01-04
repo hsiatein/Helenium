@@ -1,5 +1,5 @@
 [workspace]
-members = [ "heleny-bus", "heleny-kernel", "heleny-macros", "heleny-proto", "heleny-server", "heleny-service", "heleny-utils", "script", "service-auth", "service-bridge", "service-chat", "service-config", "service-fs", "service-hub", "service-memory", "service-stats", "service-user", "service-webui", "tests"]
+members = [ "heleny-bus", "heleny-gui", "heleny-kernel", "heleny-macros", "heleny-proto", "heleny-server", "heleny-service", "heleny-utils", "script", "service-auth", "service-bridge", "service-chat", "service-config", "service-fs", "service-hub", "service-memory", "service-stats", "service-user", "service-webui", "tests"]
 resolver = "3"
 
 [workspace.dependencies]
@@ -23,3 +23,7 @@ open = "5.3.3"
 async-openai = {version = "0.31.1",features = ["_api","responses","chat-completion"]}
 tokio-stream = "0.1.17"
 sqlx = {version = "0.8.6",features = ["sqlite","runtime-tokio","chrono"]}
+slint = "1.14.1"
+tokio-tungstenite = "0.28.0"
+futures = "0.3.31"
+tungstenite = "0.28.0"
