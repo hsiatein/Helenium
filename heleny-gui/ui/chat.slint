@@ -203,15 +203,23 @@ export component ChatView inherits Rectangle {
             HorizontalLayout {
                 padding: 12px;
                 spacing: 12px;
-                alignment: LayoutAlignment.center;
+                alignment: LayoutAlignment.stretch;
                 
-                    
+                // Wrap in Rectangle for styling
+                Rectangle {
+                    background: #ffffff;
+                    border-radius: 16px;
+                    horizontal-stretch: 1; // Rectangle stretches
+                    width: 80%;
+                    clip: true;
+                    // TextEdit fills the Rectangle
                     input := TextEdit {
+                        width: 100%;
+                        height: 100%;
                         font-size: 18px;
-                        width: 80%;
                         text: "";
                         wrap: word-wrap;
-                        horizontal-stretch: 1;
+                        
                         key-pressed(event) => {
                             if (event.text == "\n" && !event.modifiers.shift && !event.modifiers.control) {
                                 root.send(self.text);
@@ -221,7 +229,7 @@ export component ChatView inherits Rectangle {
                             return reject;
                         }
                     }
-                
+                }
         
                 VerticalLayout {
                     width: 15%;
