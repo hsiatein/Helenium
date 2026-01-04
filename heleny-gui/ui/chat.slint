@@ -1,7 +1,8 @@
 import {
     VerticalBox,
     HorizontalBox,
-    ScrollView
+    ScrollView,
+    TextEdit
 } from "std-widgets.slint";
 import { HelenyButton } from "utils.slint";
 
@@ -43,12 +44,29 @@ component HelenyMessage inherits HorizontalBox {
             HorizontalLayout {
                 padding: 12px; // 统一设置内边距，文字就不会贴边
                 alignment: LayoutAlignment.start;
-                Text {
-                    text: root.content;
-                    font-size: 16px;
-                    wrap: word-wrap;
-                    max-width: 400px;
-                    color: black;
+                
+                // Overlay container
+                Rectangle {
+                    // 1. Invisible Text triggers auto-sizing
+                    Text {
+                        text: root.content;
+                        font-size: 16px;
+                        wrap: word-wrap;
+                        max-width: 400px;
+                        color: transparent; 
+                    }
+
+                    // 2. TextInput (Primitive) fills the sized container for selection.
+                    TextInput {
+                        width: 100%;
+                        height: 100%;
+                        text: root.content;
+                        font-size: 16px;
+                        wrap: word-wrap;
+                        read-only: true;
+                        color: black;
+                        single-line: false; // Important for multi-line display
+                    }
                 }
             }
         }
@@ -77,12 +95,29 @@ component UserMessage inherits HorizontalBox {
             HorizontalLayout {
                 padding: 12px; // 统一设置内边距，文字就不会贴边
                 alignment: LayoutAlignment.end;
-                Text {
-                    text: root.content;
-                    font-size: 16px;
-                    wrap: word-wrap;
-                    max-width: 400px;
-                    color: black;
+
+                // Overlay container
+                Rectangle {
+                    // 1. Invisible Text triggers auto-sizing
+                    Text {
+                        text: root.content;
+                        font-size: 16px;
+                        wrap: word-wrap;
+                        max-width: 400px;
+                        color: transparent;
+                    }
+
+                    // 2. TextInput (Primitive) fills the sized container for selection.
+                    TextInput {
+                        width: 100%;
+                        height: 100%;
+                        text: root.content;
+                        font-size: 16px;
+                        wrap: word-wrap;
+                        read-only: true;
+                        color: black;
+                        single-line: false; // Important for multi-line display
+                    }
                 }
             }
         }
@@ -165,23 +200,38 @@ export component ChatView inherits Rectangle {
             background: #e2e2e2;
             border-radius: 0px;
             height: 18%;
-            HorizontalBox {
-                alignment: LayoutAlignment.center;
-                padding: 8px;
+            HorizontalLayout {
+                padding: 12px;
+                spacing: 12px;
+                alignment: LayoutAlignment.stretch;
+                
+                // Wrap in Rectangle for styling
                 Rectangle {
                     background: #ffffff;
                     border-radius: 16px;
-                    clip: true;
+                    horizontal-stretch: 1; // Rectangle stretches
                     width: 80%;
-                    input := TextInput {
+                    clip: true;
+                    // TextEdit fills the Rectangle
+                    input := TextEdit {
+                        width: 100%;
+                        height: 100%;
                         font-size: 18px;
-                        input-type: InputType.text;
                         text: "";
-                        width: 95%;
+                        wrap: word-wrap;
+                        
+                        key-pressed(event) => {
+                            if (event.text == "\n" && !event.modifiers.shift && !event.modifiers.control) {
+                                root.send(self.text);
+                                self.text = "";
+                                return accept;
+                            }
+                            return reject;
+                        }
                     }
                 }
         
-                VerticalBox {
+                VerticalLayout {
                     width: 15%;
                     alignment: LayoutAlignment.center;
                     height: 100%;
