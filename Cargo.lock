@@ -2326,6 +2326,8 @@ dependencies = [
  "service_hub",
  "service_memory",
  "service_stats",
+ "service_task",
+ "service_toolkit",
  "service_user",
  "service_webui",
  "tokio",
@@ -5339,6 +5341,40 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
+ "heleny_bus",
+ "heleny_macros",
+ "heleny_proto",
+ "heleny_service",
+ "inventory",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "service_task"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "heleny_bus",
+ "heleny_macros",
+ "heleny_proto",
+ "heleny_service",
+ "inventory",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "service_toolkit"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
  "heleny_bus",
  "heleny_macros",
  "heleny_proto",

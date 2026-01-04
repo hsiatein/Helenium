@@ -41,3 +41,19 @@ pub async fn read_via_fs_service<T: Into<PathBuf>>(endpoint: &Endpoint, path: T)
     let data = rx.await.context("获取 FsService 的文件失败")?;
     Ok(data)
 }
+
+pub async fn list_via_fs_service<T: Into<PathBuf>>(endpoint: &Endpoint, path: T) -> Result<Vec<PathBuf>> {
+    let (tx, rx) = oneshot::channel();
+    endpoint
+        .send(
+            FS_SERVICE,
+            FsServiceMessage::List {
+                dir: path.into(),
+                feedback: tx,
+            },
+        )
+        .await
+        .context("获取 FsService 文件的消息发送失败")?;
+    let data = rx.await.context("读取目录失败")?;
+    Ok(data)
+}

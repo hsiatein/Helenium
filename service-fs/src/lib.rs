@@ -106,6 +106,16 @@ impl Service for FsService {
                 }
                 Ok(())
             }
+            FsServiceMessage::List { dir, feedback }=>{
+                let mut entries=fs::read_dir(dir).await?;
+                let mut items=vec![];
+                while let Some(entry) = entries.next_entry().await? {
+                    let path = entry.path();
+                    items.push(path);
+                }
+                let _=feedback.send(items);
+                Ok(())
+            }
         }
     }
     async fn stop(&mut self) {}

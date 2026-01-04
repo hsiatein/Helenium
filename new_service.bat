@@ -1,1 +1,1 @@
-./target/debug/new_service.exe "memory"
+./target/debug/new_service.exe "toolkit"
