@@ -25,6 +25,7 @@ impl Resource {
 
 pub static TOTAL_BUS_TRAFFIC: &'static str = "TotalBusTraffic";
 pub static DISPLAY_MESSAGES: &'static str = "DisplayMessages";
+pub static HEALTH: &'static str = "Health";
 
 #[derive(Debug, Clone, Serialize,Deserialize)]
 pub enum ResourcePayload {

@@ -64,8 +64,8 @@ pub async fn handle_frontend_message(msg:FrontendMessage,ui_weak:Weak<AppWindow>
                         }
                     }).context("绘图 bus_stats_chart 失败")?;
                 }
-                ResourcePayload::Health(_health)=>{
-
+                ResourcePayload::Health(health)=>{
+                    debug!("{:?}",health);
                 }
             }
         }
