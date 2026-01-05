@@ -1,3 +1,4 @@
+use heleny_proto::ToolDescription;
 use heleny_proto::ToolManual;
 use heleny_service::get_from_config_service;
 use heleny_service::list_via_fs_service;
@@ -22,6 +23,7 @@ mod toolkit_config;
 pub struct ToolkitService{
     endpoint:Endpoint,
     tool_manuals:Vec<ToolManual>,
+    tool_descriptions:Vec<ToolDescription>,
 }
 
 #[derive(Debug)]
@@ -50,11 +52,13 @@ impl Service for ToolkitService {
                 }
             }
         }).collect();
+        let tool_descriptions:Vec<ToolDescription>=tool_manuals.iter().map(|manual| manual.get_description()).collect();
         info!("读取到 {} 个工具手册",tool_manuals.len());
         // 实例化
         let instance=Self {
             endpoint,
             tool_manuals,
+            tool_descriptions,
         };
         Ok(Box::new(instance))
     }
@@ -62,8 +66,32 @@ impl Service for ToolkitService {
         &mut self,
         _name: String,
         _role: ServiceRole,
-        _msg: ToolkitServiceMessage,
+        msg: ToolkitServiceMessage,
     ) -> Result<()>{
+        match msg {
+            ToolkitServiceMessage::GetIntro { feedback }=>{
+                let _=feedback.send(serde_json::to_string(&self.tool_descriptions)?);
+            }
+            ToolkitServiceMessage::GetManual { names, feedback }=>{
+                let results: Vec<serde_json::Value> = names.into_iter().map(|name| {
+                    match self.tool_manuals.iter().find(|tool| tool.name == name) {
+                        Some(manual) => {
+                            // 将 manual 转换为 json 对象，如果失败则返回错误 json
+                            serde_json::to_value(manual).unwrap_or_else(|_| {
+                                serde_json::json!({ "error": format!("无法序列化工具手册 {}", name) })
+                            })
+                        }
+                        None => {
+                            serde_json::json!({ "error": format!("未找到工具手册 {}", name) })
+                        }
+                    }
+                }).collect();
+
+                if let Ok(json_out) = serde_json::to_string(&results) {
+                    let _ = feedback.send(json_out);
+                }
+            }
+        }
         Ok(())
     }
     async fn stop(&mut self){
