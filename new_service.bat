@@ -1,1 +1,0 @@
-./target/debug/new_service.exe "memory"

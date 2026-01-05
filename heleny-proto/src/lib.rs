@@ -8,3 +8,5 @@ pub mod service_handle;
 pub mod memory;
 mod frontend_message;
 pub use frontend_message::*;
+mod tool_manual;
+pub use tool_manual::*;

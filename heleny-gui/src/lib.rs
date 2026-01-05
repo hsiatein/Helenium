@@ -50,10 +50,6 @@ pub async fn handle_frontend_message(msg:FrontendMessage,ui_weak:Weak<AppWindow>
                             messages.extend(history);
                             messages
                         };
-                        // history.extend(messages);
-                        // history.sort_by_key(|a|{
-                        //     a.id
-                        // });
                         let model = ModelRc::new(slint::VecModel::from(history));
                         ui.set_chat_model(model);
                         
@@ -80,7 +76,6 @@ pub async fn handle_frontend_message(msg:FrontendMessage,ui_weak:Weak<AppWindow>
                         }
                     }).collect();
                     
-                    // Sort services by name for consistent display
                     services.sort_by(|a, b| a.name.cmp(&b.name));
 
                     ui_weak.upgrade_in_event_loop(move |ui| {

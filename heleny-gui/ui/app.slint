@@ -2,23 +2,26 @@ import {
     Button,
     VerticalBox,
     HorizontalBox,
-    ListView,
+    ListView, ScrollView,
 } from "std-widgets.slint";
 import { HelenyButton } from "utils.slint";
 import { ChatView,MessageItem } from "chat.slint";
-import "SourceHanSans-Medium.ttf";
+import "./SourceHanSans-Medium.ttf";
 import { TerminalView, ServiceHealthItem } from "terminal.slint";
 
 
 export component AppWindow inherits Window {
     background: #f0f8ff;
     full-screen: false;
-    max-height: 1080px;
+    max-height: 1200px;
     max-width: 1920px;
     min-height: 600px;
     min-width: 960px;
-    default-font-family: "Source Han Sans, Source Han Sans Medium";
+    default-font-family: root.font-family[active-font];
+    default-font-weight: 500;
     title: "Helenium";
+    in property <[string]> font-family: ["AR PL UMing CN","AR PL UKai CN", "STKaiti", "Noto Sans CJK SC", "Source Han Sans", "Source Han Sans Medium", "STZhongsong"];
+    in property <int> active-font: 6;
     in-out property <int> active-tab: 0;
     in-out property <[MessageItem]> chat_model: [
     ];
@@ -29,6 +32,7 @@ export component AppWindow inherits Window {
     in-out property <[ServiceHealthItem]> services_health: [];
     callback send(string);
     callback load_more_history([MessageItem]);
+    callback shutdown();
     public function scroll_to_bottom() {
         chat_view.scroll_to_bottom()
     }
@@ -43,94 +47,97 @@ export component AppWindow inherits Window {
             background: #9ec6ff;
             drop-shadow-color: #3688ff;
             width: 20%;
-            VerticalBox {
-                alignment: LayoutAlignment.start;
-                padding: 16px;
-                spacing: 8px;
-                width: 100%;
-                HorizontalBox {
-                    alignment: LayoutAlignment.center;
-                    Rectangle {
-                        border-radius: 20px;
-                        clip: true;
-                        height: 120px;
-                        width: 120px;
-                        Image {
-                            source: @image-url("icons/icon.png");
+            height: 100%;
+            ScrollView {
+                viewport-height: menu.preferred-height+self.height;
+                menu := VerticalLayout {
+                    alignment: LayoutAlignment.start;
+                    padding: 8px;
+                    spacing: 8px;
+                    width: 100%;
+                    vertical-stretch: 1;
+                    HorizontalBox {
+                        alignment: LayoutAlignment.center;
+                        height: 140px;
+                        Rectangle {
+                            border-radius: 20px;
+                            clip: true;
+                            height: 120px;
                             width: 120px;
+                            Image {
+                                source: @image-url("icons/icon.png");
+                                width: 120px;
+                            }
                         }
                     }
-                }
-
-                Text {
-                    color: #f0f8ff;
-                    font-italic: false;
-                    font-size: 36px;
-                    horizontal-alignment: TextHorizontalAlignment.center;
-                    text: "Heleny";
-                    vertical-alignment: TextVerticalAlignment.center;
-                }
-
-                Rectangle {
-                    height: 6%;
+                    HorizontalBox {
+                        height: 60px;
+                        Text {
+                            color: #f0f8ff;
+                            font-italic: false;
+                            font-size: 36px;
+                            horizontal-alignment: TextHorizontalAlignment.center;
+                            text: "Heleny";
+                            vertical-alignment: TextVerticalAlignment.center;
+                        }
+                    }
+                    
                     HelenyButton {
                         text: "聊天";
+                        height: 4%;
                         icon: @image-url("icons/chat_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
                         btn-color: root.active-tab == 0 ? #7fb5ff : #9ec8ff;
                         clicked => { root.active-tab = 0; }
                     }
-                }
 
-                Rectangle {
-                    height: 6%;
                     HelenyButton {
                         text: "日程";
+                        height: 4%;
                         icon: @image-url("icons/schedule_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
                         btn-color: root.active-tab == 1 ? #7fb5ff : #9ec8ff;
                         clicked => { root.active-tab = 1; }
                     }
-                }
+                    
 
-                Rectangle {
-                    height: 6%;
                     HelenyButton {
                         text: "终端";
+                        height: 4%;
                         icon: @image-url("icons/terminal_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
                         btn-color: root.active-tab == 2 ? #7fb5ff : #9ec8ff;
                         clicked => { root.active-tab = 2; }
                     }
-                }
 
-                Rectangle {
-                    height: 6%;
                     HelenyButton {
                         text: "任务";
+                        height: 4%;
                         icon: @image-url("icons/task_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
                         btn-color: root.active-tab == 3 ? #7fb5ff : #9ec8ff;
                         clicked => { root.active-tab = 3; }
                     }
-                }
 
-                Rectangle {
-                    height: 6%;
                     HelenyButton {
                         text: "审批";
+                        height: 4%;
                         icon: @image-url("icons/approval_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
                         btn-color: root.active-tab == 4 ? #7fb5ff : #9ec8ff;
                         clicked => { root.active-tab = 4; }
                     }
-                }
 
-                Rectangle {
-                    height: 6%;
                     HelenyButton {
                         text: "设置";
+                        height: 4%;
                         icon: @image-url("icons/settings_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
                         btn-color: root.active-tab == 5 ? #7fb5ff : #9ec8ff;
                         clicked => { root.active-tab = 5; }
                     }
-                }
 
+                    HelenyButton {
+                        height: 6%;
+                        icon: @image-url("icons/power_settings_new_48dp_1F1F1F_FILL0_wght400_GRAD0_opsz48.png");
+                        btn-color: #9ec8ff;
+                        clicked => { shutdown(); }
+                    }
+                }
             }
         }
         Rectangle {

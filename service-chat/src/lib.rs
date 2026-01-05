@@ -58,7 +58,7 @@ impl Service for ChatService {
             config.executor.preset =
                 read_via_fs_service(&endpoint, &config.executor.preset_path).await?;
         }
-        info!("预设读取完成");
+        info!("Heleny 预设读取完成");
         // 构造 Heleny
         let heleny = HelenyModel::new(
             config.heleny.preset.clone(),

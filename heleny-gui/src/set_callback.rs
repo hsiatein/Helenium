@@ -34,4 +34,15 @@ pub fn set_callback(ui:&AppWindow,write_tx:&mpsc::Sender<Message>){
             });
         };
     });
+
+    let write_tx_clone=write_tx.clone();
+    ui.on_shutdown(move ||{
+        let tx_inner = write_tx_clone.clone();
+        tokio::spawn(async move {
+            if let Err(e) = tx_inner.send("!shutdown".into()).await {
+                warn!("消息发送失败: {}", e);
+            }
+        });
+        let _=slint::quit_event_loop();
+    });
 }
