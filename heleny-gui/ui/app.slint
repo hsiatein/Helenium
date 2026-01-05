@@ -6,19 +6,23 @@ import {
 } from "std-widgets.slint";
 import { HelenyButton } from "utils.slint";
 import { ChatView,MessageItem } from "chat.slint";
-import "SourceHanSans-Medium.ttf";
+import "./SourceHanSans-Medium.ttf";
+import "./ukai.ttc";
 import { TerminalView, ServiceHealthItem } from "terminal.slint";
 
 
 export component AppWindow inherits Window {
     background: #f0f8ff;
     full-screen: false;
-    max-height: 1080px;
+    max-height: 1200px;
     max-width: 1920px;
     min-height: 600px;
     min-width: 960px;
-    default-font-family: "Source Han Sans, Source Han Sans Medium";
+    default-font-family: root.font-family[active-font];
+    default-font-weight: 500;
     title: "Helenium";
+    in property <[string]> font-family: ["AR PL UMing CN","AR PL UKai CN", "STKaiti", "Noto Sans CJK SC"];
+    in property <int> active-font: 3;
     in-out property <int> active-tab: 0;
     in-out property <[MessageItem]> chat_model: [
     ];
