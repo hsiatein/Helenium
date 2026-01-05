@@ -32,12 +32,12 @@ export component HelenyButton inherits Rectangle {
             height: 100%;
             visible: root.icon.width > 0; 
         }
-
-        Text {
+        if(root.text!=""): Text {
             text: root.text;
             font-size: 16px;
             vertical-alignment: center;
         }
+        
     }
 
     states [
