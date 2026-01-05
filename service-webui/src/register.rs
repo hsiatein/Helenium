@@ -1,7 +1,7 @@
 use anyhow::Context;
 use anyhow::Result;
+use heleny_bus::endpoint::SubEndpoint;
 use heleny_proto::FrontendMessage;
-use heleny_proto::message::AnyMessage;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use uuid::Uuid;
@@ -11,12 +11,12 @@ use crate::message::SessionToService;
 
 #[derive(Clone)]
 pub struct Register {
-    to_service: mpsc::Sender<Box<dyn AnyMessage>>,
+    to_service: SubEndpoint,
     buffer: usize,
 }
 
 impl Register {
-    pub fn new(to_service: mpsc::Sender<Box<dyn AnyMessage>>, buffer: usize) -> Self {
+    pub fn new(to_service: SubEndpoint, buffer: usize) -> Self {
         Self { to_service, buffer }
     }
 
@@ -39,14 +39,14 @@ impl Register {
 
 pub struct SessionEndpoint {
     token: Uuid,
-    to_service: mpsc::Sender<Box<dyn AnyMessage>>,
+    to_service: SubEndpoint,
     from_service: mpsc::Receiver<FrontendMessage>,
 }
 
 impl SessionEndpoint {
     pub fn new(
         token: Uuid,
-        to_service: mpsc::Sender<Box<dyn AnyMessage>>,
+        to_service: SubEndpoint,
         from_service: mpsc::Receiver<FrontendMessage>,
     ) -> Self {
         Self {

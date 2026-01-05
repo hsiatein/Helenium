@@ -7,12 +7,14 @@ use heleny_proto::name::KERNEL_SERVICE;
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
+pub type SubEndpoint=mpsc::Sender<Box<dyn AnyMessage>>;
+
 #[derive(Debug)]
 pub struct Endpoint {
     token: Uuid,
     to_bus: mpsc::Sender<TokenMessage>,
     from_bus: Option<mpsc::Receiver<SignedMessage>>,
-    to_self: Option<mpsc::Sender<Box<dyn AnyMessage>>>,
+    to_self: Option<SubEndpoint>,
     from_sub_endpoint: Option<mpsc::Receiver<Box<dyn AnyMessage>>>,
 }
 
@@ -59,7 +61,7 @@ impl Endpoint {
         self.send_box(target, Box::new(payload)).await
     }
 
-    pub fn create_sub_endpoint(&self) -> Result<mpsc::Sender<Box<dyn AnyMessage>>> {
+    pub fn create_sub_endpoint(&self) -> Result<SubEndpoint> {
         self.to_self
             .clone()
             .context("最小化启动的 Endpoint 不能使用 SubEndpoint")

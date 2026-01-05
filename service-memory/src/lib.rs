@@ -53,7 +53,7 @@ impl Service for MemoryService {
         let memory_db=MemoryDb::new(&storage_path).await?;
         info!("已连接 Memory DB");
         // 发布最新消息
-        let (tx, rx) = watch::channel(ResourcePayload::DisplayMessages{new:true,messages:vec![]});
+        let (tx, rx) = watch::channel(ResourcePayload::DisplayMessages{new:true,messages:Vec::new()});
         endpoint
             .send(
                 HUB_SERVICE,
@@ -92,7 +92,7 @@ impl Service for MemoryService {
                 self.publisher.send(ResourcePayload::DisplayMessages{new:true,messages:vec![display_message]}).context("更新 DisplayMessages 失败")
             }
             MemoryServiceMessage::GetChatMemories { feedback }=>{
-                let mut chat_memories=vec![];
+                let mut chat_memories=Vec::new();
                 for entry in &self.short_term {
                     chat_memories.push(entry.to_chat_message()?);
                 }

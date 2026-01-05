@@ -108,7 +108,7 @@ impl Service for FsService {
             }
             FsServiceMessage::List { dir, feedback }=>{
                 let mut entries=fs::read_dir(dir).await?;
-                let mut items=vec![];
+                let mut items=Vec::new();
                 while let Some(entry) = entries.next_entry().await? {
                     let path = entry.path();
                     items.push(path);

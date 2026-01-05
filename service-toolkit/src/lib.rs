@@ -38,7 +38,7 @@ impl Service for ToolkitService {
         let config:ToolkitConfig=get_from_config_service(&endpoint).await?;
         // 读取工具描述
         let tool_paths=list_via_fs_service(&endpoint, config.tools_dir).await?;
-        let mut tool_strings=vec![];
+        let mut tool_strings=Vec::new();
         for path in tool_paths {
             let content=read_via_fs_service(&endpoint, path).await?;
             tool_strings.push(content);

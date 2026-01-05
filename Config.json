@@ -52,5 +52,8 @@
     },
     "ToolkitService":{
         "tools_dir":"./assets/tools"
+    },
+    "TaskService":{
+        "max_running_tasks":10
     }
 }
