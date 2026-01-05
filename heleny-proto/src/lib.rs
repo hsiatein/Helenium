@@ -12,3 +12,7 @@ mod tool_manual;
 pub use tool_manual::*;
 mod model_response_schema;
 pub use model_response_schema::*;
+mod chat_model;
+pub use chat_model::*;
+mod llm_api;
+pub use llm_api::*;

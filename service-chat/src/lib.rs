@@ -3,6 +3,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
+use heleny_proto::PlannerModel;
 use heleny_proto::message::AnyMessage;
 use heleny_proto::resource::Resource;
 use heleny_proto::role::ServiceRole;
@@ -20,8 +21,8 @@ use crate::model::HelenyModel;
 mod chat_config;
 mod model;
 
-pub use chat_config::HELENY_SCHEMA;
-pub use chat_config::PLANNER_SCHEMA;
+pub use heleny_proto::HELENY_SCHEMA;
+pub use heleny_proto::PLANNER_SCHEMA;
 
 #[base_service(deps=["ConfigService","FsService","MemoryService","ToolkitService"])]
 pub struct ChatService {
@@ -95,6 +96,12 @@ impl Service for ChatService {
                         Ok(())
                     }
                 }
+            }
+            ChatServiceMessage::GetPlanner { feedback }=>{
+                let api_config=self.config.api.get(self.config.planner.api).context("没有此 API 配置")?.to_owned();
+                let planner=PlannerModel::new(self.config.planner.preset.clone(), api_config);
+                let _=feedback.send(planner);
+                Ok(())
             }
         }
     }

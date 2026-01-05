@@ -12,3 +12,5 @@ chrono = {workspace = true}
 tracing = { workspace = true }
 serde = {workspace = true}
 async-openai = {workspace = true}
+async-trait = {workspace = true}
+heleny_macros = {path = "../heleny-macros"}

@@ -2,13 +2,9 @@ use anyhow::Context;
 use anyhow::Result;
 use async_openai::Client;
 use async_openai::config::OpenAIConfig;
-use async_openai::types::chat::ChatCompletionRequestMessage;
-use async_openai::types::chat::ChatCompletionRequestSystemMessageArgs;
-use async_openai::types::chat::CreateChatCompletionRequestArgs;
-use async_openai::types::chat::ResponseFormat;
-use async_openai::types::chat::ResponseFormatJsonSchema;
-use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
+use heleny_macros::chat_model;
+use heleny_proto::ChatModel;
 use heleny_proto::memory::ChatRole;
 use heleny_proto::memory::MemoryContent;
 use heleny_proto::memory::MemoryEntry;
@@ -16,9 +12,10 @@ use heleny_proto::name::MEMORY_SERVICE;
 use heleny_service::MemoryServiceMessage;
 use tokio::sync::oneshot;
 use crate::HELENY_SCHEMA;
-use crate::chat_config::ApiConfig;
+use heleny_proto::ApiConfig;
 use heleny_proto::HelenyReply;
 
+#[chat_model]
 pub struct HelenyModel {
     preset: String,
     model: String,
@@ -60,65 +57,5 @@ impl HelenyModel {
         let entry=MemoryEntry::new(ChatRole::Assistant, MemoryContent::Text(content));
         self.endpoint.send(MEMORY_SERVICE, MemoryServiceMessage::Post { entry }).await?;
         Ok(need_help)
-    }
-}
-
-impl ChatModel for HelenyModel {
-    fn schema(&self) -> &'static str {
-        self.schema
-    }
-    fn client(&self) -> &Client<OpenAIConfig> {
-        &self.client
-    }
-    fn model(&self) -> String {
-        self.model.clone()
-    }
-    fn preset(&self) -> String {
-        self.preset.clone()
-    }
-}
-
-#[async_trait]
-pub trait ChatModel {
-    fn schema(&self) -> &'static str;
-    fn client(&self) -> &Client<OpenAIConfig>;
-    fn model(&self) -> String;
-    fn preset(&self) -> String;
-    async fn _chat(&self, messages: Vec<ChatCompletionRequestMessage>) -> Result<String> {
-        let preset = ChatCompletionRequestSystemMessageArgs::default()
-            .content(self.preset().clone())
-            .build()
-            .context("预设提示词失败")?;
-        let mut preset_messages = vec![preset.into()];
-        preset_messages.extend(messages);
-        let request = CreateChatCompletionRequestArgs::default()
-            .model(self.model())
-            .messages(preset_messages)
-            .n(1)
-            .response_format(ResponseFormat::JsonSchema {
-                json_schema: ResponseFormatJsonSchema {
-                    schema: Some(serde_json::from_str(self.schema()).context("解析成 Value 失败")?),
-                    description: None,
-                    name: "math_reasoning".into(),
-                    strict: Some(true),
-                },
-            })
-            .build()
-            .context("构造请求失败")?;
-        let response = self
-            .client()
-            .chat()
-            .create(request)
-            .await
-            .context("获取回复失败")?;
-        let content = response
-            .choices
-            .first()
-            .context("回复数量为空")?
-            .message
-            .content
-            .to_owned()
-            .context("回复内容为空")?;
-        Ok(content)
     }
 }
