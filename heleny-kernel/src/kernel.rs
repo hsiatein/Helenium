@@ -27,7 +27,6 @@ use tokio::sync::oneshot;
 use tokio::time::MissedTickBehavior;
 use tokio::time::interval;
 use tokio::time::timeout;
-use tracing::debug;
 use tracing::info;
 use tracing::warn;
 
@@ -326,7 +325,6 @@ impl Kernel {
     /// 处理 Tick
     async fn handle_tick(&mut self) -> Result<()> {
         self.time_tick = self.time_tick + 1;
-        // debug!("{:?}", KernelHealth::get_mut(&self.health));
         Ok(())
     }
 }

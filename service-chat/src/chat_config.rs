@@ -56,13 +56,22 @@ pub static PLANNER_SCHEMA: &'static str = r#"{
       "description": "详细解释判断用户需求并选择对应工具的逻辑和原因。"
     },
     "tools": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "需要调用的工具名称列表。如果没有匹配的工具，则返回空数组 []。"
+      "description": "需要调用的工具名称列表；如果无论用什么工具都无法完成要求，则为null; 如果不需要任何工具即可完成要求，则为[]。",
+      "oneOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "required": ["reason", "tools"],
   "additionalProperties": false
 }"#;
+
+

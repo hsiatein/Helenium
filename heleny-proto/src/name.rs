@@ -6,3 +6,4 @@ pub static USER_SERVICE: &'static str = "UserService";
 pub static FS_SERVICE: &'static str = "FsService";
 pub static MEMORY_SERVICE: &'static str = "MemoryService";
 pub static CHAT_SERVICE: &'static str = "ChatService";
+pub static TOOLKIT_SERVICE: &'static str = "ToolkitService";

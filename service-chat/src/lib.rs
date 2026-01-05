@@ -9,6 +9,7 @@ use heleny_proto::role::ServiceRole;
 use heleny_service::ChatServiceMessage;
 use heleny_service::Service;
 use heleny_service::get_from_config_service;
+use heleny_service::get_tool_descriptions;
 use heleny_service::read_via_fs_service;
 use tokio::time::Instant;
 use tracing::info;
@@ -17,7 +18,6 @@ use crate::chat_config::ChatConfig;
 use crate::model::HelenyModel;
 
 mod chat_config;
-mod heleny_reply;
 mod model;
 
 pub use chat_config::HELENY_SCHEMA;
@@ -46,13 +46,14 @@ impl Service for ChatService {
             }
         }
         // 读取预设
+        let tool_descriptions=get_tool_descriptions(&endpoint).await?;
         if config.heleny.preset.is_empty() {
             config.heleny.preset =
-                read_via_fs_service(&endpoint, &config.heleny.preset_path).await?;
+                read_via_fs_service(&endpoint, &config.heleny.preset_path).await?+&tool_descriptions;
         }
         if config.planner.preset.is_empty() {
             config.planner.preset =
-                read_via_fs_service(&endpoint, &config.planner.preset_path).await?;
+                read_via_fs_service(&endpoint, &config.planner.preset_path).await?+&tool_descriptions;
         }
         if config.executor.preset.is_empty() {
             config.executor.preset =

@@ -17,7 +17,7 @@ use heleny_service::MemoryServiceMessage;
 use tokio::sync::oneshot;
 use crate::HELENY_SCHEMA;
 use crate::chat_config::ApiConfig;
-use crate::heleny_reply::HelenyReply;
+use heleny_proto::HelenyReply;
 
 pub struct HelenyModel {
     preset: String,

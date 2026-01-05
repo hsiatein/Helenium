@@ -13,7 +13,7 @@ use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tracing::Instrument;
-use tracing::debug;
+use tracing::trace;
 use tracing::info_span;
 use tracing::warn;
 use uuid::Uuid;
@@ -160,7 +160,7 @@ impl Bus {
             .context("消息携带未知 token, 忽略")?
             .clone();
         let msg = msg.sign(name, role);
-        // debug!("已签名: {:?}", msg);
+        trace!("已签名: {:?}", msg);
         let target = msg.target.clone();
         self.send(msg)
             .await
