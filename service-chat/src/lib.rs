@@ -23,7 +23,7 @@ mod model;
 pub use chat_config::HELENY_SCHEMA;
 pub use chat_config::PLANNER_SCHEMA;
 
-#[base_service(deps=["ConfigService","FsService","MemoryService"])]
+#[base_service(deps=["ConfigService","FsService","MemoryService","ToolkitService"])]
 pub struct ChatService {
     endpoint: Endpoint,
     config: ChatConfig,

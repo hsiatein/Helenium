@@ -21,6 +21,7 @@ use heleny_service::get_from_config_service;
 use tokio::fs;
 use tokio::sync::watch;
 use tokio::time::Instant;
+use tracing::info;
 
 use crate::memory_config::MemoryConfig;
 use crate::memory_db::MemoryDb;
@@ -50,6 +51,7 @@ impl Service for MemoryService {
         let storage_path=dir.join("memory.db");
         // 新建 MemoryDb
         let memory_db=MemoryDb::new(&storage_path).await?;
+        info!("已连接 Memory DB");
         // 发布最新消息
         let (tx, rx) = watch::channel(ResourcePayload::DisplayMessages{new:true,messages:vec![]});
         endpoint

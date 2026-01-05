@@ -16,6 +16,7 @@ use heleny_service::KernelMessage;
 use heleny_service::Service;
 use heleny_service::UserServiceMessage;
 use tokio::time::Instant;
+use tracing::info;
 use tracing::warn;
 
 use crate::user::User;
@@ -73,6 +74,7 @@ impl Service for UserService {
     ) -> Result<()> {
         match msg {
             UserServiceMessage::Login(_frontend_type) => {
+                info!("用户 {} 登陆",name);
                 self.users.push(User {
                     name: name.to_string(),
                     _frontend_type,
