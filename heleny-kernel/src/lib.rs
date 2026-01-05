@@ -18,3 +18,6 @@ extern crate service_chat;
 extern crate service_webui;
 
 extern crate service_memory;
+
+extern crate service_task;
+extern crate service_toolkit;

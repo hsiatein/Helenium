@@ -1,0 +1,77 @@
+{
+    "name": "scheduler",
+    "description": "用于添加、列出、删除未来日程任务计划，支持一次性任务、按间隔的周期任务、按分钟级Cron表达式的任务。任务的描述一定要清晰明了，确保可以靠描述来开始以及完成。",
+    "commands": [
+        {
+            "name": "once",
+            "description": "添加一次性任务，在指定时间执行一次。",
+            "args": [
+                {
+                    "name": "description",
+                    "description": "任务描述",
+                    "type": "string",
+                    "required": true
+                },
+                {
+                    "name": "time",
+                    "description": "执行时间（ISO8601 格式，如 2025-02-01T10:00:00+08:00）",
+                    "type": "string",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "name": "interval",
+            "description": "添加固定间隔执行的周期任务（秒级或分钟级自由决定）。",
+            "args": [
+                {
+                    "name": "description",
+                    "description": "任务描述",
+                    "type": "string",
+                    "required": true
+                },
+                {
+                    "name": "every",
+                    "description": "间隔秒数（如 60 表示每 60 秒执行一次）。",
+                    "type": "integer",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "name": "cron",
+            "description": "按分钟级Cron表达式执行任务，不支持秒和年。",
+            "args": [
+                {
+                    "name": "description",
+                    "description": "任务描述",
+                    "type": "string",
+                    "required": true
+                },
+                {
+                    "name": "cron",
+                    "description": "Cron 表达式（标准5字段，如 \"0 9,10 * * *\" 表示每天9:00和10:00）。",
+                    "type": "string",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "name": "cancel",
+            "description": "取消已存在的任务。",
+            "args": [
+                {
+                    "name": "id",
+                    "description": "要取消的任务 ID",
+                    "type": "string",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "name": "list",
+            "description": "列出当前所有计划中的任务。",
+            "args": []
+        }
+    ]
+}

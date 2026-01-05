@@ -49,5 +49,8 @@
         "short_term_length":20,
         "storage_dir":"./storage",
         "display_length":20
+    },
+    "ToolkitService":{
+        "tools_dir":"./assets/tools"
     }
 }

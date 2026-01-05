@@ -74,6 +74,7 @@ enum _WorkerMessage{
 impl Service for {PATTERN}Service {
     type MessageType= {PATTERN}ServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>>{
+        // 实例化
         let instance=Self {
             endpoint,
         };

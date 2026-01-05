@@ -6,7 +6,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/hsiatein/Helenium">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="assets\icon.png" alt="Logo" width="80" height="80">
   </a>
 
   <h3 align="center">Helenium</h3>
@@ -59,9 +59,11 @@
 ### AI使用情况
 
 本项目测试大多数使用AI生成, 在测试以外使用AI生成的还有:
-1. heleny-utils::init_tracing函数 (6-31行).
-2. heleny-macros::base_service宏 (1-63行).
-3. 大部分前端代码, ( Vue, heleny-webui/src/router.ts, heleny-webui/src/main.ts ).
+1. heleny-utils\src\lib.rs::init_tracing函数 (6-31行).
+2. heleny-macros\src\lib.rs::base_service宏 (1-63行).
+3. 大部分 WebUI 代码, ( *.vue, heleny-webui/src/router.ts, heleny-webui/src/main.ts ).
+4. *.slint文件大量使用了AI.
+5. heleny-gui\src\lib.rs::generate_svg_path函数 (92-178行).
 
 <p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 
@@ -110,7 +112,7 @@
 <!-- ROADMAP -->
 ## 路线
 
-- [ ] 初步做出可以对话的原型
+- [x] 初步做出可以对话的原型
 
 <p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 
@@ -140,11 +142,6 @@ Distributed under the Unlicense License. See `LICENSE.txt` for more information.
 
 * 异步运行时: [Tokio](https://tokio.rs/)
 * 日志: [Tracing](https://github.com/tokio-rs/tracing)
-* [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
-* [Malven's Grid Cheatsheet](https://grid.malven.co/)
-* [Img Shields](https://shields.io)
-* [GitHub Pages](https://pages.github.com)
-* [Font Awesome](https://fontawesome.com)
-* [React Icons](https://react-icons.github.io/react-icons/search)
+* GUI: [Slint](https://github.com/slint-ui/slint)
 
 <p align="right">(<a href="#readme-top">回到顶部</a>)</p>

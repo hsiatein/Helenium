@@ -4,7 +4,7 @@ import {
 
 
 export component HelenyButton inherits Rectangle {
-    in property <string> text: "默认文字";
+    in property <string> text: "";
     in property <image> icon: @image-url("");
     in property <brush> btn-color: #9ec8ff;
     
@@ -12,6 +12,7 @@ export component HelenyButton inherits Rectangle {
 
     // --- 2. 设置容器属性 ---
     width: 90%;
+    vertical-stretch: 0;
     background: btn-color;
     border-radius: 12px;
     animate background { duration: 150ms; }
@@ -32,12 +33,12 @@ export component HelenyButton inherits Rectangle {
             height: 100%;
             visible: root.icon.width > 0; 
         }
-
-        Text {
+        if(root.text!=""): Text {
             text: root.text;
             font-size: 16px;
             vertical-alignment: center;
         }
+        
     }
 
     states [

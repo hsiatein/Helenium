@@ -162,6 +162,7 @@ async fn ws_handler(ws: WebSocketUpgrade, State(register): State<Register>) -> R
 }
 
 async fn handle_socket(mut socket: WebSocket, mut endpoint: SessionEndpoint) {
+    info!("新的前端连接已建立 WebSocket 会话");
     loop {
         tokio::select! {
             res = socket.recv() => {
