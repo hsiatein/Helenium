@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 use std::collections::VecDeque;
 use anyhow::Context;
+use heleny_proto::ExecutorModel;
 use heleny_proto::PlannerModel;
 use heleny_proto::message::downcast;
 use heleny_proto::name::CHAT_SERVICE;
+use heleny_proto::name::TOOLKIT_SERVICE;
 use heleny_service::ChatServiceMessage;
+use heleny_service::ToolkitServiceMessage;
 use heleny_service::get_from_config_service;
 use tokio::sync::oneshot;
 use tokio::time::Instant;
@@ -40,6 +43,13 @@ enum WorkerMessage{
     },
     GetPlanner{
         feedback:oneshot::Sender<PlannerModel>,
+    },
+    GetManuals{
+        tool_names:Vec<String>,
+        feedback:oneshot::Sender<String>,
+    },
+    GetExecutor{
+        feedback:oneshot::Sender<ExecutorModel>,
     }
 }
 
@@ -64,7 +74,7 @@ impl Service for TaskService {
     ) -> Result<()>{
         match msg {
             TaskServiceMessage::AddTask { task_description }=>{
-                let task=Task::new(Uuid::new_v4(), task_description, self.endpoint.create_sub_endpoint()?);
+                let task=Task::new(Uuid::new_v4(), task_description, self.endpoint.create_sub_endpoint()?,self.config.max_working_loop);
                 self.pending_tasks.push_back(task);
                 self.launch_tasks();
             }
@@ -87,13 +97,19 @@ impl Service for TaskService {
                 }else {
                     info!("任务 {} 失败: {:?}",id,log);
                 }
-                Ok(())
+                self.endpoint.send(CHAT_SERVICE, ChatServiceMessage::TaskFinished { log }).await
             }
             WorkerMessage::GetPlanner { feedback }=>{
                 self.endpoint.send(
                     CHAT_SERVICE,
                     ChatServiceMessage::GetPlanner { feedback },
                 ).await
+            }
+            WorkerMessage::GetManuals { tool_names, feedback }=>{
+                self.endpoint.send(TOOLKIT_SERVICE, ToolkitServiceMessage::GetManuals { tool_names, feedback }).await
+            }
+            WorkerMessage::GetExecutor { feedback }=>{
+                self.endpoint.send(CHAT_SERVICE, ChatServiceMessage::GetExecutor { feedback }).await
             }
         }
     }

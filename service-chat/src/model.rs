@@ -41,14 +41,12 @@ impl HelenyModel {
     /// 发送消息进行聊天, 返回本次是否需要调用工具帮助
     pub async fn chat(&self, message: String) -> Result<Option<String>> {
         // Post 用户消息
-        let entry=MemoryEntry::new(ChatRole::User, MemoryContent::Text(message.clone()));
-        let message=entry.to_chat_message()?;
+        let entry=MemoryEntry::new(ChatRole::User, MemoryContent::Text(message));
         self.endpoint.send(MEMORY_SERVICE, MemoryServiceMessage::Post { entry }).await?;
         // 构造聊天信息
         let (tx,rx)=oneshot::channel();
         self.endpoint.send(MEMORY_SERVICE, MemoryServiceMessage::GetChatMemories { feedback: tx }).await?;
-        let mut history=rx.await.context("获取历史信息失败")?;
-        history.push(message);
+        let history=rx.await.context("获取历史信息失败")?;
         // 获取响应
         let response = self._chat(history).await?;
         let heleny_reply:HelenyReply=serde_json::from_str(&response).context("解析 Response 为 HelenyReply 失败")?;
@@ -57,5 +55,20 @@ impl HelenyModel {
         let entry=MemoryEntry::new(ChatRole::Assistant, MemoryContent::Text(content));
         self.endpoint.send(MEMORY_SERVICE, MemoryServiceMessage::Post { entry }).await?;
         Ok(need_help)
+    }
+
+    /// 发送任务结果给 Heleny, 由 Heleny 来解释给 User
+    pub async fn explain_task_result(&self, log: Vec<String>) -> Result<()> {
+        // 构造聊天信息
+        let log=format!("<task_log>{:?}</task_log>",log);
+        let entry=MemoryEntry::new(ChatRole::System, MemoryContent::Text(log));
+        let message=vec![entry.to_chat_message()?];
+        // 获取响应
+        let response = self._chat(message).await?;
+        let heleny_reply:HelenyReply=serde_json::from_str(&response).context("解析 Response 为 HelenyReply 失败")?;
+        // Post 回复
+        let entry=MemoryEntry::new(ChatRole::Assistant, MemoryContent::Text(heleny_reply.content));
+        self.endpoint.send(MEMORY_SERVICE, MemoryServiceMessage::Post { entry }).await?;
+        Ok(())
     }
 }

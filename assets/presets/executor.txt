@@ -37,8 +37,8 @@
 
 {
   "reason": "解释你为何选择该工具与该命令，用于内部调试和审计。",
-  "tool": "工具名称或 null",
-  "command": "工具命令或 null",
+  "tool": "工具名称" 或 null,
+  "command": "工具命令" 或 null,
   "args": [
     { "name": "参数名称", "value": "参数值" }
   ]

@@ -5,8 +5,8 @@ pub enum ToolkitServiceMessage {
     GetIntro {
         feedback:oneshot::Sender<String>,
     },
-    GetManual {
-        names: Vec<String>,
+    GetManuals {
+        tool_names: Vec<String>,
         feedback:oneshot::Sender<String>,
     }
 }

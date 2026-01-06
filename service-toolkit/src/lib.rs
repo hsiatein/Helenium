@@ -72,8 +72,8 @@ impl Service for ToolkitService {
             ToolkitServiceMessage::GetIntro { feedback }=>{
                 let _=feedback.send(serde_json::to_string(&self.tool_descriptions)?);
             }
-            ToolkitServiceMessage::GetManual { names, feedback }=>{
-                let results: Vec<serde_json::Value> = names.into_iter().map(|name| {
+            ToolkitServiceMessage::GetManuals { tool_names, feedback }=>{
+                let results: Vec<serde_json::Value> = tool_names.into_iter().map(|name| {
                     match self.tool_manuals.iter().find(|tool| tool.name == name) {
                         Some(manual) => {
                             // 将 manual 转换为 json 对象，如果失败则返回错误 json

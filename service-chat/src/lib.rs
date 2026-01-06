@@ -3,6 +3,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
+use heleny_proto::ExecutorModel;
 use heleny_proto::PlannerModel;
 use heleny_proto::message::AnyMessage;
 use heleny_proto::name::TASK_SERVICE;
@@ -100,6 +101,15 @@ impl Service for ChatService {
                 let planner=PlannerModel::new(self.config.planner.preset.clone(), api_config);
                 let _=feedback.send(planner);
                 Ok(())
+            }
+            ChatServiceMessage::GetExecutor { feedback }=>{
+                let api_config=self.config.api.get(self.config.executor.api).context("没有此 API 配置")?.to_owned();
+                let executor=ExecutorModel::new(self.config.executor.preset.clone(), api_config);
+                let _=feedback.send(executor);
+                Ok(())
+            }
+            ChatServiceMessage::TaskFinished { log }=>{
+                self.heleny.explain_task_result(log).await
             }
         }
     }

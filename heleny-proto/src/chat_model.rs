@@ -11,12 +11,13 @@ use async_trait::async_trait;
 
 use crate::ApiConfig;
 use crate::RequiredTools;
+use crate::ToolIntent;
 use crate::memory::ChatRole;
 use crate::memory::MemoryContent;
 use crate::memory::MemoryEntry;
 
 #[heleny_macros::chat_model]
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct PlannerModel {
     preset: String,
     model: String,
@@ -45,6 +46,63 @@ impl PlannerModel {
             "解析 Planner 回复为 RequiredTools 失败, 回复内容: {}",
             response
         ))
+    }
+}
+
+#[heleny_macros::chat_model]
+#[derive(Debug)]
+pub struct ExecutorModel {
+    preset: String,
+    model: String,
+    client: Client<OpenAIConfig>,
+    schema: &'static str,
+    memory: Vec<ChatCompletionRequestMessage>,
+}
+
+impl ExecutorModel {
+    pub fn new(preset: String, api_config: ApiConfig) -> Self {
+        let config = OpenAIConfig::new()
+            .with_api_base(api_config.base_url)
+            .with_api_key(api_config.api_key);
+        Self {
+            preset,
+            model: api_config.model,
+            client: Client::with_config(config),
+            schema: EXECUTOR_SCHEMA,
+            memory: Vec::new(),
+        }
+    }
+
+    pub fn add_preset(&mut self,append:&str){
+        self.preset.push_str(append);
+    }
+
+    pub async fn get_intent<T:Into<String>>(&mut self, message: T) -> Result<ToolIntent> {
+        let checkpoint=self.memory.len();
+        let intent=self._get_intent(message).await;
+        if intent.is_err() {
+            self.rollback(checkpoint);
+        }
+        intent
+    }
+
+    async fn _get_intent<T:Into<String>>(&mut self, message: T) -> Result<ToolIntent> {
+        let message=MemoryEntry::new(ChatRole::System, MemoryContent::Text(message.into())).to_chat_message()?;
+        self.memory.push(message);
+        let response = self._chat(self.memory.to_owned()).await?;
+        let intent=serde_json::from_str(&response).context(format!(
+            "解析 Executor 回复为 ToolIntent 失败, 回复内容: {}",
+            response
+        ))?;
+        let message=MemoryEntry::new(ChatRole::Assistant, MemoryContent::Text(response)).to_chat_message()?;
+        self.memory.push(message);
+        Ok(intent)
+    }
+
+    fn rollback(&mut self, checkpoint: usize){
+        while self.memory.len()>checkpoint {
+            self.memory.pop();
+        }
     }
 }
 
@@ -140,4 +198,47 @@ pub static PLANNER_SCHEMA: &'static str = r#"{
   "additionalProperties": false
 }"#;
 
-
+pub static EXECUTOR_SCHEMA: &'static str = r#"{
+  "type": "object",
+  "properties": {
+    "reason": {
+      "type": "string",
+      "description": "解释你为何选择该工具与该命令，用于内部调试和审计。"
+    },
+    "tool": {
+      "description": "需要调用的工具名称；如果不需要调用工具，则为 null。",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "null" }
+      ]
+    },
+    "command": {
+      "description": "需要执行的工具命令；如果不需要执行命令，则为 null。",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "null" }
+      ]
+    },
+    "args": {
+      "type": "array",
+      "description": "传递给工具命令的参数列表。",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "参数名称。"
+          },
+          "value": {
+            "type": "string",
+            "description": "参数值。"
+          }
+        },
+        "required": ["name", "value"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["reason", "tool", "command", "args"],
+  "additionalProperties": false
+}"#;
