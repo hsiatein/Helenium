@@ -54,6 +54,7 @@
         "tools_dir":"./assets/tools"
     },
     "TaskService":{
-        "max_running_tasks":10
+        "max_running_tasks":10,
+        "max_working_loop":100
     }
 }
