@@ -78,7 +78,6 @@
 - 若参数定义中 `"required": true`，必须在 args 中包含。
 - `"required": false"` 可省略。
 - 未定义参数一律禁止出现。
-- 若参数允许重复 `"allow_repeat": true"`，可多次出现同名项。
 
 ---
 

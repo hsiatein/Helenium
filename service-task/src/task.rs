@@ -19,6 +19,7 @@ pub struct Task {
     task_description:String,
     sender:SubEndpoint,
     max_working_loop:usize,
+    current:usize,
     log:Arc<Mutex<Vec<String>>>,
 }
 
@@ -43,7 +44,7 @@ impl TaskHandle {
 
 impl Task {
     pub fn new(id:Uuid, task_description:String, sender:SubEndpoint, max_working_loop:usize)->Self{
-        Self { id, task_description, sender, max_working_loop, log: Arc::new(Mutex::new(Vec::new())) }
+        Self { id, task_description, sender, max_working_loop, current:0, log: Arc::new(Mutex::new(Vec::new())) }
     }
 
     pub fn launch(mut self)->TaskHandle{
@@ -72,17 +73,19 @@ impl Task {
     pub async fn run(&mut self)->Result<()>{
         let mut executor=self.preprocess().await?;
         let input=&self.task_description;
-        for _ in 0..self.max_working_loop {
+        while self.current < self.max_working_loop {
             let intent=match executor.get_intent(input).await {
                 Ok(intent)=>intent,
                 Err(e)=>{
                     self.log(format!("获取 Intent 失败, 重试: {}",e));
+                    self.current=self.current+1;
                     continue;
                 }
             };
             if intent.tool.is_none() && intent.command.is_none() {
                 return Ok(());
             }
+            self.current=self.current+1;
         };
         let context="达到最大工作循环限制";
         self.log(context);
