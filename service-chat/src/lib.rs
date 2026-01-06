@@ -5,10 +5,12 @@ use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::PlannerModel;
 use heleny_proto::message::AnyMessage;
+use heleny_proto::name::TASK_SERVICE;
 use heleny_proto::resource::Resource;
 use heleny_proto::role::ServiceRole;
 use heleny_service::ChatServiceMessage;
 use heleny_service::Service;
+use heleny_service::TaskServiceMessage;
 use heleny_service::get_from_config_service;
 use heleny_service::get_tool_descriptions;
 use heleny_service::read_via_fs_service;
@@ -88,14 +90,10 @@ impl Service for ChatService {
         match msg {
             ChatServiceMessage::Chat { message }=>{
                 let heleny_reply=self.heleny.chat(message).await?;
-                match heleny_reply {
-                    Some(_need_help)=>{
-                        Ok(())
-                    }
-                    None=>{
-                        Ok(())
-                    }
-                }
+                let Some(need_help)=heleny_reply else {
+                    return Ok(());
+                };
+                self.endpoint.send(TASK_SERVICE,TaskServiceMessage::AddTask { task_description: need_help }).await
             }
             ChatServiceMessage::GetPlanner { feedback }=>{
                 let api_config=self.config.api.get(self.config.planner.api).context("没有此 API 配置")?.to_owned();

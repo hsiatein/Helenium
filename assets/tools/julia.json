@@ -1,6 +1,6 @@
 {
     "name": "julia",
-    "description": "通过 Julia 语言执行数学计算、数据处理、脚本运行和绘图。所有任务在 Docker 容器内运行，允许使用Pkg安装模块。若要进行符号计算应当使用Symbolics.jl。",
+    "description": "通过 Julia 语言执行数学计算、数据处理、脚本运行和绘图。所有任务在 Docker 容器内运行，允许使用Pkg安装模块。",
     "commands": [
         {
             "name": "eval",

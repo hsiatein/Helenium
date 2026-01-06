@@ -33,15 +33,18 @@ impl PlannerModel {
             preset,
             model: api_config.model,
             client: Client::with_config(config),
-            schema: HELENY_SCHEMA,
+            schema: PLANNER_SCHEMA,
         }
     }
 
-    pub async fn get_tools_list(&self, message: String) -> Result<RequiredTools> {
-        let entry=MemoryEntry::new(ChatRole::User, MemoryContent::Text(message.clone()));
+    pub async fn get_tools_list(&self, message: &str) -> Result<RequiredTools> {
+        let entry=MemoryEntry::new(ChatRole::User, MemoryContent::Text(message.to_string()));
         let message=entry.to_chat_message()?;
         let response = self._chat(vec![message]).await?;
-        serde_json::from_str(&response).context("解析 Response 为 HelenyReply 失败")
+        serde_json::from_str(&response).context(format!(
+            "解析 Planner 回复为 RequiredTools 失败, 回复内容: {}",
+            response
+        ))
     }
 }
 

@@ -1,9 +1,12 @@
 use std::collections::HashMap;
 use std::collections::VecDeque;
-
 use anyhow::Context;
+use heleny_proto::PlannerModel;
 use heleny_proto::message::downcast;
+use heleny_proto::name::CHAT_SERVICE;
+use heleny_service::ChatServiceMessage;
 use heleny_service::get_from_config_service;
+use tokio::sync::oneshot;
 use tokio::time::Instant;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
@@ -34,6 +37,9 @@ enum WorkerMessage{
     Finish{
         id:Uuid,
         success:bool
+    },
+    GetPlanner{
+        feedback:oneshot::Sender<PlannerModel>,
     }
 }
 
@@ -81,9 +87,15 @@ impl Service for TaskService {
                 }else {
                     info!("任务 {} 失败: {:?}",id,log);
                 }
+                Ok(())
+            }
+            WorkerMessage::GetPlanner { feedback }=>{
+                self.endpoint.send(
+                    CHAT_SERVICE,
+                    ChatServiceMessage::GetPlanner { feedback },
+                ).await
             }
         }
-        Ok(())
     }
     async fn handle_tick(&mut self, _tick:Instant) -> Result<()>{
         Ok(())

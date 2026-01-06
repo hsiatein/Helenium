@@ -1,5 +1,6 @@
 use async_openai::Client;
 use async_openai::config::OpenAIConfig;
+use async_openai::types::chat::ChatCompletionRequestMessage;
 use async_openai::types::chat::ChatCompletionRequestSystemMessageArgs;
 use async_openai::types::chat::ChatCompletionRequestUserMessageArgs;
 use async_openai::types::chat::ChatCompletionResponseStream;
@@ -13,15 +14,15 @@ use tokio_stream::StreamExt;
 async fn test_api() {
     // Create client
     dotenvy::dotenv().ok();
-    let api_key = std::env::var("GROK_API_KEY").expect("无 API KEY");
+    let api_key = std::env::var("GEMINI_API_KEY").expect("无 API KEY");
     let config = OpenAIConfig::new()
-        .with_api_base("https://api.x.ai/v1")
+        .with_api_base("https://generativelanguage.googleapis.com/v1beta/openai/")
         .with_api_key(api_key);
     let client = Client::with_config(config);
     // Create request using builder pattern
     // Every request struct has companion builder struct with same name + Args suffix
     let request = CreateResponseArgs::default()
-        .model("grok-4-1-fast-non-reasoning")
+        .model("gemini-2.5-flash")
         .input("你是谁")
         .max_output_tokens(512u32)
         .build()
@@ -197,6 +198,45 @@ async fn test_schema() {
                 print!("{}", chunk);
             }),
             Err(e) => eprintln!("{}", e),
+        }
+    }
+}
+
+#[tokio::test]
+async fn test_gemini_api() {
+    dotenvy::dotenv().ok();
+    let api_key = std::env::var("GEMINI_API_KEY").expect("无 API KEY");
+
+    let config = OpenAIConfig::new()
+        .with_api_base("https://generativelanguage.googleapis.com/v1beta/openai/")
+        .with_api_key(api_key);
+
+    let client = Client::with_config(config);
+
+    let user_msg = ChatCompletionRequestUserMessageArgs::default()
+        .content("你是谁")
+        .build()
+        .unwrap();
+
+    let request = CreateChatCompletionRequestArgs::default()
+        .model("gemini-2.5-flash")
+        .messages([ChatCompletionRequestMessage::User(user_msg)])
+        .build()
+        .unwrap();
+
+    let resp = client.chat().create(request).await;
+
+    match resp {
+        Ok(r) => {
+            let text = r.choices
+                .get(0)
+                .and_then(|c| c.message.content.clone())
+                .unwrap_or_else(|| "<no content>".to_string());
+            println!("OK: {}", text);
+        }
+        Err(e) => {
+            eprintln!("ERR: {:#?}", e);
+            panic!("获取回复失败");
         }
     }
 }

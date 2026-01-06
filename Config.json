@@ -37,11 +37,11 @@
             "preset_path":"assets/presets/heleny.txt"
         },
         "planner":{
-            "api":1,
+            "api":0,
             "preset_path":"assets/presets/planner.txt"
         },
         "executor":{
-            "api":1,
+            "api":0,
             "preset_path":"assets/presets/executor.txt"
         }
     },

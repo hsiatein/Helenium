@@ -1,9 +1,12 @@
+use std::any;
 use std::sync::Arc;
 use std::sync::Mutex;
 
 use anyhow::Result;
 use anyhow::Context;
 use heleny_bus::endpoint::SubEndpoint;
+use heleny_proto::PlannerModel;
+use tokio::sync::oneshot;
 use tokio::{task::JoinHandle};
 use tracing::info;
 use tracing::warn;
@@ -66,6 +69,14 @@ impl Task {
     }
 
     pub async fn run(&mut self)->Result<()>{
+        let planner=self.get_planner().await?;
+        self.log("获取到 Planner");
+        let tools_list=planner.get_tools_list(&self.task_description).await?;
+        self.log(format!("获取到所需工具: {:?}",tools_list));
+        let Some(tool_names)=tools_list.tools else {
+            self.log("无法满足任务需求, 无法继续");
+            return Err(anyhow::anyhow!("无法满足任务需求, 无法继续"));
+        };
         Ok(())
     }
 
@@ -73,14 +84,20 @@ impl Task {
         self.sender.send(Box::new(msg)).await.context("发送消息给 Task Service 失败")
     }
 
-    fn log(&self, text:String){
+    fn log<T:Into<String>>(&self, text:T){
         match self.log.lock() {
             Ok(mut log)=>{
-                log.push(text);
+                log.push(text.into());
             }
             Err(e)=>{
                 warn!("任务 {} 日志失效: {}",self.id,e);
             }
         };
+    }
+
+    async fn get_planner(&self)->Result<PlannerModel>{
+        let (tx,rx)=oneshot::channel();
+        self.send(WorkerMessage::GetPlanner { feedback: tx }).await?;
+        rx.await.context("接收 Planner 失败")
     }
 }
