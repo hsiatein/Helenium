@@ -16,14 +16,14 @@ use axum::response::Response;
 use axum::routing::any;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
+use heleny_proto::AnyMessage;
+use heleny_proto::CHAT_SERVICE;
 use heleny_proto::FrontendMessage;
-use heleny_proto::frontend_type::FrontendType;
-use heleny_proto::message::AnyMessage;
-use heleny_proto::message::downcast;
-use heleny_proto::name::CHAT_SERVICE;
-use heleny_proto::name::USER_SERVICE;
-use heleny_proto::resource::Resource;
-use heleny_proto::role::ServiceRole;
+use heleny_proto::FrontendType;
+use heleny_proto::Resource;
+use heleny_proto::ServiceRole;
+use heleny_proto::USER_SERVICE;
+use heleny_proto::downcast;
 use heleny_service::ChatServiceMessage;
 use heleny_service::Service;
 use heleny_service::UserServiceMessage;
@@ -42,10 +42,10 @@ use tracing::info;
 use tracing::warn;
 use uuid::Uuid;
 
+mod command;
 mod message;
 mod register;
 mod webui_config;
-mod command;
 
 #[base_service(deps=["ConfigService","UserService"])]
 pub struct WebuiService {
@@ -113,13 +113,14 @@ impl Service for WebuiService {
                 self.router.remove(&token);
                 Ok(())
             }
-            SessionMessage::UserInput { mut input }=>{
+            SessionMessage::UserInput { mut input } => {
                 if input.starts_with("!") {
                     input.remove(0);
                     self.handle_command(token, input).await
-                }
-                else {
-                    self.endpoint.send(CHAT_SERVICE,ChatServiceMessage::Chat { message: input }).await
+                } else {
+                    self.endpoint
+                        .send(CHAT_SERVICE, ChatServiceMessage::Chat { message: input })
+                        .await
                 }
             }
         }
@@ -143,11 +144,17 @@ impl WebuiService {
         }
         Ok(())
     }
-    async fn send_to_session(&self, session:Uuid, msg: FrontendMessage) -> Result<()> {
-        let _=&self.router.iter().find(|(id,_tx)| **id==session).context("没找到对应 Session")?.1.send(msg).await?;
+    async fn send_to_session(&self, session: Uuid, msg: FrontendMessage) -> Result<()> {
+        let _ = &self
+            .router
+            .iter()
+            .find(|(id, _tx)| **id == session)
+            .context("没找到对应 Session")?
+            .1
+            .send(msg)
+            .await?;
         Ok(())
     }
-
 }
 
 async fn ws_handler(ws: WebSocketUpgrade, State(register): State<Register>) -> Response {
@@ -208,8 +215,12 @@ async fn handle_ws_msg(
     let msg = msg.into_text()?;
     let msg = String::from_utf8_lossy(msg.as_bytes()).to_string();
     debug!("前端消息: {}", msg);
-    if msg.is_empty() {return Ok(());}
-    endpoint.send(SessionMessage::UserInput { input: msg }).await?;
+    if msg.is_empty() {
+        return Ok(());
+    }
+    endpoint
+        .send(SessionMessage::UserInput { input: msg })
+        .await?;
     Ok(())
 }
 

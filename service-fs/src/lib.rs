@@ -3,9 +3,9 @@ use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::message::AnyMessage;
-use heleny_proto::resource::Resource;
-use heleny_proto::role::ServiceRole;
+use heleny_proto::AnyMessage;
+use heleny_proto::Resource;
+use heleny_proto::ServiceRole;
 use heleny_service::FsServiceMessage;
 use heleny_service::Service;
 use std::collections::HashMap;
@@ -106,14 +106,14 @@ impl Service for FsService {
                 }
                 Ok(())
             }
-            FsServiceMessage::List { dir, feedback }=>{
-                let mut entries=fs::read_dir(dir).await?;
-                let mut items=Vec::new();
+            FsServiceMessage::List { dir, feedback } => {
+                let mut entries = fs::read_dir(dir).await?;
+                let mut items = Vec::new();
                 while let Some(entry) = entries.next_entry().await? {
                     let path = entry.path();
                     items.push(path);
                 }
-                let _=feedback.send(items);
+                let _ = feedback.send(items);
                 Ok(())
             }
         }

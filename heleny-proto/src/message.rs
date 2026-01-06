@@ -71,13 +71,3 @@ pub fn downcast<T: Any>(msg: Box<dyn AnyMessage>) -> Result<T> {
         .map_err(|e| anyhow::anyhow!("Downcast 成 {} 消息失败: {:?}", any::type_name::<T>(), e))?;
     Ok(*msg)
 }
-
-// pub trait AnyMessageClone {
-//     fn clone_box(&self) -> Box<dyn AnyMessage>;
-// }
-
-// impl<T: Clone + Send + Sync + Debug + 'static> AnyMessageClone for T {
-//     fn clone_box(&self) -> Box<dyn AnyMessage> {
-//         Box::new(self.clone())
-//     }
-// }

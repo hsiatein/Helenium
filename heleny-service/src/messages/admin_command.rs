@@ -1,6 +1,6 @@
 use anyhow::Result;
 use heleny_bus::endpoint::Endpoint;
-use heleny_proto::message::AnyMessage;
+use heleny_proto::AnyMessage;
 use tokio::sync::oneshot;
 
 use crate::KernelMessage;

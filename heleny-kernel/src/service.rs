@@ -3,16 +3,16 @@ use async_trait::async_trait;
 use chrono::Local;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::health::HealthStatus;
-use heleny_proto::health::KernelHealth;
-use heleny_proto::message::AnyMessage;
-use heleny_proto::message::SignedMessage;
-use heleny_proto::name::KERNEL_NAME;
-use heleny_proto::name::KERNEL_SERVICE;
-use heleny_proto::resource::Resource;
-use heleny_proto::resource::ResourcePayload;
-use heleny_proto::role::ServiceRole;
-use heleny_proto::service_handle::ServiceHandle;
+use heleny_proto::AnyMessage;
+use heleny_proto::HealthStatus;
+use heleny_proto::KERNEL_NAME;
+use heleny_proto::KERNEL_SERVICE;
+use heleny_proto::KernelHealth;
+use heleny_proto::Resource;
+use heleny_proto::ResourcePayload;
+use heleny_proto::ServiceHandle;
+use heleny_proto::ServiceRole;
+use heleny_proto::SignedMessage;
 use heleny_service::AdminCommand;
 use heleny_service::CommonMessage;
 use heleny_service::KernelServiceMessage;
@@ -21,12 +21,12 @@ use heleny_service::ServiceFactory;
 use heleny_service::ServiceFactoryVec;
 use heleny_service::ShutdownStage;
 use inventory;
-use tokio::sync::watch;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::Mutex;
 use tokio::sync::oneshot;
+use tokio::sync::watch;
 use tokio::time::Instant;
 use tracing::debug;
 use tracing::info;
@@ -152,7 +152,9 @@ impl Service for KernelService {
             (KernelServiceMessage::GetHealth(sender), _) => {
                 let _ = sender.send(KernelHealth::get_mut(&self.health).to_owned());
             }
-            (KernelServiceMessage::UploadStatus(status), _) => self.handle_status(status,name).await?,
+            (KernelServiceMessage::UploadStatus(status), _) => {
+                self.handle_status(status, name).await?
+            }
             (KernelServiceMessage::WaitFor { name, sender }, _) => {
                 debug!("开始等待: {}", name);
                 let health = match KernelHealth::get_mut(&self.health).services.get(&name) {

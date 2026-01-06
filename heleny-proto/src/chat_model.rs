@@ -17,7 +17,7 @@ use crate::memory::MemoryContent;
 use crate::memory::MemoryEntry;
 
 #[heleny_macros::chat_model]
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 pub struct PlannerModel {
     preset: String,
     model: String,
@@ -39,8 +39,8 @@ impl PlannerModel {
     }
 
     pub async fn get_tools_list(&self, message: &str) -> Result<RequiredTools> {
-        let entry=MemoryEntry::new(ChatRole::User, MemoryContent::Text(message.to_string()));
-        let message=entry.to_chat_message()?;
+        let entry = MemoryEntry::new(ChatRole::User, MemoryContent::Text(message.to_string()));
+        let message = entry.to_chat_message()?;
         let response = self._chat(vec![message]).await?;
         serde_json::from_str(&response).context(format!(
             "解析 Planner 回复为 RequiredTools 失败, 回复内容: {}",
@@ -73,34 +73,36 @@ impl ExecutorModel {
         }
     }
 
-    pub fn add_preset(&mut self,append:&str){
+    pub fn add_preset(&mut self, append: &str) {
         self.preset.push_str(append);
     }
 
-    pub async fn get_intent<T:Into<String>>(&mut self, message: T) -> Result<ToolIntent> {
-        let checkpoint=self.memory.len();
-        let intent=self._get_intent(message).await;
+    pub async fn get_intent<T: Into<String>>(&mut self, message: T) -> Result<ToolIntent> {
+        let checkpoint = self.memory.len();
+        let intent = self._get_intent(message).await;
         if intent.is_err() {
             self.rollback(checkpoint);
         }
         intent
     }
 
-    async fn _get_intent<T:Into<String>>(&mut self, message: T) -> Result<ToolIntent> {
-        let message=MemoryEntry::new(ChatRole::System, MemoryContent::Text(message.into())).to_chat_message()?;
+    async fn _get_intent<T: Into<String>>(&mut self, message: T) -> Result<ToolIntent> {
+        let message = MemoryEntry::new(ChatRole::System, MemoryContent::Text(message.into()))
+            .to_chat_message()?;
         self.memory.push(message);
         let response = self._chat(self.memory.to_owned()).await?;
-        let intent=serde_json::from_str(&response).context(format!(
+        let intent = serde_json::from_str(&response).context(format!(
             "解析 Executor 回复为 ToolIntent 失败, 回复内容: {}",
             response
         ))?;
-        let message=MemoryEntry::new(ChatRole::Assistant, MemoryContent::Text(response)).to_chat_message()?;
+        let message = MemoryEntry::new(ChatRole::Assistant, MemoryContent::Text(response))
+            .to_chat_message()?;
         self.memory.push(message);
         Ok(intent)
     }
 
-    fn rollback(&mut self, checkpoint: usize){
-        while self.memory.len()>checkpoint {
+    fn rollback(&mut self, checkpoint: usize) {
+        while self.memory.len() > checkpoint {
             self.memory.pop();
         }
     }

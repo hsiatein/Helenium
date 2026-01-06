@@ -57,7 +57,7 @@ use heleny_service::{PATTERN}ServiceMessage;
 use heleny_proto::{message::AnyMessage, role::ServiceRole};
 use async_trait::async_trait;
 use anyhow::Result;
-use heleny_proto::resource::Resource;
+use heleny_proto::Resource;
 
 
 #[base_service(deps=[])]

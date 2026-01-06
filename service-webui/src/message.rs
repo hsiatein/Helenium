@@ -15,8 +15,6 @@ pub enum SessionMessage {
     Logout,
 }
 
-
-
 #[derive(Debug)]
 pub struct SessionToService {
     pub token: Uuid,

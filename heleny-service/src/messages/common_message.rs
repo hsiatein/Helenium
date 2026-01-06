@@ -1,4 +1,4 @@
-use heleny_proto::resource::Resource;
+use heleny_proto::Resource;
 
 #[derive(Debug, Clone)]
 pub enum CommonMessage {

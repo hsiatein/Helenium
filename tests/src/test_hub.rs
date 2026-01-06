@@ -1,7 +1,7 @@
 use heleny_kernel::kernel::Kernel;
-use heleny_proto::name::HUB_SERVICE;
-use heleny_proto::resource::TOTAL_BUS_TRAFFIC;
-use heleny_proto::role::ServiceRole;
+use heleny_proto::HUB_SERVICE;
+use heleny_proto::ServiceRole;
+use heleny_proto::TOTAL_BUS_TRAFFIC;
 use heleny_service::HubServiceMessage;
 use heleny_utils::init_tracing;
 use tracing::info;

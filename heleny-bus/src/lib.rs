@@ -3,9 +3,9 @@ pub mod midware;
 
 use anyhow::Context;
 use anyhow::Result;
-use heleny_proto::message::SignedMessage;
-use heleny_proto::message::TokenMessage;
-use heleny_proto::role::ServiceRole;
+use heleny_proto::ServiceRole;
+use heleny_proto::SignedMessage;
+use heleny_proto::TokenMessage;
 use std::collections::HashMap;
 use std::time::Duration;
 use tokio::sync::mpsc;
@@ -13,8 +13,8 @@ use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tracing::Instrument;
-use tracing::trace;
 use tracing::info_span;
+use tracing::trace;
 use tracing::warn;
 use uuid::Uuid;
 

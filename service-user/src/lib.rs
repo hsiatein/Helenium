@@ -2,14 +2,14 @@ use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::message::AnyMessage;
-use heleny_proto::name::HUB_SERVICE;
-use heleny_proto::name::KERNEL_NAME;
-use heleny_proto::resource::DISPLAY_MESSAGES;
-use heleny_proto::resource::HEALTH;
-use heleny_proto::resource::Resource;
-use heleny_proto::resource::TOTAL_BUS_TRAFFIC;
-use heleny_proto::role::ServiceRole;
+use heleny_proto::AnyMessage;
+use heleny_proto::DISPLAY_MESSAGES;
+use heleny_proto::HEALTH;
+use heleny_proto::HUB_SERVICE;
+use heleny_proto::KERNEL_NAME;
+use heleny_proto::Resource;
+use heleny_proto::ServiceRole;
+use heleny_proto::TOTAL_BUS_TRAFFIC;
 use heleny_service::CommonMessage;
 use heleny_service::HubServiceMessage;
 use heleny_service::KernelMessage;
@@ -74,7 +74,7 @@ impl Service for UserService {
     ) -> Result<()> {
         match msg {
             UserServiceMessage::Login(_frontend_type) => {
-                info!("用户 {} 登陆",name);
+                info!("用户 {} 登陆", name);
                 self.users.push(User {
                     name: name.to_string(),
                     _frontend_type,
@@ -101,12 +101,7 @@ impl Service for UserService {
             )
             .await
         {
-            warn!(
-                "{} 退订 {} 失败: {}",
-                Self::name(),
-                DISPLAY_MESSAGES,
-                e
-            );
+            warn!("{} 退订 {} 失败: {}", Self::name(), DISPLAY_MESSAGES, e);
         }
         if let Err(e) = self
             .endpoint
@@ -118,12 +113,7 @@ impl Service for UserService {
             )
             .await
         {
-            warn!(
-                "{} 退订 {} 失败: {}",
-                Self::name(),
-                TOTAL_BUS_TRAFFIC,
-                e
-            );
+            warn!("{} 退订 {} 失败: {}", Self::name(), TOTAL_BUS_TRAFFIC, e);
         }
         if let Err(e) = self
             .endpoint
@@ -135,12 +125,7 @@ impl Service for UserService {
             )
             .await
         {
-            warn!(
-                "{} 退订 {} 失败: {}",
-                Self::name(),
-                HEALTH,
-                e
-            );
+            warn!("{} 退订 {} 失败: {}", Self::name(), HEALTH, e);
         }
     }
     async fn handle_sub_endpoint(&mut self, _msg: Box<dyn AnyMessage>) -> Result<()> {

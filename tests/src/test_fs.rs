@@ -1,5 +1,5 @@
 use heleny_kernel::kernel::Kernel;
-use heleny_proto::role::ServiceRole;
+use heleny_proto::ServiceRole;
 use heleny_service::FsServiceMessage;
 use heleny_utils::init_tracing;
 use rand::Rng;

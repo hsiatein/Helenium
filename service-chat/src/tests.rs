@@ -228,7 +228,8 @@ async fn test_gemini_api() {
 
     match resp {
         Ok(r) => {
-            let text = r.choices
+            let text = r
+                .choices
                 .get(0)
                 .and_then(|c| c.message.content.clone())
                 .unwrap_or_else(|| "<no content>".to_string());

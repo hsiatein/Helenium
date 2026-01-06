@@ -6,9 +6,9 @@ use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
-use heleny_proto::message::AnyMessage;
-use heleny_proto::resource::Resource;
-use heleny_proto::role::ServiceRole;
+use heleny_proto::AnyMessage;
+use heleny_proto::Resource;
+use heleny_proto::ServiceRole;
 use heleny_service::HubServiceMessage;
 use heleny_service::Service;
 use tokio::time::Instant;
@@ -94,8 +94,15 @@ impl Service for HubService {
                     None => Ok(()),
                 }
             }
-            HubServiceMessage::Get { resource_name, feedback }=>{
-                let (_,provider)=self.providers.iter().find(|(r,_)|{*r==&resource_name}).context("未找到对应资源")?;
+            HubServiceMessage::Get {
+                resource_name,
+                feedback,
+            } => {
+                let (_, provider) = self
+                    .providers
+                    .iter()
+                    .find(|(r, _)| *r == &resource_name)
+                    .context("未找到对应资源")?;
                 provider.get(feedback).await
             }
         }

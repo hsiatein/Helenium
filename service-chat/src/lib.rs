@@ -3,12 +3,12 @@ use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
+use heleny_proto::AnyMessage;
 use heleny_proto::ExecutorModel;
 use heleny_proto::PlannerModel;
-use heleny_proto::message::AnyMessage;
-use heleny_proto::name::TASK_SERVICE;
-use heleny_proto::resource::Resource;
-use heleny_proto::role::ServiceRole;
+use heleny_proto::Resource;
+use heleny_proto::ServiceRole;
+use heleny_proto::TASK_SERVICE;
 use heleny_service::ChatServiceMessage;
 use heleny_service::Service;
 use heleny_service::TaskServiceMessage;
@@ -50,14 +50,16 @@ impl Service for ChatService {
             }
         }
         // 读取预设
-        let tool_descriptions=get_tool_descriptions(&endpoint).await?;
+        let tool_descriptions = get_tool_descriptions(&endpoint).await?;
         if config.heleny.preset.is_empty() {
-            config.heleny.preset =
-                read_via_fs_service(&endpoint, &config.heleny.preset_path).await?+&tool_descriptions;
+            config.heleny.preset = read_via_fs_service(&endpoint, &config.heleny.preset_path)
+                .await?
+                + &tool_descriptions;
         }
         if config.planner.preset.is_empty() {
-            config.planner.preset =
-                read_via_fs_service(&endpoint, &config.planner.preset_path).await?+&tool_descriptions;
+            config.planner.preset = read_via_fs_service(&endpoint, &config.planner.preset_path)
+                .await?
+                + &tool_descriptions;
         }
         if config.executor.preset.is_empty() {
             config.executor.preset =
@@ -72,7 +74,7 @@ impl Service for ChatService {
                 .get(config.heleny.api)
                 .context("没有此 API 配置")?
                 .to_owned(),
-            endpoint.create_sender_endpoint()
+            endpoint.create_sender_endpoint(),
         );
         // 构造实例
         let instance = Self {
@@ -89,28 +91,43 @@ impl Service for ChatService {
         msg: ChatServiceMessage,
     ) -> Result<()> {
         match msg {
-            ChatServiceMessage::Chat { message }=>{
-                let heleny_reply=self.heleny.chat(message).await?;
-                let Some(need_help)=heleny_reply else {
+            ChatServiceMessage::Chat { message } => {
+                let heleny_reply = self.heleny.chat(message).await?;
+                let Some(need_help) = heleny_reply else {
                     return Ok(());
                 };
-                self.endpoint.send(TASK_SERVICE,TaskServiceMessage::AddTask { task_description: need_help }).await
+                self.endpoint
+                    .send(
+                        TASK_SERVICE,
+                        TaskServiceMessage::AddTask {
+                            task_description: need_help,
+                        },
+                    )
+                    .await
             }
-            ChatServiceMessage::GetPlanner { feedback }=>{
-                let api_config=self.config.api.get(self.config.planner.api).context("没有此 API 配置")?.to_owned();
-                let planner=PlannerModel::new(self.config.planner.preset.clone(), api_config);
-                let _=feedback.send(planner);
+            ChatServiceMessage::GetPlanner { feedback } => {
+                let api_config = self
+                    .config
+                    .api
+                    .get(self.config.planner.api)
+                    .context("没有此 API 配置")?
+                    .to_owned();
+                let planner = PlannerModel::new(self.config.planner.preset.clone(), api_config);
+                let _ = feedback.send(planner);
                 Ok(())
             }
-            ChatServiceMessage::GetExecutor { feedback }=>{
-                let api_config=self.config.api.get(self.config.executor.api).context("没有此 API 配置")?.to_owned();
-                let executor=ExecutorModel::new(self.config.executor.preset.clone(), api_config);
-                let _=feedback.send(executor);
+            ChatServiceMessage::GetExecutor { feedback } => {
+                let api_config = self
+                    .config
+                    .api
+                    .get(self.config.executor.api)
+                    .context("没有此 API 配置")?
+                    .to_owned();
+                let executor = ExecutorModel::new(self.config.executor.preset.clone(), api_config);
+                let _ = feedback.send(executor);
                 Ok(())
             }
-            ChatServiceMessage::TaskFinished { log }=>{
-                self.heleny.explain_task_result(log).await
-            }
+            ChatServiceMessage::TaskFinished { log } => self.heleny.explain_task_result(log).await,
         }
     }
     async fn stop(&mut self) {}

@@ -7,9 +7,9 @@ use crate::ToolkitServiceMessage;
 use anyhow::Context;
 use anyhow::Result;
 use heleny_bus::endpoint::Endpoint;
-use heleny_proto::name::CONFIG_SERVICE;
-use heleny_proto::name::FS_SERVICE;
-use heleny_proto::name::TOOLKIT_SERVICE;
+use heleny_proto::CONFIG_SERVICE;
+use heleny_proto::FS_SERVICE;
+use heleny_proto::TOOLKIT_SERVICE;
 use serde::de::DeserializeOwned;
 use tokio::sync::oneshot;
 use tokio::time::timeout;
@@ -44,7 +44,10 @@ pub async fn read_via_fs_service<T: Into<PathBuf>>(endpoint: &Endpoint, path: T)
     Ok(data)
 }
 
-pub async fn list_via_fs_service<T: Into<PathBuf>>(endpoint: &Endpoint, path: T) -> Result<Vec<PathBuf>> {
+pub async fn list_via_fs_service<T: Into<PathBuf>>(
+    endpoint: &Endpoint,
+    path: T,
+) -> Result<Vec<PathBuf>> {
     let (tx, rx) = oneshot::channel();
     endpoint
         .send(

@@ -8,7 +8,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use tracing::warn;
 
-#[derive(PartialEq, Clone, Debug, Serialize,Deserialize)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub enum HealthStatus {
     Starting,
     Healthy,
@@ -17,7 +17,7 @@ pub enum HealthStatus {
     Stopped,
 }
 
-#[derive(Clone, Debug, Serialize,Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct KernelHealth {
     pub kernel: HealthStatus,
     pub services: HashMap<String, (HealthStatus, Option<chrono::prelude::DateTime<Local>>)>,
@@ -41,18 +41,20 @@ impl KernelHealth {
             }
         }
     }
-    
-    pub fn is_same(&self,other:&KernelHealth)->bool{
-        if self.kernel!=other.kernel {return false;};
-        if self.services.len()!=other.services.len() {return false;};
-        self.services.keys().all(|key|{
-            match (self.services.get(key),other.services.get(key)) {
-                (Some(a),Some(b))=>{
-                    a.0==b.0
-                }
-                _=>false,
-            }
-        })
+
+    pub fn is_same(&self, other: &KernelHealth) -> bool {
+        if self.kernel != other.kernel {
+            return false;
+        };
+        if self.services.len() != other.services.len() {
+            return false;
+        };
+        self.services.keys().all(
+            |key| match (self.services.get(key), other.services.get(key)) {
+                (Some(a), Some(b)) => a.0 == b.0,
+                _ => false,
+            },
+        )
     }
 
     pub fn set_alive(&mut self, name: &str) {

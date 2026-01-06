@@ -1,4 +1,4 @@
-use heleny_proto::message::TokenMessage;
+use heleny_proto::TokenMessage;
 use tokio::sync::mpsc;
 
 #[derive(Debug)]

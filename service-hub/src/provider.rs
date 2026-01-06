@@ -3,8 +3,8 @@ use std::collections::HashSet;
 use anyhow::Context;
 use anyhow::Result;
 use heleny_bus::endpoint::Endpoint;
-use heleny_proto::resource::Resource;
-use heleny_proto::resource::ResourcePayload;
+use heleny_proto::Resource;
+use heleny_proto::ResourcePayload;
 use heleny_service::CommonMessage;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
@@ -76,8 +76,11 @@ impl Provider {
             .await
             .context("发送失败")
     }
-    pub async fn get(&self, feedback:oneshot::Sender<ResourcePayload>)->Result<()>{
-        self.tx.send(Command::Get(feedback)).await.context("发送失败")
+    pub async fn get(&self, feedback: oneshot::Sender<ResourcePayload>) -> Result<()> {
+        self.tx
+            .send(Command::Get(feedback))
+            .await
+            .context("发送失败")
     }
 }
 

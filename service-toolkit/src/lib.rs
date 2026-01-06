@@ -1,17 +1,18 @@
+use anyhow::Result;
+use async_trait::async_trait;
+use heleny_bus::endpoint::Endpoint;
+use heleny_macros::base_service;
+use heleny_proto::AnyMessage;
+use heleny_proto::Resource;
+use heleny_proto::ServiceRole;
 use heleny_proto::ToolDescription;
 use heleny_proto::ToolManual;
+use heleny_service::Service;
+use heleny_service::ToolkitServiceMessage;
 use heleny_service::get_from_config_service;
 use heleny_service::list_via_fs_service;
 use heleny_service::read_via_fs_service;
 use tokio::time::Instant;
-use heleny_bus::endpoint::Endpoint;
-use heleny_macros::base_service;
-use heleny_service::Service;
-use heleny_service::ToolkitServiceMessage;
-use heleny_proto::{message::AnyMessage, role::ServiceRole};
-use async_trait::async_trait;
-use anyhow::Result;
-use heleny_proto::resource::Resource;
 use tracing::info;
 use tracing::warn;
 
@@ -20,42 +21,44 @@ use crate::toolkit_config::*;
 mod toolkit_config;
 
 #[base_service(deps=["ConfigService"])]
-pub struct ToolkitService{
-    endpoint:Endpoint,
-    tool_manuals:Vec<ToolManual>,
-    tool_descriptions:Vec<ToolDescription>,
+pub struct ToolkitService {
+    endpoint: Endpoint,
+    tool_manuals: Vec<ToolManual>,
+    tool_descriptions: Vec<ToolDescription>,
 }
 
 #[derive(Debug)]
-enum _WorkerMessage{
-    
-}
+enum _WorkerMessage {}
 
 #[async_trait]
 impl Service for ToolkitService {
-    type MessageType= ToolkitServiceMessage;
-    async fn new(endpoint: Endpoint) -> Result<Box<Self>>{
-        let config:ToolkitConfig=get_from_config_service(&endpoint).await?;
+    type MessageType = ToolkitServiceMessage;
+    async fn new(endpoint: Endpoint) -> Result<Box<Self>> {
+        let config: ToolkitConfig = get_from_config_service(&endpoint).await?;
         // 读取工具描述
-        let tool_paths=list_via_fs_service(&endpoint, config.tools_dir).await?;
-        let mut tool_strings=Vec::new();
+        let tool_paths = list_via_fs_service(&endpoint, config.tools_dir).await?;
+        let mut tool_strings = Vec::new();
         for path in tool_paths {
-            let content=read_via_fs_service(&endpoint, path).await?;
+            let content = read_via_fs_service(&endpoint, path).await?;
             tool_strings.push(content);
         }
-        let tool_manuals:Vec<ToolManual>=tool_strings.into_iter().filter_map(|str| {
-            match serde_json::from_str(&str) {
-                Ok(value)=>Some(value),
-                Err(e)=>{
-                    warn!("读取 {} 时失败: {:?}",str,e);
+        let tool_manuals: Vec<ToolManual> = tool_strings
+            .into_iter()
+            .filter_map(|str| match serde_json::from_str(&str) {
+                Ok(value) => Some(value),
+                Err(e) => {
+                    warn!("读取 {} 时失败: {:?}", str, e);
                     None
                 }
-            }
-        }).collect();
-        let tool_descriptions:Vec<ToolDescription>=tool_manuals.iter().map(|manual| manual.get_description()).collect();
-        info!("读取到 {} 个工具手册",tool_manuals.len());
+            })
+            .collect();
+        let tool_descriptions: Vec<ToolDescription> = tool_manuals
+            .iter()
+            .map(|manual| manual.get_description())
+            .collect();
+        info!("读取到 {} 个工具手册", tool_manuals.len());
         // 实例化
-        let instance=Self {
+        let instance = Self {
             endpoint,
             tool_manuals,
             tool_descriptions,
@@ -67,12 +70,15 @@ impl Service for ToolkitService {
         _name: String,
         _role: ServiceRole,
         msg: ToolkitServiceMessage,
-    ) -> Result<()>{
+    ) -> Result<()> {
         match msg {
-            ToolkitServiceMessage::GetIntro { feedback }=>{
-                let _=feedback.send(serde_json::to_string(&self.tool_descriptions)?);
+            ToolkitServiceMessage::GetIntro { feedback } => {
+                let _ = feedback.send(serde_json::to_string(&self.tool_descriptions)?);
             }
-            ToolkitServiceMessage::GetManuals { tool_names, feedback }=>{
+            ToolkitServiceMessage::GetManuals {
+                tool_names,
+                feedback,
+            } => {
                 let results: Vec<serde_json::Value> = tool_names.into_iter().map(|name| {
                     match self.tool_manuals.iter().find(|tool| tool.name == name) {
                         Some(manual) => {
@@ -94,13 +100,11 @@ impl Service for ToolkitService {
         }
         Ok(())
     }
-    async fn stop(&mut self){
-
-    }
-    async fn handle_sub_endpoint(&mut self, _msg: Box<dyn AnyMessage>) -> Result<()>{
+    async fn stop(&mut self) {}
+    async fn handle_sub_endpoint(&mut self, _msg: Box<dyn AnyMessage>) -> Result<()> {
         Ok(())
     }
-    async fn handle_tick(&mut self, _tick:Instant) -> Result<()>{
+    async fn handle_tick(&mut self, _tick: Instant) -> Result<()> {
         Ok(())
     }
     async fn handle_resource(&mut self, _resource: Resource) -> Result<()> {
@@ -108,6 +112,4 @@ impl Service for ToolkitService {
     }
 }
 
-impl ToolkitService {
-    
-}
+impl ToolkitService {}

@@ -2,7 +2,7 @@ use ed25519_dalek::Signer;
 use ed25519_dalek::SigningKey;
 use ed25519_dalek::pkcs8::DecodePrivateKey;
 use heleny_kernel::kernel::Kernel;
-use heleny_proto::role::ServiceRole;
+use heleny_proto::ServiceRole;
 use heleny_service::AuthServiceMessage;
 use heleny_utils::init_tracing;
 use std::fs;

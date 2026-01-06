@@ -1,5 +1,5 @@
-use heleny_proto::health::HealthStatus;
-use heleny_proto::health::KernelHealth;
+use heleny_proto::HealthStatus;
+use heleny_proto::KernelHealth;
 use heleny_service::ServiceFactory;
 
 pub fn new_kernel_health() -> KernelHealth {

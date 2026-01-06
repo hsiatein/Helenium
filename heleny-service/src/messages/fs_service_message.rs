@@ -15,7 +15,7 @@ pub enum FsServiceMessage {
     },
     Update,
     List {
-        dir:PathBuf,
+        dir: PathBuf,
         feedback: oneshot::Sender<Vec<PathBuf>>,
-    }
+    },
 }

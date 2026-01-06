@@ -9,7 +9,7 @@ pub struct HelenyReply {
 #[derive(Debug, Clone, Deserialize)]
 pub struct RequiredTools {
     pub reason: String,
-    pub tools: Option<Vec<String>>
+    pub tools: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

@@ -1,7 +1,7 @@
 use anyhow::Context;
 use anyhow::Result;
-use heleny_proto::health::HealthStatus;
-use heleny_proto::health::KernelHealth;
+use heleny_proto::HealthStatus;
+use heleny_proto::KernelHealth;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use tracing::debug;

@@ -1,11 +1,11 @@
-use crate::service::{KernelService};
+use crate::service::KernelService;
 use anyhow::Context;
 use anyhow::Result;
-use heleny_proto::health::KernelHealth;
-use heleny_proto::name::HUB_SERVICE;
-use heleny_proto::name::KERNEL_SERVICE;
-use heleny_proto::resource::HEALTH;
-use heleny_proto::resource::ResourcePayload;
+use heleny_proto::HEALTH;
+use heleny_proto::HUB_SERVICE;
+use heleny_proto::KERNEL_SERVICE;
+use heleny_proto::KernelHealth;
+use heleny_proto::ResourcePayload;
 use heleny_service::AdminCommand;
 use heleny_service::HubServiceMessage;
 use heleny_service::ServiceSignal;
@@ -14,7 +14,7 @@ use tokio::sync::watch;
 use tracing::info;
 
 impl KernelService {
-    pub async fn handle_status(&mut self,status:ServiceSignal,name:String)->Result<()>{
+    pub async fn handle_status(&mut self, status: ServiceSignal, name: String) -> Result<()> {
         match status {
             ServiceSignal::Alive => {
                 self.notify(&name);
@@ -42,11 +42,20 @@ impl KernelService {
                 self.notify(&name);
                 if name == KERNEL_SERVICE {
                     return Ok(());
-                }else if name==HUB_SERVICE {
-                    let health=KernelHealth::get_mut(&self.health).to_owned();
-                    let (tx,rx)=watch::channel(ResourcePayload::Health(health));
-                    self.endpoint.send(HUB_SERVICE, HubServiceMessage::Publish { provider: KERNEL_SERVICE.to_string(), resource_name: HEALTH.to_string(), receiver: rx }).await?;
-                    self.health_tx=Some(tx);
+                } else if name == HUB_SERVICE {
+                    let health = KernelHealth::get_mut(&self.health).to_owned();
+                    let (tx, rx) = watch::channel(ResourcePayload::Health(health));
+                    self.endpoint
+                        .send(
+                            HUB_SERVICE,
+                            HubServiceMessage::Publish {
+                                provider: KERNEL_SERVICE.to_string(),
+                                resource_name: HEALTH.to_string(),
+                                receiver: rx,
+                            },
+                        )
+                        .await?;
+                    self.health_tx = Some(tx);
                 }
                 info!("{} 成功初始化", name);
                 KernelHealth::get_mut(&self.health).set_alive(&name);
@@ -84,25 +93,22 @@ impl KernelService {
                 }
             }
         };
-        let Some(tx)=&self.health_tx else {
+        let Some(tx) = &self.health_tx else {
             return Ok(());
         };
-        let new_health=KernelHealth::get_mut(&self.health).to_owned();
-        tx.send_if_modified(|health|{
-            match health {
-                ResourcePayload::Health(health)=>{
-                    if new_health.is_same(health) {
-                        false
-                    }
-                    else {
-                        *health=new_health;
-                        true
-                    }
-                }
-                _=>{
-                    *health=ResourcePayload::Health(new_health);
+        let new_health = KernelHealth::get_mut(&self.health).to_owned();
+        tx.send_if_modified(|health| match health {
+            ResourcePayload::Health(health) => {
+                if new_health.is_same(health) {
+                    false
+                } else {
+                    *health = new_health;
                     true
                 }
+            }
+            _ => {
+                *health = ResourcePayload::Health(new_health);
+                true
             }
         });
         // tx.send(ResourcePayload::Health(new_health)).context("发送 Health 信息失败")?;

@@ -6,7 +6,7 @@ use std::time::Duration;
 use anyhow::Result;
 use chrono::DateTime;
 use chrono::Local;
-use heleny_proto::resource::ResourcePayload;
+use heleny_proto::ResourcePayload;
 use tokio::sync::mpsc;
 use tokio::sync::watch;
 use tokio::task::JoinHandle;

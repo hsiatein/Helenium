@@ -1,13 +1,19 @@
-use std::path::{Path};
-use async_openai::types::chat::ChatCompletionRequestMessage;
-use sqlx::Row;
 use anyhow::Result;
-use chrono::{DateTime, Local};
-use heleny_proto::memory::{ChatRole, DisplayMessage, MemoryContent, MemoryEntry};
-use sqlx::{Pool, Sqlite, SqlitePool, sqlite::SqliteConnectOptions};
+use async_openai::types::chat::ChatCompletionRequestMessage;
+use chrono::DateTime;
+use chrono::Local;
+use heleny_proto::ChatRole;
+use heleny_proto::DisplayMessage;
+use heleny_proto::MemoryContent;
+use heleny_proto::MemoryEntry;
+use sqlx::Pool;
+use sqlx::Row;
+use sqlx::Sqlite;
+use sqlx::SqlitePool;
+use sqlx::sqlite::SqliteConnectOptions;
+use std::path::Path;
 
-
-static INIT_SQL:&'static str = r#"
+static INIT_SQL: &'static str = r#"
     CREATE TABLE IF NOT EXISTS memories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         role TEXT NOT NULL,
@@ -20,35 +26,38 @@ static INIT_SQL:&'static str = r#"
 "#;
 
 pub struct MemoryDb {
-    pool:Pool<Sqlite>
+    pool: Pool<Sqlite>,
 }
 
 impl MemoryDb {
-    pub async fn new(path:&Path)->Result<Self>{
+    pub async fn new(path: &Path) -> Result<Self> {
         let options = SqliteConnectOptions::new()
-        .filename(path)
-        .create_if_missing(true);
+            .filename(path)
+            .create_if_missing(true);
         let pool = SqlitePool::connect_with(options).await?;
         sqlx::query(INIT_SQL).execute(&pool).await?;
         Ok(Self { pool })
     }
 
-    pub async fn save_entry(
-        &self, 
-        entry:MemoryEntry
-    ) -> anyhow::Result<i64> {
-        self.save(entry.role.to_str(), entry.time, &serde_json::to_string(&entry.content)?, None).await
+    pub async fn save_entry(&self, entry: MemoryEntry) -> anyhow::Result<i64> {
+        self.save(
+            entry.role.to_str(),
+            entry.time,
+            &serde_json::to_string(&entry.content)?,
+            None,
+        )
+        .await
     }
 
     pub async fn save(
-        &self, 
-        role: &str, 
-        time: DateTime<Local>, 
-        content: &str, 
-        vec: Option<Vec<u8>>
+        &self,
+        role: &str,
+        time: DateTime<Local>,
+        content: &str,
+        vec: Option<Vec<u8>>,
     ) -> anyhow::Result<i64> {
         let result = sqlx::query(
-            "INSERT INTO memories (role, time, content, embedding) VALUES (?, ?, ?, ?)"
+            "INSERT INTO memories (role, time, content, embedding) VALUES (?, ?, ?, ?)",
         )
         .bind(role)
         .bind(time)
@@ -60,15 +69,16 @@ impl MemoryDb {
         Ok(result.last_insert_rowid())
     }
 
-    pub async fn _get_chat_messages(&self, n: i64) -> anyhow::Result<Vec<ChatCompletionRequestMessage>> {
+    pub async fn _get_chat_messages(
+        &self,
+        n: i64,
+    ) -> anyhow::Result<Vec<ChatCompletionRequestMessage>> {
         // 1. 执行查询
         // 使用 DESC 排序获取物理上最后存入的 n 条
-        let rows = sqlx::query(
-            "SELECT role, time, content FROM memories ORDER BY id DESC LIMIT ?"
-        )
-        .bind(n)
-        .fetch_all(&self.pool)
-        .await?;
+        let rows = sqlx::query("SELECT role, time, content FROM memories ORDER BY id DESC LIMIT ?")
+            .bind(n)
+            .fetch_all(&self.pool)
+            .await?;
 
         // 2. 解析数据
         let mut entries = Vec::new();
@@ -85,24 +95,31 @@ impl MemoryDb {
             // 还原 ChatRole (假设你实现了从 String 到 Enum 的转换，或者简单匹配)
             let role = ChatRole::from(&role_str);
 
-            entries.push(MemoryEntry {
-                role,
-                time,
-                content,
-            }.to_chat_message()?);
-        };
+            entries.push(
+                MemoryEntry {
+                    role,
+                    time,
+                    content,
+                }
+                .to_chat_message()?,
+            );
+        }
         entries.reverse();
 
         Ok(entries)
     }
 
-    pub async fn get_display_messages(&self, id_upper_bound: i64, n: i64) -> anyhow::Result<Vec<DisplayMessage>> {
+    pub async fn get_display_messages(
+        &self,
+        id_upper_bound: i64,
+        n: i64,
+    ) -> anyhow::Result<Vec<DisplayMessage>> {
         // 1. 执行查询
         // 筛选 id 小于上限的记录，按 id 倒序排列取前 n 条
         let rows = sqlx::query(
             "SELECT id, role, time, content FROM memories \
             WHERE id < ? \
-            ORDER BY id DESC LIMIT ?"
+            ORDER BY id DESC LIMIT ?",
         )
         .bind(id_upper_bound)
         .bind(n)
@@ -139,7 +156,7 @@ impl MemoryDb {
         Ok(entries)
     }
 
-    pub async fn close(&self){
+    pub async fn close(&self) {
         self.pool.close().await;
     }
 }

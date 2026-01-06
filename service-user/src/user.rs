@@ -1,4 +1,4 @@
-use heleny_proto::frontend_type::FrontendType;
+use heleny_proto::FrontendType;
 
 pub struct User {
     pub name: String,

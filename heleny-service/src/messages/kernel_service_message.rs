@@ -5,8 +5,8 @@ use std::sync::Mutex;
 
 use tokio::sync::oneshot;
 
-use heleny_proto::health::KernelHealth;
-use heleny_proto::service_handle::ServiceHandle;
+use heleny_proto::KernelHealth;
+use heleny_proto::ServiceHandle;
 
 #[derive(Debug)]
 pub enum ServiceSignal {

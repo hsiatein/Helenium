@@ -1,13 +1,13 @@
 use anyhow::Context;
 use anyhow::Result;
-use heleny_proto::message::AnyMessage;
-use heleny_proto::message::SignedMessage;
-use heleny_proto::message::TokenMessage;
-use heleny_proto::name::KERNEL_SERVICE;
+use heleny_proto::AnyMessage;
+use heleny_proto::KERNEL_SERVICE;
+use heleny_proto::SignedMessage;
+use heleny_proto::TokenMessage;
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
-pub type SubEndpoint=mpsc::Sender<Box<dyn AnyMessage>>;
+pub type SubEndpoint = mpsc::Sender<Box<dyn AnyMessage>>;
 
 #[derive(Debug)]
 pub struct Endpoint {

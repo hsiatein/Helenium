@@ -1,5 +1,6 @@
-use heleny_proto::resource::ResourcePayload;
-use tokio::sync::{oneshot, watch};
+use heleny_proto::ResourcePayload;
+use tokio::sync::oneshot;
+use tokio::sync::watch;
 
 #[derive(Debug)]
 pub enum HubServiceMessage {
@@ -16,6 +17,6 @@ pub enum HubServiceMessage {
     },
     Get {
         resource_name: String,
-        feedback:oneshot::Sender<ResourcePayload>,
-    }
+        feedback: oneshot::Sender<ResourcePayload>,
+    },
 }
