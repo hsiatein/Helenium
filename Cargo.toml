@@ -10,7 +10,7 @@ dotenvy = "0.15.7"
 inventory = "0.3.21"
 async-trait = "0.1.89"
 anyhow = "1.0.100"
-uuid = { version = "1.19.0", features = ["v4"] }
+uuid = { version = "1.19.0", features = ["v4","serde"] }
 tracing ="0.1.44"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter", "fmt"] }
 tracing-appender = "0.2.4"

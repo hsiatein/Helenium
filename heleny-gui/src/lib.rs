@@ -8,6 +8,7 @@ use heleny_proto::DisplayMessage;
 use heleny_proto::FrontendMessage;
 use heleny_proto::MemoryContent;
 use heleny_proto::ResourcePayload;
+use heleny_proto::UserDecision;
 use slint::Model;
 use slint::ModelRc;
 use slint::Weak;
@@ -113,6 +114,13 @@ pub async fn handle_frontend_message(msg: FrontendMessage, ui_weak: Weak<AppWind
                     .context("更新服务健康度失败")?;
             }
         },
+        FrontendMessage::UserDecision(user_decison)=>{
+            match user_decison {
+                UserDecision::ConsentRequestion(consent_requestion)=>{
+                    
+                }
+            }
+        }
     }
     Ok(())
 }

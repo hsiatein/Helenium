@@ -16,3 +16,4 @@ serde = {workspace = true}
 ed25519-dalek = {workspace = true}
 chrono = {workspace = true}
 async-openai = {workspace = true}
+uuid = {workspace = true}

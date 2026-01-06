@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
@@ -10,14 +12,18 @@ use heleny_proto::KERNEL_NAME;
 use heleny_proto::Resource;
 use heleny_proto::ServiceRole;
 use heleny_proto::TOTAL_BUS_TRAFFIC;
+use heleny_proto::UserDecision;
 use heleny_service::CommonMessage;
 use heleny_service::HubServiceMessage;
 use heleny_service::KernelMessage;
 use heleny_service::Service;
 use heleny_service::UserServiceMessage;
+use heleny_service::WebuiServiceMessage;
+use tokio::sync::oneshot;
 use tokio::time::Instant;
 use tracing::info;
 use tracing::warn;
+use uuid::Uuid;
 
 use crate::user::User;
 
@@ -27,6 +33,7 @@ mod user;
 pub struct UserService {
     endpoint: Endpoint,
     users: Vec<User>,
+    consent_requestions:HashMap<Uuid,oneshot::Sender<()>>,
 }
 
 #[derive(Debug)]
@@ -63,6 +70,7 @@ impl Service for UserService {
         let instance = Self {
             endpoint,
             users: Vec::new(),
+            consent_requestions: HashMap::new(),
         };
         Ok(Box::new(instance))
     }
@@ -87,6 +95,12 @@ impl Service for UserService {
                         },
                     )
                     .await
+            }
+            UserServiceMessage::RequestConsent { body } => {
+                let request_id=Uuid::new_v4();
+                let (requestion,feedback)=body.to_frontend(request_id);
+                self.consent_requestions.insert(request_id, feedback);
+                self.send_to_all_users(WebuiServiceMessage::UserDecision(UserDecision::ConsentRequestion(requestion))).await
             }
         }
     }

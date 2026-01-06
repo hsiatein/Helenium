@@ -93,9 +93,13 @@ impl Service for WebuiService {
         &mut self,
         _name: String,
         _role: ServiceRole,
-        _msg: WebuiServiceMessage,
+        msg: WebuiServiceMessage,
     ) -> Result<()> {
-        Ok(())
+        match msg {
+            WebuiServiceMessage::UserDecision(user_decision)=>{
+                self.send_to_all_sessions(FrontendMessage::UserDecision(user_decision)).await
+            }
+        }
     }
     async fn stop(&mut self) {
         self.app_handle.abort();

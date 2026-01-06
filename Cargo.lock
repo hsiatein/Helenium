@@ -2388,6 +2388,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -5402,6 +5403,7 @@ dependencies = [
  "inventory",
  "tokio",
  "tracing",
+ "uuid",
 ]
 
 [[package]]

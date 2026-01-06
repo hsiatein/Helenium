@@ -97,6 +97,9 @@ impl Service for ToolkitService {
                     let _ = feedback.send(json_out);
                 }
             }
+            ToolkitServiceMessage::GetToolkit { tool_names, task_id, task_description, feedback }=>{
+                
+            }
         }
         Ok(())
     }
