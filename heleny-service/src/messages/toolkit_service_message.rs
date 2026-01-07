@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
-use heleny_proto::{CanRequestConsent, ConsentRequestion, HelenyTool, ToolArg, HelenyToolFactory, ToolIntent, USER_SERVICE};
+use heleny_proto::{CanRequestConsent, ConsentRequestion, HelenyTool, HelenyToolFactory, ToolIntent, USER_SERVICE};
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
@@ -20,7 +20,7 @@ pub enum ToolkitServiceMessage {
         task_description: String,
         feedback: oneshot::Sender<Toolkit>,
     },
-    Publish {
+    Register {
         factory: Box<dyn HelenyToolFactory>,
     }
 }

@@ -3,12 +3,15 @@ use std::time::Duration;
 
 use crate::ConfigServiceMessage;
 use crate::FsServiceMessage;
+use crate::KernelServiceMessage;
 use crate::ToolkitServiceMessage;
 use anyhow::Context;
 use anyhow::Result;
 use heleny_bus::endpoint::Endpoint;
 use heleny_proto::CONFIG_SERVICE;
 use heleny_proto::FS_SERVICE;
+use heleny_proto::HelenyToolFactory;
+use heleny_proto::KERNEL_SERVICE;
 use heleny_proto::TOOLKIT_SERVICE;
 use serde::de::DeserializeOwned;
 use tokio::sync::oneshot;
@@ -74,4 +77,27 @@ pub async fn get_tool_descriptions(endpoint: &Endpoint) -> Result<String> {
         .context("获取工具简介的消息发送失败")?;
     let data = rx.await.context("获取工具简介失败")?;
     Ok(data)
+}
+
+pub async fn wait_for(endpoint: &Endpoint,name:&str)->Result<()> {
+    let (tx, rx) = oneshot::channel();
+    endpoint
+        .send(
+            KERNEL_SERVICE,
+            KernelServiceMessage::WaitFor { name: name.to_string(), sender: tx },
+        )
+        .await
+        .context("等待服务的消息发送失败")?;
+    let data = rx.await.context("获取工具简介失败")?;
+    data
+}
+
+pub async fn register_tool_factory<T:HelenyToolFactory>(endpoint: &Endpoint,factory:T){
+    let register_endpoint=endpoint.create_sender_endpoint();
+    tokio::spawn(async move {
+        if wait_for(&register_endpoint,TOOLKIT_SERVICE).await.is_err() {
+            return ;
+        };
+        let _=register_endpoint.send(TOOLKIT_SERVICE, ToolkitServiceMessage::Register { factory: Box::new(factory) }).await;
+    });
 }

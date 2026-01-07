@@ -10,7 +10,7 @@ use tracing::warn;
 use tungstenite::Message;
 
 use crate::AppWindow;
-use crate::handle_frontend_message;
+use crate::FrontendHandler;
 
 pub fn handle_ws(
     stream: WebSocketStream<MaybeTlsStream<TcpStream>>,
@@ -26,8 +26,10 @@ pub fn handle_ws(
         }
     });
     // 设置 ws 读取
+    let write_tx_clone=write_tx.clone();
     tokio::spawn(async move {
         // while let 循环不断从 stream 中获取消息
+        let frontend_handler=FrontendHandler::new(write_tx_clone, ui_weak.clone());
         while let Some(msg) = read.next().await {
             match msg {
                 Ok(m) => {
@@ -44,7 +46,7 @@ pub fn handle_ws(
                             continue;
                         }
                     };
-                    if let Err(e) = handle_frontend_message(msg, ui_weak.clone()).await {
+                    if let Err(e) = frontend_handler.handle_frontend_message(msg).await {
                         warn!("{}", e);
                     };
                 }

@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::Result;
 use async_openai::types::chat::ChatCompletionRequestAssistantMessageArgs;
 use async_openai::types::chat::ChatCompletionRequestMessage;
@@ -36,7 +38,7 @@ impl ChatRole {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum MemoryContent {
     Text(String),
-    Image(String),
+    Image(PathBuf),
 }
 
 impl MemoryContent {

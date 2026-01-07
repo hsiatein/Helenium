@@ -99,7 +99,7 @@ impl Service for ToolkitService {
                     return Err(anyhow::anyhow!("发送工具包失败"))
                 };
             }
-            ToolkitServiceMessage::Publish { factory }=>{
+            ToolkitServiceMessage::Register { factory }=>{
                 let name=factory.name();
                 info!("成功注册工具: {}",name);
                 self.tool_factories.insert(name, factory);

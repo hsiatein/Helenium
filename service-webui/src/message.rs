@@ -12,7 +12,7 @@ pub enum SessionMessage {
     UserInput {
         input: String,
     },
-    Logout,
+    Logout
 }
 
 #[derive(Debug)]

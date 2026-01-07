@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::UserDecision;
 use crate::resource::Resource;
 use serde::Deserialize;
@@ -15,6 +17,10 @@ pub enum FrontendCommand {
     GetHistory(i64),
     GetHealth,
     Shutdown,
+    GetImage{
+        id:i64,
+        path:PathBuf
+    }
 }
 
 impl FrontendCommand {

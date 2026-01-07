@@ -11,6 +11,7 @@ use heleny_proto::ServiceRole;
 use heleny_service::FsServiceMessage;
 use heleny_service::Service;
 use heleny_service::get_from_config_service;
+use heleny_service::register_tool_factory;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::path::Path;
@@ -22,6 +23,7 @@ use tracing::warn;
 
 use crate::cache_entry::CacheEntry;
 use crate::config::FsConfig;
+use crate::tool::FsToolFactory;
 
 mod cache_entry;
 mod config;
@@ -30,7 +32,6 @@ mod tool;
 #[base_service(deps=["ConfigService"])]
 pub struct FsService {
     endpoint: Endpoint,
-    exchange_dir:PathBuf,
     temp_dir:PathBuf,
     cache: HashMap<PathBuf, CacheEntry>,
 }
@@ -44,9 +45,10 @@ impl Service for FsService {
         let exchange_dir=tokio::fs::canonicalize(&config.exchange_dir).await?;
         tokio::fs::create_dir_all(&config.temp_dir).await?;
         let temp_dir=tokio::fs::canonicalize(&config.temp_dir).await?;
+        let factory=FsToolFactory::new(endpoint.create_sender_endpoint(), exchange_dir);
+        register_tool_factory(&endpoint, factory).await;
         let instance = Self {
             endpoint,
-            exchange_dir,
             temp_dir,
             cache: HashMap::new(),
         };
@@ -118,14 +120,25 @@ impl Service for FsService {
                 let mut entries = fs::read_dir(dir).await?;
                 let mut items = Vec::new();
                 while let Some(entry) = entries.next_entry().await? {
-                    let path = entry.path();
+                    let path = tokio::fs::canonicalize(entry.path()).await?;
                     items.push(path);
                 }
                 let _ = feedback.send(items);
                 Ok(())
             }
-            FsServiceMessage::Load { path }=>{
-                self.load(&path).await
+            FsServiceMessage::Load { path,feedback }=>{
+                self.load(&path).await?;
+                let _=feedback.send(());
+                Ok(())
+            }
+            FsServiceMessage::GetImage { path, feedback }=>{
+                let abs_path = tokio::fs::canonicalize(&path).await?;
+                self.load(&abs_path).await?;
+                let data = self.cache.get(&abs_path).context("未找到文件")?;
+                if let HelenyFile::Image(data)=&data.content {
+                    let _ = feedback.send(data.clone());
+                };
+                Ok(())
             }
         }
     }

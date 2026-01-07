@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
-use serde::Deserialize;
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct HelenyReply {
@@ -14,7 +15,7 @@ pub struct RequiredTools {
     pub tools: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ToolIntent {
     pub reason: String,
     pub tool: Option<String>,
@@ -23,13 +24,16 @@ pub struct ToolIntent {
     pub args: Vec<ToolArg>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ToolArg {
     pub name: String,
     pub value: String,
 }
 
-pub fn get_tool_arg<T:FromStr>(args:&Vec<ToolArg>,name:&str)->Option<T> {
-    let Some(arg)=args.iter().find(|arg| arg.name==name) else {return None;};
-    arg.value.parse::<T>().ok()
+pub fn get_tool_arg<T:FromStr>(args:&Vec<ToolArg>,name:&str)->Result<T> {
+    let Some(arg)=args.iter().find(|arg| arg.name==name) else {return Err(anyhow::anyhow!("没有找到此参数名: {}",name));};
+    let Ok(arg)=arg.value.parse::<T>() else {
+        return Err(anyhow::anyhow!("解析成目标类型失败"));
+    };
+    Ok(arg)
 }

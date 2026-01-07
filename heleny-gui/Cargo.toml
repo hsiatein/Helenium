@@ -18,6 +18,8 @@ tracing ={ workspace = true}
 dotenvy = {workspace = true}
 heleny_proto = {path = "../heleny-proto"}
 chrono ={workspace = true}
+image = {workspace = true}
+base64 = {workspace = true}
 
 [build-dependencies]
 slint-build = "1.14.1"

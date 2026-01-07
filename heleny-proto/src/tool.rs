@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use crate::{ToolArg};
 
 #[async_trait]
-pub trait HelenyToolFactory:Debug + Send + Sync {
+pub trait HelenyToolFactory:Debug + Send + Sync + 'static {
     fn name(&self)->String;
     async fn create(&mut self)->Result<Box<dyn HelenyTool>>;
 }

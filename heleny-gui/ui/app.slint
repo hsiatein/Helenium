@@ -30,6 +30,7 @@ export component AppWindow inherits Window {
     in-out property <string> bus_x_start;
     in-out property <string> bus_x_end;
     in-out property <[ServiceHealthItem]> services_health: [];
+    in-out property <image> default_image: @image-url("icons/image_40dp_1F1F1F_FILL0_wght400_GRAD0_opsz40.png");
     callback send(string);
     callback load_more_history([MessageItem]);
     callback shutdown();

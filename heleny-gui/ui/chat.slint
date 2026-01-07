@@ -10,7 +10,9 @@ export struct MessageItem {
     id: int,
     time: string,
     is_me: bool,
-    text: string,
+    kind: string,   // "text" | "image"
+    text: string,   // kind=="text" 时用
+    image: image,   // kind=="image" 时用
 }
 
 component HelenyMessage inherits HorizontalBox {

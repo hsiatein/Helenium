@@ -100,6 +100,9 @@ impl Task {
             if intent.tool.is_none() && intent.command.is_none() {
                 return Ok(());
             }
+            if let Ok(intent)=serde_json::to_string(&intent){
+                self.log(intent);
+            }
             let result=toolkit.invoke(intent).await;
             input=format!("<tool_result>{}</tool_result>",result);
             self.log(&input);

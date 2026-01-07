@@ -99,6 +99,10 @@ impl Service for WebuiService {
             WebuiServiceMessage::UserDecision(user_decision)=>{
                 self.send_to_all_sessions(FrontendMessage::UserDecision(user_decision)).await
             }
+        
+            WebuiServiceMessage::SendToFrontend { session, message }=>{
+                self.send_to_session(session, message).await
+            }
         }
     }
     async fn stop(&mut self) {
