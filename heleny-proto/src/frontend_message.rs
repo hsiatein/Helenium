@@ -20,7 +20,8 @@ pub enum FrontendCommand {
     GetImage{
         id:i64,
         path:PathBuf
-    }
+    },
+    GetConsentRequestions,
 }
 
 impl FrontendCommand {

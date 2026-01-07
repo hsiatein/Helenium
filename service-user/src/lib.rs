@@ -100,7 +100,15 @@ impl Service for UserService {
                 let request_id=Uuid::new_v4();
                 let requestion=body.to_frontend(request_id);
                 self.consent_requestions.insert(request_id, body);
+                info!("收到新请求");
                 self.send_to_all_users(WebuiServiceMessage::UserDecision(UserDecision::ConsentRequestions(vec![requestion]))).await
+            }
+            UserServiceMessage::ListConsentRequestions { feedback }=>{
+                let reqs=self.consent_requestions.iter().map(|(k,v)|{
+                    v.to_frontend(*k)
+                }).collect();
+                let _=feedback.send(reqs);
+                Ok(())
             }
         }
     }

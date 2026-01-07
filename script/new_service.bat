@@ -1,1 +1,1 @@
-./target/debug/new_service.exe "toolkit"
+./target/debug/new_service.exe "test"

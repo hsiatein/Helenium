@@ -41,6 +41,7 @@ async fn main() -> Result<()> {
         .await
         .unwrap();
     write_tx.send(FrontendCommand::GetHealth.into()).await.unwrap();
+    write_tx.send(FrontendCommand::GetConsentRequestions.into()).await.unwrap();
     ui.run()?;
     write_tx.send(Message::Close(None)).await.unwrap();
     tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;

@@ -21,3 +21,5 @@ extern crate service_memory;
 
 extern crate service_task;
 extern crate service_toolkit;
+
+extern crate service_test;

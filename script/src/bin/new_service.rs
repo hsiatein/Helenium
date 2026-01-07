@@ -54,7 +54,7 @@ use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_service::Service;
 use heleny_service::{PATTERN}ServiceMessage;
-use heleny_proto::{message::AnyMessage, role::ServiceRole};
+use heleny_proto::{AnyMessage, ServiceRole};
 use async_trait::async_trait;
 use anyhow::Result;
 use heleny_proto::Resource;
@@ -126,8 +126,7 @@ pub enum {PATTERN}ServiceMessage {
 
     let path = &PathBuf::from("heleny-service")
         .join("src")
-        .join("messages")
-        .join("mod.rs");
+        .join("messages.rs");
     let message_lib = std::fs::read_to_string(path).expect("读取失败");
     let message_lib = message_lib
         + "\nmod "

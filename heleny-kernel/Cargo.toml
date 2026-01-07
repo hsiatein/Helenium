@@ -29,3 +29,4 @@ service_chat ={ path = "../service-chat"}
 service_memory ={ path = "../service-memory"}
 service_task ={ path = "../service-task"}
 service_toolkit ={ path = "../service-toolkit"}
+service_test ={ path = "../service-test"}

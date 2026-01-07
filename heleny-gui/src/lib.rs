@@ -15,7 +15,6 @@ use slint::Model;
 use slint::ModelRc;
 use slint::Rgba8Pixel;
 use slint::SharedPixelBuffer;
-use slint::VecModel;
 use slint::Weak;
 use tokio::sync::mpsc;
 use tungstenite::Message;
@@ -176,7 +175,7 @@ impl FrontendHandler {
             FrontendMessage::UserDecision(user_decison)=>{
                 match user_decison {
                     UserDecision::ConsentRequestions(consent_requestions)=>{
-                        
+                        debug!("{:?}",consent_requestions);
                     }
                 }
             }

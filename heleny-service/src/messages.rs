@@ -30,3 +30,6 @@ mod task_service_message;
 pub use task_service_message::*;
 mod toolkit_service_message;
 pub use toolkit_service_message::*;
+
+mod test_service_message;
+pub use test_service_message::*;

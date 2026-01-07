@@ -9,11 +9,14 @@ use heleny_proto::KERNEL_NAME;
 use heleny_proto::MEMORY_SERVICE;
 use heleny_proto::Resource;
 use heleny_proto::ResourcePayload;
+use heleny_proto::USER_SERVICE;
+use heleny_proto::UserDecision;
 use heleny_proto::WEBUI_SERVICE;
 use heleny_service::FsServiceMessage;
 use heleny_service::HubServiceMessage;
 use heleny_service::KernelMessage;
 use heleny_service::MemoryServiceMessage;
+use heleny_service::UserServiceMessage;
 use heleny_service::WebuiServiceMessage;
 use tokio::sync::oneshot;
 use uuid::Uuid;
@@ -21,7 +24,7 @@ use base64::prelude::*;
 use crate::WebuiService;
 
 impl WebuiService {
-    pub async fn handle_command(&mut self, token: Uuid, command: FrontendCommand) -> Result<()> {
+    pub async fn handle_command(&mut self, session: Uuid, command: FrontendCommand) -> Result<()> {
         match command {
             FrontendCommand::GetHistory(id_upper_bound)=>{
                 let (tx, rx) = oneshot::channel();
@@ -36,7 +39,7 @@ impl WebuiService {
                     .await?;
                 let history = rx.await?;
                 self.send_to_session(
-                    token,
+                    session,
                     FrontendMessage::UpdateResource(Resource {
                         name: DISPLAY_MESSAGES.to_string(),
                         payload: ResourcePayload::DisplayMessages {
@@ -60,7 +63,7 @@ impl WebuiService {
                     .await?;
                 let health = rx.await?;
                 self.send_to_session(
-                    token,
+                    session,
                     FrontendMessage::UpdateResource(Resource {
                         name: HEALTH.to_string(),
                         payload: health,
@@ -80,9 +83,16 @@ impl WebuiService {
                 tokio::spawn(async move {
                     let Ok(image)=rx.await else {return ;};
                     let base64=BASE64_STANDARD.encode(image);
-                    let _=sub.send(WEBUI_SERVICE,WebuiServiceMessage::SendToFrontend { session: token, message: FrontendMessage::UpdateResource(Resource { name: String::new(), payload: ResourcePayload::Image { id, base64 } }) }).await;
+                    let _=sub.send(WEBUI_SERVICE,WebuiServiceMessage::SendToFrontend { session, message: FrontendMessage::UpdateResource(Resource { name: String::new(), payload: ResourcePayload::Image { id, base64 } }) }).await;
                 });
                 Ok(())
+            }
+            FrontendCommand::GetConsentRequestions =>{
+                let (tx,rx)=oneshot::channel();
+                self.endpoint.send(USER_SERVICE, UserServiceMessage::ListConsentRequestions {feedback: tx }).await?;
+                let result=rx.await?;
+                let user_decision=UserDecision::ConsentRequestions(result);
+                self.send_to_session(session, FrontendMessage::UserDecision(user_decision)).await
             }
         }
     }
