@@ -73,9 +73,13 @@ component HelenyMessage inherits HorizontalBox {
                     }
                 }
                 if(kind=="image"): Rectangle {
-                    Image {
-                        source: root.image;
-                        max-width: 400px;
+                    height: 400px;
+                    width: 400px;
+                    HorizontalLayout {
+                        Image {
+                            source: root.image;
+                            image-fit: ImageFit.contain;
+                        }
                     }
                 }
             }
@@ -131,10 +135,11 @@ component UserMessage inherits HorizontalBox {
                         single-line: false; // Important for multi-line display
                     }
                 }
-                if(kind=="image"): Rectangle {
+                if(kind=="image"): HorizontalLayout {
+                    height: 400px;
                     Image {
                         source: root.image;
-                        max-width: 400px;
+                        image-fit: ImageFit.contain;
                     }
                 }
             }
