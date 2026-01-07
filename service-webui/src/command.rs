@@ -79,7 +79,7 @@ impl WebuiService {
                 let sub=self.endpoint.create_sender_endpoint();
                 tokio::spawn(async move {
                     let Ok(image)=rx.await else {return ;};
-                    let base64=BASE64_STANDARD.encode(image.as_bytes());
+                    let base64=BASE64_STANDARD.encode(image);
                     let _=sub.send(WEBUI_SERVICE,WebuiServiceMessage::SendToFrontend { session: token, message: FrontendMessage::UpdateResource(Resource { name: String::new(), payload: ResourcePayload::Image { id, base64 } }) }).await;
                 });
                 Ok(())

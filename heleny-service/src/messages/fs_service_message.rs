@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 
-use image::DynamicImage;
 use tokio::sync::oneshot;
 
 #[derive(Debug)]
@@ -25,6 +24,6 @@ pub enum FsServiceMessage {
     },
     GetImage {
         path:PathBuf,
-        feedback: oneshot::Sender<DynamicImage>,
+        feedback: oneshot::Sender<Vec<u8>>,
     }
 }

@@ -1,9 +1,7 @@
-use image::DynamicImage;
-
 #[derive(Clone)]
 pub enum HelenyFile {
     Text(String),
-    Image(DynamicImage),
+    Image(Vec<u8>),
 }
 
 #[derive(Clone)]

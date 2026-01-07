@@ -27,7 +27,7 @@ impl CacheEntry {
     }
 
     pub async fn read_image(path: &PathBuf) -> Result<Self> {
-        let content = image::open(path)?;
+        let content = tokio::fs::read(path).await?;
         let last_modified: SystemTime = fs::metadata(path)
             .await
             .context("获取文件元数据失败")?

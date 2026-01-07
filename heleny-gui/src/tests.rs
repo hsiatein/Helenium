@@ -12,7 +12,7 @@ fn test_base64(){
         .join("5D8BAF8E29A29C419FED28A964645206.png");
 
     let image_bytes = std::fs::read(&image_path).expect("read test image");
-    let img: DynamicImage = image::load_from_memory(&image_bytes).expect("decode image");
+    let img: DynamicImage = image::open(&image_path).expect("read");
 
     let b64 = BASE64_STANDARD.encode(&image_bytes);
     let decoded = BASE64_STANDARD.decode(b64).expect("decode base64");

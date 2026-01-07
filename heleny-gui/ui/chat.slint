@@ -19,6 +19,7 @@ component HelenyMessage inherits HorizontalBox {
     in property <string> kind;
     in property <string> content;
     in property <string> time;
+    in property <image> image;
     alignment: LayoutAlignment.start;
     Rectangle {
         border-radius: 30px;
@@ -49,7 +50,7 @@ component HelenyMessage inherits HorizontalBox {
                 alignment: LayoutAlignment.start;
                 
                 // Overlay container
-                Rectangle {
+                if(kind=="text"): Rectangle {
                     // 1. Invisible Text triggers auto-sizing
                     Text {
                         text: root.content;
@@ -71,6 +72,12 @@ component HelenyMessage inherits HorizontalBox {
                         single-line: false; // Important for multi-line display
                     }
                 }
+                if(kind=="image"): Rectangle {
+                    Image {
+                        source: root.image;
+                        max-width: 400px;
+                    }
+                }
             }
         }
     }
@@ -80,6 +87,7 @@ component UserMessage inherits HorizontalBox {
     in property <string> kind;
     in property <string> content;
     in property <string> time;
+    in property <image> image;
     alignment: LayoutAlignment.end;
     VerticalBox {
         padding: 5px;
@@ -101,7 +109,7 @@ component UserMessage inherits HorizontalBox {
                 alignment: LayoutAlignment.end;
 
                 // Overlay container
-                Rectangle {
+                if(kind=="text"): Rectangle {
                     // 1. Invisible Text triggers auto-sizing
                     Text {
                         text: root.content;
@@ -121,6 +129,12 @@ component UserMessage inherits HorizontalBox {
                         read-only: true;
                         color: black;
                         single-line: false; // Important for multi-line display
+                    }
+                }
+                if(kind=="image"): Rectangle {
+                    Image {
+                        source: root.image;
+                        max-width: 400px;
                     }
                 }
             }
@@ -191,10 +205,14 @@ export component ChatView inherits Rectangle {
                     if (data.is_me) : UserMessage{
                         content: data.text;
                         time: data.time;
+                        kind: data.kind;
+                        image: data.image;
                     }
                     if (!data.is_me) : HelenyMessage{
                         content: data.text;
                         time: data.time;
+                        kind: data.kind;
+                        image: data.image;
                     }
 
                 }
