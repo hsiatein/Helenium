@@ -3,8 +3,8 @@ use pathdiff::diff_paths;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
-use heleny_proto::{CanRequestConsent, FS_SERVICE, HelenyTool, HelenyToolFactory, ToolArg, get_tool_arg};
-use heleny_service::FsServiceMessage;
+use heleny_proto::{CanRequestConsent, ChatRole, FS_SERVICE, HelenyTool, HelenyToolFactory, MEMORY_SERVICE, MemoryContent, MemoryEntry, ToolArg, get_tool_arg};
+use heleny_service::{FsServiceMessage, MemoryServiceMessage};
 use tokio::{fs::canonicalize, sync::oneshot};
 
 #[derive(Debug)]
@@ -66,6 +66,18 @@ impl HelenyTool for FsTool {
                 self.endpoint.send(FS_SERVICE, FsServiceMessage::Load { path, feedback:tx }).await?;
                 rx.await?;
                 Ok("加载完成".into())
+            }
+            "send"=>{
+                let path:PathBuf=get_tool_arg(&args, "path")?;
+                let path= match canonicalize(self.exchange_dir.join(path)).await {
+                    Ok(path)=>path,
+                    Err(e)=>{
+                        return Err(anyhow::anyhow!("路径正则化失败: {}",e));
+                    }
+                };
+                let entry=MemoryEntry::new(ChatRole::Assistant, MemoryContent::Image(path));
+                self.endpoint.send(MEMORY_SERVICE, MemoryServiceMessage::Post { entry }).await?;
+                Ok("发送完成".into())
             }
             cmd=>{
                 Err(anyhow::anyhow!("未知命令: {}",cmd))

@@ -284,3 +284,6 @@ fn generate_svg_path(
 
     (path, y_max, x_start, x_end)
 }
+
+#[cfg(test)]
+mod tests;

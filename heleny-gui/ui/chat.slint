@@ -16,6 +16,7 @@ export struct MessageItem {
 }
 
 component HelenyMessage inherits HorizontalBox {
+    in property <string> kind;
     in property <string> content;
     in property <string> time;
     alignment: LayoutAlignment.start;
@@ -76,6 +77,7 @@ component HelenyMessage inherits HorizontalBox {
 }
 
 component UserMessage inherits HorizontalBox {
+    in property <string> kind;
     in property <string> content;
     in property <string> time;
     alignment: LayoutAlignment.end;
