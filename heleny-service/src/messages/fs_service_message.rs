@@ -18,4 +18,7 @@ pub enum FsServiceMessage {
         dir: PathBuf,
         feedback: oneshot::Sender<Vec<PathBuf>>,
     },
+    Load {
+        path: PathBuf,
+    },
 }

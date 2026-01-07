@@ -43,3 +43,5 @@ __screenshots__/
 models/
 storage/
 codex/
+.exchange/
+.temp/

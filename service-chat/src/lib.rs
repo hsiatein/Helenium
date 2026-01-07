@@ -18,10 +18,10 @@ use heleny_service::read_via_fs_service;
 use tokio::time::Instant;
 use tracing::info;
 
-use crate::chat_config::ChatConfig;
+use crate::config::ChatConfig;
 use crate::model::HelenyModel;
 
-mod chat_config;
+mod config;
 mod model;
 
 pub use heleny_proto::HELENY_SCHEMA;
@@ -50,16 +50,13 @@ impl Service for ChatService {
             }
         }
         // 读取预设
-        let tool_descriptions = get_tool_descriptions(&endpoint).await?;
         if config.heleny.preset.is_empty() {
             config.heleny.preset = read_via_fs_service(&endpoint, &config.heleny.preset_path)
-                .await?
-                + &tool_descriptions;
+                .await?;
         }
         if config.planner.preset.is_empty() {
             config.planner.preset = read_via_fs_service(&endpoint, &config.planner.preset_path)
-                .await?
-                + &tool_descriptions;
+                .await?;
         }
         if config.executor.preset.is_empty() {
             config.executor.preset =
@@ -112,7 +109,8 @@ impl Service for ChatService {
                     .get(self.config.planner.api)
                     .context("没有此 API 配置")?
                     .to_owned();
-                let planner = PlannerModel::new(self.config.planner.preset.clone(), api_config);
+                let tool_descriptions=get_tool_descriptions(&self.endpoint).await?;
+                let planner = PlannerModel::new(self.config.planner.preset.clone()+&tool_descriptions, api_config);
                 let _ = feedback.send(planner);
                 Ok(())
             }

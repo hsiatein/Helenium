@@ -4,11 +4,16 @@ use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::AnyMessage;
+use heleny_proto::HelenyFile;
+use heleny_proto::HelenyFileType;
 use heleny_proto::Resource;
 use heleny_proto::ServiceRole;
 use heleny_service::FsServiceMessage;
 use heleny_service::Service;
+use heleny_service::get_from_config_service;
 use std::collections::HashMap;
+use std::collections::HashSet;
+use std::path::Path;
 use std::path::PathBuf;
 use tokio::fs::write;
 use tokio::fs::{self};
@@ -16,12 +21,17 @@ use tokio::time::Instant;
 use tracing::warn;
 
 use crate::cache_entry::CacheEntry;
+use crate::config::FsConfig;
 
 mod cache_entry;
+mod config;
+mod tool;
 
-#[base_service(deps=[])]
+#[base_service(deps=["ConfigService"])]
 pub struct FsService {
     endpoint: Endpoint,
+    exchange_dir:PathBuf,
+    temp_dir:PathBuf,
     cache: HashMap<PathBuf, CacheEntry>,
 }
 
@@ -29,8 +39,15 @@ pub struct FsService {
 impl Service for FsService {
     type MessageType = FsServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>> {
+        let config:FsConfig=get_from_config_service(&endpoint).await?;
+        tokio::fs::create_dir_all(&config.exchange_dir).await?;
+        let exchange_dir=tokio::fs::canonicalize(&config.exchange_dir).await?;
+        tokio::fs::create_dir_all(&config.temp_dir).await?;
+        let temp_dir=tokio::fs::canonicalize(&config.temp_dir).await?;
         let instance = Self {
             endpoint,
+            exchange_dir,
+            temp_dir,
             cache: HashMap::new(),
         };
         Ok(Box::new(instance))
@@ -44,20 +61,11 @@ impl Service for FsService {
         match msg {
             FsServiceMessage::Read { path, feedback } => {
                 let abs_path = tokio::fs::canonicalize(&path).await?;
-                let modified = fs::metadata(&abs_path)
-                    .await
-                    .context("获取文件元数据失败")?
-                    .modified()
-                    .context("获取文件修改时间失败")?;
-                let data = match self.cache.get(&abs_path) {
-                    Some(data) if data.last_modified == modified => data.content.clone(),
-                    _ => {
-                        let data = CacheEntry::read(&abs_path).await?;
-                        self.cache.insert(abs_path.clone(), data.clone());
-                        data.content
-                    }
+                self.load(&abs_path).await?;
+                let data = self.cache.get(&abs_path).context("未找到文件")?;
+                if let HelenyFile::Text(data)=&data.content {
+                    let _ = feedback.send(data.clone());
                 };
-                let _ = feedback.send(data);
                 Ok(())
             }
             FsServiceMessage::Write {
@@ -74,7 +82,7 @@ impl Service for FsService {
                 let modified = fs::metadata(&abs_path).await?.modified()?;
 
                 let entry = CacheEntry {
-                    content,
+                    content:HelenyFile::Text(content),
                     last_modified: modified,
                 };
                 self.cache.insert(abs_path, entry);
@@ -101,7 +109,7 @@ impl Service for FsService {
                     if file_modified == entry.last_modified {
                         continue;
                     }
-                    let data = CacheEntry::read(path).await?;
+                    let data = CacheEntry::read_text(path).await?;
                     *entry = data;
                 }
                 Ok(())
@@ -115,6 +123,9 @@ impl Service for FsService {
                 }
                 let _ = feedback.send(items);
                 Ok(())
+            }
+            FsServiceMessage::Load { path }=>{
+                self.load(&path).await
             }
         }
     }
@@ -130,4 +141,52 @@ impl Service for FsService {
     }
 }
 
-impl FsService {}
+impl FsService {
+    async fn load(&mut self, path: &Path)->Result<()>{
+        let abs_path = tokio::fs::canonicalize(&path).await?;
+        let modified = fs::metadata(&abs_path)
+            .await
+            .context("获取文件元数据失败")?
+            .modified()
+            .context("获取文件修改时间失败")?;
+        let data=match get_file_type(&abs_path) {
+            HelenyFileType::Text=>{
+                match self.cache.get(&abs_path) {
+                    Some(data) if data.last_modified == modified => return Ok(()),
+                    _ => {
+                        CacheEntry::read_text(&abs_path).await?
+                    }
+                }
+            }
+            HelenyFileType::Image=>{
+                match self.cache.get(&abs_path) {
+                    Some(data) if data.last_modified == modified => return Ok(()),
+                    _ => {
+                        CacheEntry::read_image(&abs_path).await?
+                    }
+                }
+            }
+            HelenyFileType::Unknown=>{
+                return Err(anyhow::anyhow!("未知文件类型"));
+            }
+        };
+        self.cache.insert(abs_path.clone(), data);
+        Ok(())
+    }
+}
+
+fn get_file_type(path:&Path)->HelenyFileType{
+    let Some(ext)=path.extension() else {
+        return HelenyFileType::Unknown;
+    };
+    let Some(ext)=ext.to_str() else {
+        return HelenyFileType::Unknown;
+    };
+    let image_exts=HashSet::from(["png","jpg","jpeg","svg","webp"]);
+    if image_exts.contains(ext) {
+        return HelenyFileType::Image;
+    }
+    else {
+        return HelenyFileType::Text;
+    }
+}

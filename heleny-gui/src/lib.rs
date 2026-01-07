@@ -116,7 +116,7 @@ pub async fn handle_frontend_message(msg: FrontendMessage, ui_weak: Weak<AppWind
         },
         FrontendMessage::UserDecision(user_decison)=>{
             match user_decison {
-                UserDecision::ConsentRequestion(consent_requestion)=>{
+                UserDecision::ConsentRequestions(consent_requestions)=>{
                     
                 }
             }

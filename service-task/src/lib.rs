@@ -14,6 +14,7 @@ use heleny_proto::downcast;
 use heleny_service::ChatServiceMessage;
 use heleny_service::Service;
 use heleny_service::TaskServiceMessage;
+use heleny_service::Toolkit;
 use heleny_service::ToolkitServiceMessage;
 use heleny_service::get_from_config_service;
 use std::collections::HashMap;
@@ -45,12 +46,14 @@ enum WorkerMessage {
     GetPlanner {
         feedback: oneshot::Sender<PlannerModel>,
     },
-    GetManuals {
-        tool_names: Vec<String>,
-        feedback: oneshot::Sender<String>,
-    },
     GetExecutor {
         feedback: oneshot::Sender<ExecutorModel>,
+    },
+    GetToolkit {
+        tool_names: Vec<String>,
+        task_id: Uuid,
+        task_description: String,
+        feedback: oneshot::Sender<Toolkit>,
     },
 }
 
@@ -110,23 +113,22 @@ impl Service for TaskService {
                     .send(CHAT_SERVICE, ChatServiceMessage::GetPlanner { feedback })
                     .await
             }
-            WorkerMessage::GetManuals {
-                tool_names,
-                feedback,
-            } => {
-                self.endpoint
-                    .send(
-                        TOOLKIT_SERVICE,
-                        ToolkitServiceMessage::GetManuals {
-                            tool_names,
-                            feedback,
-                        },
-                    )
-                    .await
-            }
             WorkerMessage::GetExecutor { feedback } => {
                 self.endpoint
                     .send(CHAT_SERVICE, ChatServiceMessage::GetExecutor { feedback })
+                    .await
+            }
+            WorkerMessage::GetToolkit { tool_names, task_id, task_description, feedback }=>{
+                self.endpoint
+                    .send(
+                        TOOLKIT_SERVICE,
+                        ToolkitServiceMessage::GetToolkit {
+                            tool_names,
+                            task_id,
+                            task_description,
+                            feedback,
+                        },
+                    )
                     .await
             }
         }

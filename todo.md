@@ -1,16 +1,16 @@
 services:
 - [ ] fs_service
-  - [ ] 初步实现，但是还没有并发优化
+  - [x] 初步实现，但是还没有并发优化
 - [ ] log_service
 - [x] kernel_service
 - [ ] scheduler_service
-- [ ] chat_service
+- [x] chat_service
 - [ ] task_service
 - [ ] frontend_service(签名验证)
 - [ ] network_service
 - [ ] http_service
 - [ ] shell_service
-- [ ] memory_service
+- [x] memory_service
 - [ ] db_service
 - [x] config_service
 - [x] auth_service
@@ -19,9 +19,8 @@ services:
 - [ ] bridge_service(给外部服务例如外部GUI提供资源)
   - [ ] 从Bus获取代理endpoint
 - [ ] storage_service(调用db或fs)
-- [ ] gui_service(提供gui)
-- [ ] user_service(决定user获取什么资源并推送)
-- [ ] webui_service
+- [x] user_service(决定user获取什么资源并推送)
+- [x] webui_service
 
 
 todo:
@@ -51,8 +50,8 @@ todo:
 - [x] 24.给heleny模型实现post到memory服务
 - [x] 25.memory服务更新后推送到前端
 - [x] 26.处理用户输入命令
-- [ ] 27.need_help时开启任务
+- [x] 27.need_help时开启任务
 - [ ] 28.总线流量统计改Byte
 - [ ] 29.限制对话token
-- [ ] 30.pub use减少路径长度
+- [x] 30.pub use减少路径长度
 - [ ] 31.toolkit服务制作toolkit

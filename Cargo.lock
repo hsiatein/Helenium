@@ -2353,10 +2353,12 @@ dependencies = [
  "async-trait",
  "chrono",
  "heleny_macros",
+ "image",
  "serde",
  "serde_json",
  "tokio",
  "tracing",
+ "tungstenite",
  "uuid",
 ]
 
@@ -5290,11 +5292,15 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "base64",
  "heleny_bus",
  "heleny_macros",
  "heleny_proto",
  "heleny_service",
+ "image",
  "inventory",
+ "serde",
+ "serde_json",
  "tokio",
  "tracing",
 ]

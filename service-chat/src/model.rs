@@ -3,6 +3,7 @@ use anyhow::Context;
 use anyhow::Result;
 use async_openai::Client;
 use async_openai::config::OpenAIConfig;
+use async_openai::types::chat::ChatCompletionRequestSystemMessageArgs;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::chat_model;
 use heleny_proto::ApiConfig;
@@ -13,6 +14,7 @@ use heleny_proto::MEMORY_SERVICE;
 use heleny_proto::MemoryContent;
 use heleny_proto::MemoryEntry;
 use heleny_service::MemoryServiceMessage;
+use heleny_service::get_tool_descriptions;
 use tokio::sync::oneshot;
 
 #[chat_model]
@@ -46,6 +48,11 @@ impl HelenyModel {
             .send(MEMORY_SERVICE, MemoryServiceMessage::Post { entry })
             .await?;
         // 构造聊天信息
+        let tool_descriptions = ChatCompletionRequestSystemMessageArgs::default()
+            .content(get_tool_descriptions(&self.endpoint).await?)
+            .build()
+            .context("生成工具简介失败")?;
+        let mut messages=vec![tool_descriptions.into()];
         let (tx, rx) = oneshot::channel();
         self.endpoint
             .send(
@@ -54,8 +61,9 @@ impl HelenyModel {
             )
             .await?;
         let history = rx.await.context("获取历史信息失败")?;
+        messages.extend(history);
         // 获取响应
-        let response = self._chat(history).await?;
+        let response = self._chat(messages).await?;
         let heleny_reply: HelenyReply =
             serde_json::from_str(&response).context("解析 Response 为 HelenyReply 失败")?;
         // Post 回复

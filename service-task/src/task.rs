@@ -6,6 +6,7 @@ use anyhow::Result;
 use heleny_bus::endpoint::SubEndpoint;
 use heleny_proto::ExecutorModel;
 use heleny_proto::PlannerModel;
+use heleny_service::Toolkit;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use tracing::info;
@@ -85,10 +86,10 @@ impl Task {
     }
 
     pub async fn run(&mut self) -> Result<()> {
-        let mut executor = self.preprocess().await?;
-        let input = &self.task_description;
+        let (mut executor,mut toolkit) = self.preprocess().await?;
+        let mut input = self.task_description.clone();
         while self.current < self.max_working_loop {
-            let intent = match executor.get_intent(input).await {
+            let intent = match executor.get_intent(&input).await {
                 Ok(intent) => intent,
                 Err(e) => {
                     self.log(format!("获取 Intent 失败, 重试: {}", e));
@@ -99,6 +100,9 @@ impl Task {
             if intent.tool.is_none() && intent.command.is_none() {
                 return Ok(());
             }
+            let result=toolkit.invoke(intent).await;
+            input=format!("<tool_result>{}</tool_result>",result);
+            self.log(&input);
             self.current = self.current + 1;
         }
         let context = "达到最大工作循环限制";
@@ -106,7 +110,7 @@ impl Task {
         Err(anyhow::anyhow!(context))
     }
 
-    async fn preprocess(&self) -> Result<ExecutorModel> {
+    async fn preprocess(&self) -> Result<(ExecutorModel,Toolkit)> {
         let planner = match self.get_planner().await {
             Ok(planner) => {
                 self.log("成功获取 Planner");
@@ -134,20 +138,20 @@ impl Task {
             self.log(context);
             return Err(anyhow::anyhow!(context));
         };
-        let manuals = match self.get_manuals(tool_names).await {
+        let toolkit = match self.get_toolkit(tool_names).await {
             Ok(manuals) => {
-                self.log("成功获取所需工具说明书");
+                self.log("成功获取所需工具箱");
                 manuals
             }
             Err(e) => {
-                let context = format!("获取所需工具说明书失败: {}", e);
+                let context = format!("获取所需工具箱失败: {}", e);
                 self.log(&context);
                 return Err(anyhow::anyhow!(context));
             }
         };
         let executor = match self.get_executor().await {
             Ok(mut executor) => {
-                executor.add_preset(&manuals);
+                executor.add_preset(toolkit.get_manuals());
                 self.log("成功获取所需 Executor");
                 executor
             }
@@ -157,7 +161,7 @@ impl Task {
                 return Err(anyhow::anyhow!(context));
             }
         };
-        Ok(executor)
+        Ok((executor,toolkit))
     }
 
     async fn send(&self, msg: WorkerMessage) -> Result<()> {
@@ -185,12 +189,9 @@ impl Task {
         rx.await.context("接收 Planner 失败")
     }
 
-    async fn get_manuals(&self, tool_names: Vec<String>) -> Result<String> {
+    async fn get_toolkit(&self, tool_names: Vec<String>) -> Result<Toolkit> {
         let (tx, rx) = oneshot::channel();
-        self.send(WorkerMessage::GetManuals {
-            tool_names,
-            feedback: tx,
-        })
+        self.send(WorkerMessage::GetToolkit { tool_names, task_id: self.id, task_description: self.task_description.clone(), feedback: tx })
         .await?;
         rx.await.context("接收 Manuals 失败")
     }

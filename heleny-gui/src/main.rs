@@ -5,6 +5,7 @@ use anyhow::Result;
 use heleny_gui::AppWindow;
 use heleny_gui::handle_ws;
 use heleny_gui::set_callback;
+use heleny_proto::FrontendCommand;
 use heleny_utils::init_tracing;
 use slint::ComponentHandle;
 use tokio_tungstenite::connect_async;
@@ -36,10 +37,10 @@ async fn main() -> Result<()> {
 
     // 启动 UI
     write_tx
-        .send("!get_history 1000000000".into())
+        .send(FrontendCommand::GetHistory(1000000000).into())
         .await
         .unwrap();
-    write_tx.send("!get_health".into()).await.unwrap();
+    write_tx.send(FrontendCommand::GetHealth.into()).await.unwrap();
     ui.run()?;
     write_tx.send(Message::Close(None)).await.unwrap();
     tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;

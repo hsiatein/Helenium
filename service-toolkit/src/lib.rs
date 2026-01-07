@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+
+use anyhow::Context;
 use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
@@ -6,8 +9,10 @@ use heleny_proto::AnyMessage;
 use heleny_proto::Resource;
 use heleny_proto::ServiceRole;
 use heleny_proto::ToolDescription;
+use heleny_proto::HelenyToolFactory;
 use heleny_proto::ToolManual;
 use heleny_service::Service;
+use heleny_service::Toolkit;
 use heleny_service::ToolkitServiceMessage;
 use heleny_service::get_from_config_service;
 use heleny_service::list_via_fs_service;
@@ -20,11 +25,12 @@ use crate::toolkit_config::*;
 
 mod toolkit_config;
 
-#[base_service(deps=["ConfigService"])]
+#[base_service(deps=["ConfigService","FsService"])]
 pub struct ToolkitService {
     endpoint: Endpoint,
-    tool_manuals: Vec<ToolManual>,
+    tool_manuals: HashMap<String,ToolManual>,
     tool_descriptions: Vec<ToolDescription>,
+    tool_factories: HashMap<String,Box<dyn HelenyToolFactory>>
 }
 
 #[derive(Debug)]
@@ -57,11 +63,13 @@ impl Service for ToolkitService {
             .map(|manual| manual.get_description())
             .collect();
         info!("读取到 {} 个工具手册", tool_manuals.len());
+        let tool_manuals=tool_manuals.into_iter().map(|manual| (manual.name.clone(),manual)).collect();
         // 实例化
         let instance = Self {
             endpoint,
             tool_manuals,
             tool_descriptions,
+            tool_factories: HashMap::new(),
         };
         Ok(Box::new(instance))
     }
@@ -73,32 +81,28 @@ impl Service for ToolkitService {
     ) -> Result<()> {
         match msg {
             ToolkitServiceMessage::GetIntro { feedback } => {
-                let _ = feedback.send(serde_json::to_string(&self.tool_descriptions)?);
-            }
-            ToolkitServiceMessage::GetManuals {
-                tool_names,
-                feedback,
-            } => {
-                let results: Vec<serde_json::Value> = tool_names.into_iter().map(|name| {
-                    match self.tool_manuals.iter().find(|tool| tool.name == name) {
-                        Some(manual) => {
-                            // 将 manual 转换为 json 对象，如果失败则返回错误 json
-                            serde_json::to_value(manual).unwrap_or_else(|_| {
-                                serde_json::json!({ "error": format!("无法序列化工具手册 {}", name) })
-                            })
-                        }
-                        None => {
-                            serde_json::json!({ "error": format!("未找到工具手册 {}", name) })
-                        }
-                    }
-                }).collect();
-
-                if let Ok(json_out) = serde_json::to_string(&results) {
-                    let _ = feedback.send(json_out);
-                }
+                let tool_descriptions:Vec<&ToolDescription>=self.tool_descriptions.iter().filter(|des| self.tool_factories.contains_key(&des.name)).collect();
+                let _ = feedback.send(serde_json::to_string(&tool_descriptions)?);
             }
             ToolkitServiceMessage::GetToolkit { tool_names, task_id, task_description, feedback }=>{
-                
+                let mut manuals=Vec::new();
+                let mut tools=HashMap::new();
+                for name in &tool_names {
+                    let Some(manual)=self.tool_manuals.get(name) else {continue;};
+                    let Some(factory)=self.tool_factories.get_mut(name) else {continue;};
+                    let Ok(tool)=factory.create().await else {continue;};
+                    manuals.push(manual);
+                    tools.insert(name.clone(),tool);
+                }
+                let toolkit=Toolkit::new(task_id, task_description, self.endpoint.create_sender_endpoint(), serde_json::to_string(&manuals).context("序列化工具手册失败")?, tools);
+                if let Err(_)=feedback.send(toolkit) {
+                    return Err(anyhow::anyhow!("发送工具包失败"))
+                };
+            }
+            ToolkitServiceMessage::Publish { factory }=>{
+                let name=factory.name();
+                info!("成功注册工具: {}",name);
+                self.tool_factories.insert(name, factory);
             }
         }
         Ok(())

@@ -5,6 +5,10 @@
     "ConfigService":{
         "save_after" : 10.0
     },
+    "FsService":{
+        "exchange_dir": "./.exchange",
+        "temp_dir":"./.temp"
+    },
     "AuthService":{
         "pub_keys":[
             "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAUEsqCIV2CVWAJ1ScPMhZUi+fYer0ivp6ziucUF2TfGY=\n-----END PUBLIC KEY-----",

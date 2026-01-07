@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -25,4 +27,9 @@ pub struct ToolIntent {
 pub struct ToolArg {
     pub name: String,
     pub value: String,
+}
+
+pub fn get_tool_arg<T:FromStr>(args:&Vec<ToolArg>,name:&str)->Option<T> {
+    let Some(arg)=args.iter().find(|arg| arg.name==name) else {return None;};
+    arg.value.parse::<T>().ok()
 }
