@@ -13,7 +13,7 @@ pub enum ServiceSignal {
     Ready,
     Alive,
     InitFail,
-    Terminate,
+    Terminate(String),
 }
 
 #[derive(Debug)]

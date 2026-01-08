@@ -64,27 +64,32 @@ impl KernelService {
                     self.init_services(can_init).await;
                 }
             }
-            ServiceSignal::Terminate => {
-                info!("{} 成功退出", name);
-                KernelHealth::get_mut(&self.health).set_dead(&name);
+            ServiceSignal::Terminate(service_name) => {
+                let term=if name==KERNEL_SERVICE {
+                    service_name
+                }else {
+                    name
+                };
+                info!("{} 成功退出", term);
+                KernelHealth::get_mut(&self.health).set_dead(&term);
                 {
                     let mut services = match self.services.as_ref().lock() {
                         Ok(service) => service,
                         Err(e) => {
                             return Err(anyhow::anyhow!(
                                 "无法获取 {} 的锁, 导致无法清理: {}",
-                                name,
+                                term,
                                 e
                             ));
                         }
                     };
                     services
-                        .get(&name)
-                        .context(format!("未找到 {} 的句柄, 导致无法清理", name))?
+                        .get(&term)
+                        .context(format!("未找到 {} 的句柄, 导致无法清理", term))?
                         .abort();
-                    services.remove(&name);
+                    services.remove(&term);
                 }
-                let can_stop = self.deps_relation.refresh_cache(&name, false)?;
+                let can_stop = self.deps_relation.refresh_cache(&term, false)?;
                 if can_stop.contains(KERNEL_SERVICE) {
                     self.send_admin_message(AdminCommand::Shutdown(ShutdownStage::StopKernel))
                         .await;

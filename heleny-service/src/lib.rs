@@ -186,7 +186,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
             .endpoint()
             .send(
                 KERNEL_SERVICE,
-                KernelServiceMessage::UploadStatus(ServiceSignal::Terminate),
+                KernelServiceMessage::UploadStatus(ServiceSignal::Terminate("".into())),
             )
             .await;
     }

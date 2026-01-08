@@ -110,6 +110,10 @@ impl Service for UserService {
                 let _=feedback.send(reqs);
                 Ok(())
             }
+            UserServiceMessage::Logout=>{
+                self.users.retain(|user| user.name!=name);
+                Ok(())
+            }
         }
     }
     async fn stop(&mut self) {

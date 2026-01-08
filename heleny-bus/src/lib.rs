@@ -6,6 +6,7 @@ use anyhow::Result;
 use heleny_proto::ServiceRole;
 use heleny_proto::SignedMessage;
 use heleny_proto::TokenMessage;
+use tracing::debug;
 use std::collections::HashMap;
 use std::time::Duration;
 use tokio::sync::mpsc;
@@ -160,7 +161,7 @@ impl Bus {
             .context("消息携带未知 token, 忽略")?
             .clone();
         let msg = msg.sign(name, role);
-        trace!("已签名: {:?}", msg);
+        debug!("已签名: 来源 {} 目标{}", msg.name, msg.target);
         let target = msg.target.clone();
         self.send(msg)
             .await

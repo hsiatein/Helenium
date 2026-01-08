@@ -27,7 +27,7 @@ impl Service for TestService {
     type MessageType= TestServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>>{
         let toolkit_ep=ToolkitEndpoint::new(Uuid::new_v4(), "任务描述".into(), endpoint.create_sender_endpoint());
-        toolkit_ep.request_consent("请求描述".into()).await?;
+        // toolkit_ep.request_consent("请求描述".into()).await?;
         // 实例化
         let instance=Self {
             endpoint,

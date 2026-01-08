@@ -107,6 +107,7 @@ impl Service for WebuiService {
     }
     async fn stop(&mut self) {
         self.app_handle.abort();
+        let _=self.endpoint.send(USER_SERVICE, UserServiceMessage::Logout).await;
     }
     async fn handle_sub_endpoint(&mut self, msg: Box<dyn AnyMessage>) -> Result<()> {
         let worker_message = downcast::<SessionToService>(msg)?;

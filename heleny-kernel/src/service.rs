@@ -275,35 +275,44 @@ impl KernelService {
         info!("开始代理关闭服务");
         for name in can_stop {
             info!("开始代理关闭 {}", name);
+            let mut killed=false;
             {
                 let mut health = KernelHealth::get_mut(&self.health);
                 match health.services.get(&name) {
-                    Some((HealthStatus::Healthy, _)) => health.services.insert(
+                    Some((HealthStatus::Healthy, _)) => {
+                        let _=health.services.insert(
                         name.to_string(),
                         (HealthStatus::Stopping, Some(Local::now())),
-                    ),
+                        );
+                    },
                     _ => {
                         warn!("{} 非健康状态, 强制杀死", name);
-                        match self
-                            .services
-                            .as_ref()
-                            .lock()
-                            .expect("获取 services 锁失败")
-                            .remove(&name)
                         {
-                            Some(handle) => {
-                                handle.abort();
-                                health.services.insert(
-                                    name.to_string(),
-                                    (HealthStatus::Stopped, Some(Local::now())),
-                                );
-                                info!("强制终止 {} 句柄", name);
-                            }
-                            None => (),
-                        };
-                        continue;
+                            match self
+                                .services
+                                .as_ref()
+                                .lock()
+                                .expect("获取 services 锁失败")
+                                .remove(&name)
+                            {
+                                Some(handle) => {
+                                    handle.abort();
+                                    health.services.insert(
+                                        name.to_string(),
+                                        (HealthStatus::Stopped, Some(Local::now())),
+                                    );
+                                    info!("强制终止 {} 句柄", name);
+                                }
+                                None => (),
+                            };
+                        }
+                        killed=true;
                     }
                 };
+            }
+            if killed {
+                let _=self.endpoint.send(KERNEL_SERVICE, KernelServiceMessage::UploadStatus(heleny_service::ServiceSignal::Terminate(name))).await;
+                continue;
             }
             let _ = self.endpoint.send(&name, CommonMessage::Stop).await;
         }
