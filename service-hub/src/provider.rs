@@ -15,7 +15,7 @@ use tracing::warn;
 pub struct Provider {
     // 提供者的名字
     pub name: String,
-    _handle: JoinHandle<()>,
+    pub handle: JoinHandle<()>,
     tx: mpsc::Sender<Command>,
 }
 
@@ -35,7 +35,7 @@ impl Provider {
     ) -> Result<Provider> {
         let (tx, mut rx) = mpsc::channel(32);
         let mut worker = ProviderWorker::new(endpoint, receiver, resource_name, subscribers);
-        let _handle = tokio::spawn(async move {
+        let handle = tokio::spawn(async move {
             loop {
                 tokio::select! {
                     _ = worker.receiver.changed() => {
@@ -62,7 +62,7 @@ impl Provider {
                 }
             }
         });
-        let instance = Self { name, _handle, tx };
+        let instance = Self { name, handle, tx };
         Ok(instance)
     }
 

@@ -107,7 +107,9 @@ impl Service for HubService {
             }
         }
     }
-    async fn stop(&mut self) {}
+    async fn stop(&mut self) {
+        self.providers.iter().for_each(|(_,p)|{p.handle.abort();});
+    }
     async fn handle_sub_endpoint(&mut self, _msg: Box<dyn AnyMessage>) -> Result<()> {
         Ok(())
     }
