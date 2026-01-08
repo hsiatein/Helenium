@@ -20,6 +20,8 @@ heleny_proto = {path = "../heleny-proto"}
 chrono ={workspace = true}
 image = {workspace = true}
 base64 = {workspace = true}
+uuid = {workspace = true}
+heleny_server ={path = "../heleny-server"}
 
 [build-dependencies]
 slint-build = "1.14.1"

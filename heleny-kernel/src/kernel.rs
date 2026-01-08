@@ -74,13 +74,13 @@ impl Kernel {
         self.bus.get_endpoint(name, buffer, role).await
     }
 
-    pub async fn wait_for(&mut self, name: String) -> oneshot::Receiver<Result<()>> {
+    pub async fn wait_for<T:Into<String>>(&mut self, name: T) -> oneshot::Receiver<Result<()>> {
         let (tx, rx) = oneshot::channel();
         let _ = self
             .endpoint
             .send(
                 KERNEL_SERVICE,
-                KernelServiceMessage::WaitFor { name, sender: tx },
+                KernelServiceMessage::WaitFor { name:name.into(), sender: tx },
             )
             .await;
         rx

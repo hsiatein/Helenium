@@ -1,6 +1,6 @@
 import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
 
-export struct ConsentRequestionFE {
+export struct ConsentRequestionSlint {
     request_id: string,
     task_id: string,
     task_description: string,
@@ -44,7 +44,7 @@ component ActionButton inherits Rectangle {
 }
 
 export component ApprovalsView inherits Rectangle {
-    in property <[ConsentRequestionFE]> requests: [];
+    in property <[ConsentRequestionSlint]> requests: [];
     callback approve(string);
     callback reject(string);
 

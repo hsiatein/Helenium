@@ -15,7 +15,6 @@ use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tracing::Instrument;
 use tracing::info_span;
-use tracing::trace;
 use tracing::warn;
 use uuid::Uuid;
 

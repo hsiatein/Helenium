@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use anyhow::Context;
 use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
@@ -112,6 +113,17 @@ impl Service for UserService {
             }
             UserServiceMessage::Logout=>{
                 self.users.retain(|user| user.name!=name);
+                Ok(())
+            }
+            UserServiceMessage::MakeDecision { req_id, approval }=>{
+                let cr=self.consent_requestions.remove(&req_id).context("未找到此请求")?;
+                if approval {
+                    info!("用户同意了 {:?}",cr);
+                }
+                else {
+                    info!("用户拒绝了 {:?}",cr);
+                }
+                let _=cr.feedback.send(approval);
                 Ok(())
             }
         }

@@ -1,4 +1,4 @@
-use heleny_kernel::kernel::Kernel;
+use heleny_kernel::Kernel;
 use heleny_proto::HUB_SERVICE;
 use heleny_proto::ServiceRole;
 use heleny_proto::TOTAL_BUS_TRAFFIC;

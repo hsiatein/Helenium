@@ -6,6 +6,7 @@ use heleny_gui::AppWindow;
 use heleny_gui::handle_ws;
 use heleny_gui::set_callback;
 use heleny_proto::FrontendCommand;
+use heleny_server::launch_webui;
 use heleny_utils::init_tracing;
 use slint::ComponentHandle;
 use tokio_tungstenite::connect_async;
@@ -19,8 +20,9 @@ async fn main() -> Result<()> {
     // 前期准备
     dotenvy::dotenv().ok();
     let _log_guard = init_tracing("./logs".into());
-    let span = info_span!("Kernel");
+    let span = info_span!("Frontend");
     let _span_guard = span.enter();
+    let handle=launch_webui().await?;
 
     // 设置 UI
     let ui = AppWindow::new()?;
@@ -43,7 +45,11 @@ async fn main() -> Result<()> {
     write_tx.send(FrontendCommand::GetHealth.into()).await.unwrap();
     write_tx.send(FrontendCommand::GetConsentRequestions.into()).await.unwrap();
     ui.run()?;
-    write_tx.send(Message::Close(None)).await.unwrap();
-    tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+    if ui.get_kernel_shutdown() {
+        let _=handle.await;
+    }
+    else {
+        write_tx.send(Message::Close(None)).await.unwrap();
+    }
     Ok(())
 }

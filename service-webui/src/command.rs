@@ -94,6 +94,9 @@ impl WebuiService {
                 let user_decision=UserDecision::ConsentRequestions(result);
                 self.send_to_session(session, FrontendMessage::UserDecision(user_decision)).await
             }
+            FrontendCommand::MakeDecision { req_id, approval }=>{
+                self.endpoint.send(USER_SERVICE, UserServiceMessage::MakeDecision { req_id, approval }).await
+            }
         }
     }
 }

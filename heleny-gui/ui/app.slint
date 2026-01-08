@@ -8,7 +8,7 @@ import { HelenyButton } from "utils.slint";
 import { ChatView,MessageItem } from "chat.slint";
 import "./SourceHanSans-Medium.ttf";
 import { TerminalView, ServiceHealthItem } from "terminal.slint";
-import { ApprovalsView, ConsentRequestionFE } from "approvals.slint";
+import { ApprovalsView, ConsentRequestionSlint } from "approvals.slint";
 
 
 export component AppWindow inherits Window {
@@ -31,56 +31,14 @@ export component AppWindow inherits Window {
     in-out property <string> bus_x_start;
     in-out property <string> bus_x_end;
     in-out property <[ServiceHealthItem]> services_health: [];
-    in-out property <[ConsentRequestionFE]> consent_requestions: [
-        {
-            request_id: "f4cc01b4-9bae-40ee-8c94-dd2a00843281",
-            task_id: "5cacc4bf-5408-4283-b46b-cab07cf8e840",
-            task_description: "任务描述示例：整理本周会议纪要",
-            reason: "需要查看相关文件权限",
-            descripion: "请求访问共享盘中的会议记录并生成摘要"
-        },
-        {
-            request_id: "8a6e3c9a-3dd6-4f3a-9f43-87c4f3c4d2aa",
-            task_id: "b1b77a1d-0f8e-4f3e-90a3-2a4b8bff1b01",
-            task_description: "任务描述示例：发送项目状态邮件",
-            reason: "需要外部邮件发送权限",
-            descripion: "向指定联系人发送项目进度汇报"
-        },
-        {
-            request_id: "f4cc01b4-9bae-40ee-8c94-dd2a00843281",
-            task_id: "5cacc4bf-5408-4283-b46b-cab07cf8e840",
-            task_description: "任务描述示例：整理本周会议纪要",
-            reason: "需要查看相关文件权限",
-            descripion: "请求访问共享盘中的会议记录并生成摘要"
-        },
-        {
-            request_id: "8a6e3c9a-3dd6-4f3a-9f43-87c4f3c4d2aa",
-            task_id: "b1b77a1d-0f8e-4f3e-90a3-2a4b8bff1b01",
-            task_description: "任务描述示例：发送项目状态邮件",
-            reason: "需要外部邮件发送权限",
-            descripion: "向指定联系人发送项目进度汇报"
-        },
-        {
-            request_id: "f4cc01b4-9bae-40ee-8c94-dd2a00843281",
-            task_id: "5cacc4bf-5408-4283-b46b-cab07cf8e840",
-            task_description: "任务描述示例：整理本周会议纪要",
-            reason: "需要查看相关文件权限",
-            descripion: "请求访问共享盘中的会议记录并生成摘要"
-        },
-        {
-            request_id: "8a6e3c9a-3dd6-4f3a-9f43-87c4f3c4d2aa",
-            task_id: "b1b77a1d-0f8e-4f3e-90a3-2a4b8bff1b01",
-            task_description: "任务描述示例：发送项目状态邮件",
-            reason: "需要外部邮件发送权限",
-            descripion: "向指定联系人发送项目进度汇报"
-        }
+    in-out property <[ConsentRequestionSlint]> consent_requestions: [
     ];
-    in-out property <image> default_image: @image-url("icons/image_40dp_1F1F1F_FILL0_wght400_GRAD0_opsz40.png");
+    in property <image> default_image: @image-url("icons/image_40dp_1F1F1F_FILL0_wght400_GRAD0_opsz40.png");
+    in-out property <bool> kernel_shutdown:false;
     callback send(string);
     callback load_more_history([MessageItem]);
     callback shutdown();
-    callback approve_consent(string);
-    callback reject_consent(string);
+    callback make_decision(string,bool);
     public function scroll_to_bottom() {
         chat_view.scroll_to_bottom()
     }
@@ -183,7 +141,7 @@ export component AppWindow inherits Window {
                         height: 6%;
                         icon: @image-url("icons/power_settings_new_48dp_1F1F1F_FILL0_wght400_GRAD0_opsz48.png");
                         btn-color: #9ec8ff;
-                        clicked => { shutdown(); }
+                        clicked => { shutdown();kernel_shutdown=true; }
                     }
                 }
             }
@@ -212,8 +170,8 @@ export component AppWindow inherits Window {
                 width: 100%;
                 height: 100%;
                 requests: root.consent_requestions;
-                approve(request_id) => { root.approve_consent(request_id); }
-                reject(request_id) => { root.reject_consent(request_id); }
+                approve(request_id) => { root.make_decision(request_id,true); }
+                reject(request_id) => { root.make_decision(request_id,false); }
             }
         }
         

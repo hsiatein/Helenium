@@ -5,6 +5,7 @@ use crate::resource::Resource;
 use serde::Deserialize;
 use serde::Serialize;
 use tungstenite::Message;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FrontendMessage {
@@ -20,6 +21,10 @@ pub enum FrontendCommand {
     GetImage{
         id:i64,
         path:PathBuf
+    },
+    MakeDecision{
+        req_id:Uuid,
+        approval:bool,
     },
     GetConsentRequestions,
 }

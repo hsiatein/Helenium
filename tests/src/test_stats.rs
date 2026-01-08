@@ -1,4 +1,4 @@
-use heleny_kernel::kernel::Kernel;
+use heleny_kernel::Kernel;
 use heleny_proto::ServiceRole;
 use heleny_service::StatsServiceMessage;
 use heleny_utils::init_tracing;

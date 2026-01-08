@@ -2283,6 +2283,7 @@ dependencies = [
  "dotenvy",
  "futures",
  "heleny_proto",
+ "heleny_server",
  "heleny_utils",
  "image",
  "serde",
@@ -2293,6 +2294,7 @@ dependencies = [
  "tokio-tungstenite",
  "tracing",
  "tungstenite",
+ "uuid",
 ]
 
 [[package]]
@@ -2372,6 +2374,7 @@ dependencies = [
  "anyhow",
  "dotenvy",
  "heleny_kernel",
+ "heleny_proto",
  "heleny_utils",
  "tokio",
  "tracing",

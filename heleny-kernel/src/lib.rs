@@ -1,5 +1,5 @@
 pub mod health;
-pub mod kernel;
+mod kernel;
 pub mod service;
 
 extern crate service_auth;
