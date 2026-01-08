@@ -35,8 +35,8 @@ pub enum ResourcePayload {
         new: bool,
         messages: Vec<DisplayMessage>,
     },
-    Image{
-        id:i64,
-        base64:String
-    }
+    Image {
+        id: i64,
+        base64: String,
+    },
 }

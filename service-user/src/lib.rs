@@ -34,7 +34,7 @@ mod user;
 pub struct UserService {
     endpoint: Endpoint,
     users: Vec<User>,
-    consent_requestions:HashMap<Uuid,ConsentRequestion>,
+    consent_requestions: HashMap<Uuid, ConsentRequestion>,
 }
 
 #[derive(Debug)]
@@ -98,32 +98,39 @@ impl Service for UserService {
                     .await
             }
             UserServiceMessage::RequestConsent { body } => {
-                let request_id=Uuid::new_v4();
-                let requestion=body.to_frontend(request_id);
+                let request_id = Uuid::new_v4();
+                let requestion = body.to_frontend(request_id);
                 self.consent_requestions.insert(request_id, body);
                 info!("收到新请求");
-                self.send_to_all_users(WebuiServiceMessage::UserDecision(UserDecision::ConsentRequestions(vec![requestion]))).await
+                self.send_to_all_users(WebuiServiceMessage::UserDecision(
+                    UserDecision::ConsentRequestions(vec![requestion]),
+                ))
+                .await
             }
-            UserServiceMessage::ListConsentRequestions { feedback }=>{
-                let reqs=self.consent_requestions.iter().map(|(k,v)|{
-                    v.to_frontend(*k)
-                }).collect();
-                let _=feedback.send(reqs);
+            UserServiceMessage::ListConsentRequestions { feedback } => {
+                let reqs = self
+                    .consent_requestions
+                    .iter()
+                    .map(|(k, v)| v.to_frontend(*k))
+                    .collect();
+                let _ = feedback.send(reqs);
                 Ok(())
             }
-            UserServiceMessage::Logout=>{
-                self.users.retain(|user| user.name!=name);
+            UserServiceMessage::Logout => {
+                self.users.retain(|user| user.name != name);
                 Ok(())
             }
-            UserServiceMessage::MakeDecision { req_id, approval }=>{
-                let cr=self.consent_requestions.remove(&req_id).context("未找到此请求")?;
+            UserServiceMessage::MakeDecision { req_id, approval } => {
+                let cr = self
+                    .consent_requestions
+                    .remove(&req_id)
+                    .context("未找到此请求")?;
                 if approval {
-                    info!("用户同意了 {:?}",cr);
+                    info!("用户同意了 {:?}", cr);
+                } else {
+                    info!("用户拒绝了 {:?}", cr);
                 }
-                else {
-                    info!("用户拒绝了 {:?}",cr);
-                }
-                let _=cr.feedback.send(approval);
+                let _ = cr.feedback.send(approval);
                 Ok(())
             }
         }

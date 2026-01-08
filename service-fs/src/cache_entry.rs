@@ -21,7 +21,7 @@ impl CacheEntry {
             .modified()
             .context("获取文件修改时间失败")?;
         Ok(Self {
-            content:HelenyFile::Text(content),
+            content: HelenyFile::Text(content),
             last_modified,
         })
     }
@@ -34,7 +34,7 @@ impl CacheEntry {
             .modified()
             .context("获取文件修改时间失败")?;
         Ok(Self {
-            content:HelenyFile::Image(content),
+            content: HelenyFile::Image(content),
             last_modified,
         })
     }

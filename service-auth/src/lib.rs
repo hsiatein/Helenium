@@ -1,4 +1,4 @@
-mod auth_config;
+mod config;
 
 use anyhow::Context;
 use anyhow::Result;
@@ -27,7 +27,7 @@ use tokio::time::Instant;
 use tracing::debug;
 use tracing::warn;
 
-use crate::auth_config::AuthConfig;
+use crate::config::AuthConfig;
 
 #[base_service(deps=["ConfigService"])]
 pub struct AuthService {

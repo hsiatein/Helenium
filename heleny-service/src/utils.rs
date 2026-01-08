@@ -79,12 +79,15 @@ pub async fn get_tool_descriptions(endpoint: &Endpoint) -> Result<String> {
     Ok(data)
 }
 
-pub async fn wait_for(endpoint: &Endpoint,name:&str)->Result<()> {
+pub async fn wait_for(endpoint: &Endpoint, name: &str) -> Result<()> {
     let (tx, rx) = oneshot::channel();
     endpoint
         .send(
             KERNEL_SERVICE,
-            KernelServiceMessage::WaitFor { name: name.to_string(), sender: tx },
+            KernelServiceMessage::WaitFor {
+                name: name.to_string(),
+                sender: tx,
+            },
         )
         .await
         .context("等待服务的消息发送失败")?;
@@ -92,12 +95,19 @@ pub async fn wait_for(endpoint: &Endpoint,name:&str)->Result<()> {
     data
 }
 
-pub async fn register_tool_factory<T:HelenyToolFactory>(endpoint: &Endpoint,factory:T){
-    let register_endpoint=endpoint.create_sender_endpoint();
+pub async fn register_tool_factory<T: HelenyToolFactory>(endpoint: &Endpoint, factory: T) {
+    let register_endpoint = endpoint.create_sender_endpoint();
     tokio::spawn(async move {
-        if wait_for(&register_endpoint,TOOLKIT_SERVICE).await.is_err() {
-            return ;
+        if wait_for(&register_endpoint, TOOLKIT_SERVICE).await.is_err() {
+            return;
         };
-        let _=register_endpoint.send(TOOLKIT_SERVICE, ToolkitServiceMessage::Register { factory: Box::new(factory) }).await;
+        let _ = register_endpoint
+            .send(
+                TOOLKIT_SERVICE,
+                ToolkitServiceMessage::Register {
+                    factory: Box::new(factory),
+                },
+            )
+            .await;
     });
 }

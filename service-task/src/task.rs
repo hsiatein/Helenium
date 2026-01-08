@@ -86,7 +86,7 @@ impl Task {
     }
 
     pub async fn run(&mut self) -> Result<()> {
-        let (mut executor,mut toolkit) = self.preprocess().await?;
+        let (mut executor, mut toolkit) = self.preprocess().await?;
         let mut input = self.task_description.clone();
         while self.current < self.max_working_loop {
             let intent = match executor.get_intent(&input).await {
@@ -100,11 +100,11 @@ impl Task {
             if intent.tool.is_none() && intent.command.is_none() {
                 return Ok(());
             }
-            if let Ok(intent)=serde_json::to_string(&intent){
+            if let Ok(intent) = serde_json::to_string(&intent) {
                 self.log(intent);
             }
-            let result=toolkit.invoke(intent).await;
-            input=format!("<tool_result>{}</tool_result>",result);
+            let result = toolkit.invoke(intent).await;
+            input = format!("<tool_result>{}</tool_result>", result);
             self.log(&input);
             self.current = self.current + 1;
         }
@@ -113,7 +113,7 @@ impl Task {
         Err(anyhow::anyhow!(context))
     }
 
-    async fn preprocess(&self) -> Result<(ExecutorModel,Toolkit)> {
+    async fn preprocess(&self) -> Result<(ExecutorModel, Toolkit)> {
         let planner = match self.get_planner().await {
             Ok(planner) => {
                 self.log("成功获取 Planner");
@@ -164,7 +164,7 @@ impl Task {
                 return Err(anyhow::anyhow!(context));
             }
         };
-        Ok((executor,toolkit))
+        Ok((executor, toolkit))
     }
 
     async fn send(&self, msg: WorkerMessage) -> Result<()> {
@@ -194,7 +194,12 @@ impl Task {
 
     async fn get_toolkit(&self, tool_names: Vec<String>) -> Result<Toolkit> {
         let (tx, rx) = oneshot::channel();
-        self.send(WorkerMessage::GetToolkit { tool_names, task_id: self.id, task_description: self.task_description.clone(), feedback: tx })
+        self.send(WorkerMessage::GetToolkit {
+            tool_names,
+            task_id: self.id,
+            task_description: self.task_description.clone(),
+            feedback: tx,
+        })
         .await?;
         rx.await.context("接收 Manuals 失败")
     }
@@ -205,5 +210,4 @@ impl Task {
             .await?;
         rx.await.context("接收 Executor 失败")
     }
-
 }

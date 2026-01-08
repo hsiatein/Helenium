@@ -24,8 +24,8 @@ use tokio::time::Instant;
 
 mod task;
 pub use task::*;
-mod task_config;
-pub use task_config::*;
+mod config;
+pub use config::*;
 use tracing::info;
 use uuid::Uuid;
 
@@ -118,7 +118,12 @@ impl Service for TaskService {
                     .send(CHAT_SERVICE, ChatServiceMessage::GetExecutor { feedback })
                     .await
             }
-            WorkerMessage::GetToolkit { tool_names, task_id, task_description, feedback }=>{
+            WorkerMessage::GetToolkit {
+                tool_names,
+                task_id,
+                task_description,
+                feedback,
+            } => {
                 self.endpoint
                     .send(
                         TOOLKIT_SERVICE,

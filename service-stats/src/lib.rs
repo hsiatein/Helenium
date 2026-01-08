@@ -18,10 +18,10 @@ use tokio::time::Instant;
 use tracing::debug;
 
 use crate::bus_watcher::BusWatcherHandle;
-use crate::stats_config::StatsConfig;
+use crate::config::StatsConfig;
 
 mod bus_watcher;
-mod stats_config;
+mod config;
 
 #[base_service(deps=["ConfigService","HubService"])]
 pub struct StatsService {

@@ -1,7 +1,7 @@
+use crate::config::WebuiConfig;
 use crate::message::SessionToService;
 use crate::register::Register;
 use crate::register::SessionEndpoint;
-use crate::webui_config::WebuiConfig;
 use anyhow::Context;
 use anyhow::Result;
 use async_trait::async_trait;
@@ -43,9 +43,9 @@ use tracing::warn;
 use uuid::Uuid;
 
 mod command;
+mod config;
 mod message;
 mod register;
-mod webui_config;
 
 #[base_service(deps=["ConfigService","UserService"])]
 pub struct WebuiService {
@@ -96,18 +96,22 @@ impl Service for WebuiService {
         msg: WebuiServiceMessage,
     ) -> Result<()> {
         match msg {
-            WebuiServiceMessage::UserDecision(user_decision)=>{
-                self.send_to_all_sessions(FrontendMessage::UserDecision(user_decision)).await
+            WebuiServiceMessage::UserDecision(user_decision) => {
+                self.send_to_all_sessions(FrontendMessage::UserDecision(user_decision))
+                    .await
             }
-        
-            WebuiServiceMessage::SendToFrontend { session, message }=>{
+
+            WebuiServiceMessage::SendToFrontend { session, message } => {
                 self.send_to_session(session, message).await
             }
         }
     }
     async fn stop(&mut self) {
         self.app_handle.abort();
-        let _=self.endpoint.send(USER_SERVICE, UserServiceMessage::Logout).await;
+        let _ = self
+            .endpoint
+            .send(USER_SERVICE, UserServiceMessage::Logout)
+            .await;
     }
     async fn handle_sub_endpoint(&mut self, msg: Box<dyn AnyMessage>) -> Result<()> {
         let worker_message = downcast::<SessionToService>(msg)?;
@@ -125,7 +129,7 @@ impl Service for WebuiService {
             SessionMessage::UserInput { mut input } => {
                 if input.starts_with("!") {
                     input.remove(0);
-                    let command=serde_json::from_str(&input)?;
+                    let command = serde_json::from_str(&input)?;
                     self.handle_command(token, command).await
                 } else {
                     self.endpoint

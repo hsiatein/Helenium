@@ -22,7 +22,7 @@ async fn main() -> Result<()> {
     let _log_guard = init_tracing("./logs".into());
     let span = info_span!("Frontend");
     let _span_guard = span.enter();
-    let handle=launch_webui().await?;
+    let handle = launch_webui().await?;
 
     // 设置 UI
     let ui = AppWindow::new()?;
@@ -42,13 +42,18 @@ async fn main() -> Result<()> {
         .send(FrontendCommand::GetHistory(1000000000).into())
         .await
         .unwrap();
-    write_tx.send(FrontendCommand::GetHealth.into()).await.unwrap();
-    write_tx.send(FrontendCommand::GetConsentRequestions.into()).await.unwrap();
+    write_tx
+        .send(FrontendCommand::GetHealth.into())
+        .await
+        .unwrap();
+    write_tx
+        .send(FrontendCommand::GetConsentRequestions.into())
+        .await
+        .unwrap();
     ui.run()?;
     if ui.get_kernel_shutdown() {
-        let _=handle.await;
-    }
-    else {
+        let _ = handle.await;
+    } else {
         write_tx.send(Message::Close(None)).await.unwrap();
     }
     Ok(())

@@ -65,9 +65,9 @@ impl KernelService {
                 }
             }
             ServiceSignal::Terminate(service_name) => {
-                let term=if name==KERNEL_SERVICE {
+                let term = if name == KERNEL_SERVICE {
                     service_name
-                }else {
+                } else {
                     name
                 };
                 info!("{} 成功退出", term);

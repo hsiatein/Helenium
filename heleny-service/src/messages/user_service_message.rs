@@ -1,4 +1,6 @@
-use heleny_proto::{ConsentRequestion, ConsentRequestionFE, FrontendType};
+use heleny_proto::ConsentRequestion;
+use heleny_proto::ConsentRequestionFE;
+use heleny_proto::FrontendType;
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
@@ -6,14 +8,14 @@ use uuid::Uuid;
 pub enum UserServiceMessage {
     Login(FrontendType),
     Logout,
-    RequestConsent{
+    RequestConsent {
         body: ConsentRequestion,
     },
-    ListConsentRequestions{
+    ListConsentRequestions {
         feedback: oneshot::Sender<Vec<ConsentRequestionFE>>,
     },
-    MakeDecision{
-        req_id:Uuid,
-        approval:bool,
+    MakeDecision {
+        req_id: Uuid,
+        approval: bool,
     },
 }

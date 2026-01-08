@@ -1,7 +1,8 @@
 use std::str::FromStr;
 
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct HelenyReply {
@@ -30,9 +31,11 @@ pub struct ToolArg {
     pub value: String,
 }
 
-pub fn get_tool_arg<T:FromStr>(args:&Vec<ToolArg>,name:&str)->Result<T> {
-    let Some(arg)=args.iter().find(|arg| arg.name==name) else {return Err(anyhow::anyhow!("没有找到此参数名: {}",name));};
-    let Ok(arg)=arg.value.parse::<T>() else {
+pub fn get_tool_arg<T: FromStr>(args: &Vec<ToolArg>, name: &str) -> Result<T> {
+    let Some(arg) = args.iter().find(|arg| arg.name == name) else {
+        return Err(anyhow::anyhow!("没有找到此参数名: {}", name));
+    };
+    let Ok(arg) = arg.value.parse::<T>() else {
         return Err(anyhow::anyhow!("解析成目标类型失败"));
     };
     Ok(arg)

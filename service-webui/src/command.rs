@@ -1,4 +1,6 @@
+use crate::WebuiService;
 use anyhow::Result;
+use base64::prelude::*;
 use heleny_proto::DISPLAY_MESSAGES;
 use heleny_proto::FS_SERVICE;
 use heleny_proto::FrontendCommand;
@@ -20,13 +22,11 @@ use heleny_service::UserServiceMessage;
 use heleny_service::WebuiServiceMessage;
 use tokio::sync::oneshot;
 use uuid::Uuid;
-use base64::prelude::*;
-use crate::WebuiService;
 
 impl WebuiService {
     pub async fn handle_command(&mut self, session: Uuid, command: FrontendCommand) -> Result<()> {
         match command {
-            FrontendCommand::GetHistory(id_upper_bound)=>{
+            FrontendCommand::GetHistory(id_upper_bound) => {
                 let (tx, rx) = oneshot::channel();
                 self.endpoint
                     .send(
@@ -50,7 +50,7 @@ impl WebuiService {
                 )
                 .await
             }
-            FrontendCommand::GetHealth=>{
+            FrontendCommand::GetHealth => {
                 let (tx, rx) = oneshot::channel();
                 self.endpoint
                     .send(
@@ -71,31 +71,60 @@ impl WebuiService {
                 )
                 .await
             }
-            FrontendCommand::Shutdown=>{
+            FrontendCommand::Shutdown => {
                 self.endpoint
                     .send(KERNEL_NAME, KernelMessage::Shutdown)
                     .await
             }
-            FrontendCommand::GetImage { id, path }=>{
-                let (tx,rx)=oneshot::channel();
-                self.endpoint.send(FS_SERVICE, FsServiceMessage::GetImage { path, feedback: tx }).await?;
-                let sub=self.endpoint.create_sender_endpoint();
+            FrontendCommand::GetImage { id, path } => {
+                let (tx, rx) = oneshot::channel();
+                self.endpoint
+                    .send(
+                        FS_SERVICE,
+                        FsServiceMessage::GetImage { path, feedback: tx },
+                    )
+                    .await?;
+                let sub = self.endpoint.create_sender_endpoint();
                 tokio::spawn(async move {
-                    let Ok(image)=rx.await else {return ;};
-                    let base64=BASE64_STANDARD.encode(image);
-                    let _=sub.send(WEBUI_SERVICE,WebuiServiceMessage::SendToFrontend { session, message: FrontendMessage::UpdateResource(Resource { name: String::new(), payload: ResourcePayload::Image { id, base64 } }) }).await;
+                    let Ok(image) = rx.await else {
+                        return;
+                    };
+                    let base64 = BASE64_STANDARD.encode(image);
+                    let _ = sub
+                        .send(
+                            WEBUI_SERVICE,
+                            WebuiServiceMessage::SendToFrontend {
+                                session,
+                                message: FrontendMessage::UpdateResource(Resource {
+                                    name: String::new(),
+                                    payload: ResourcePayload::Image { id, base64 },
+                                }),
+                            },
+                        )
+                        .await;
                 });
                 Ok(())
             }
-            FrontendCommand::GetConsentRequestions =>{
-                let (tx,rx)=oneshot::channel();
-                self.endpoint.send(USER_SERVICE, UserServiceMessage::ListConsentRequestions {feedback: tx }).await?;
-                let result=rx.await?;
-                let user_decision=UserDecision::ConsentRequestions(result);
-                self.send_to_session(session, FrontendMessage::UserDecision(user_decision)).await
+            FrontendCommand::GetConsentRequestions => {
+                let (tx, rx) = oneshot::channel();
+                self.endpoint
+                    .send(
+                        USER_SERVICE,
+                        UserServiceMessage::ListConsentRequestions { feedback: tx },
+                    )
+                    .await?;
+                let result = rx.await?;
+                let user_decision = UserDecision::ConsentRequestions(result);
+                self.send_to_session(session, FrontendMessage::UserDecision(user_decision))
+                    .await
             }
-            FrontendCommand::MakeDecision { req_id, approval }=>{
-                self.endpoint.send(USER_SERVICE, UserServiceMessage::MakeDecision { req_id, approval }).await
+            FrontendCommand::MakeDecision { req_id, approval } => {
+                self.endpoint
+                    .send(
+                        USER_SERVICE,
+                        UserServiceMessage::MakeDecision { req_id, approval },
+                    )
+                    .await
             }
         }
     }

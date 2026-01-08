@@ -26,10 +26,10 @@ pub fn handle_ws(
         }
     });
     // 设置 ws 读取
-    let write_tx_clone=write_tx.clone();
+    let write_tx_clone = write_tx.clone();
     tokio::spawn(async move {
         // while let 循环不断从 stream 中获取消息
-        let frontend_handler=FrontendHandler::new(write_tx_clone, ui_weak.clone());
+        let frontend_handler = FrontendHandler::new(write_tx_clone, ui_weak.clone());
         while let Some(msg) = read.next().await {
             match msg {
                 Ok(m) => {

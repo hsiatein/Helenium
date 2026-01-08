@@ -23,7 +23,7 @@ pub enum FsServiceMessage {
         feedback: oneshot::Sender<()>,
     },
     GetImage {
-        path:PathBuf,
+        path: PathBuf,
         feedback: oneshot::Sender<Vec<u8>>,
-    }
+    },
 }

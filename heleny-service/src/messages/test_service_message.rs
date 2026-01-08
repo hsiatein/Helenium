@@ -1,4 +1,2 @@
 #[derive(Debug)]
-pub enum TestServiceMessage {
-
-}
+pub enum TestServiceMessage {}

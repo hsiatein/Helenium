@@ -23,10 +23,10 @@ use tokio::sync::watch;
 use tokio::time::Instant;
 use tracing::info;
 
-use crate::memory_config::MemoryConfig;
+use crate::config::MemoryConfig;
 use crate::memory_db::MemoryDb;
 
-mod memory_config;
+mod config;
 mod memory_db;
 
 #[base_service(deps=["ConfigService","HubService"])]

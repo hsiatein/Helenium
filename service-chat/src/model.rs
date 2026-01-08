@@ -52,7 +52,7 @@ impl HelenyModel {
             .content(get_tool_descriptions(&self.endpoint).await?)
             .build()
             .context("生成工具简介失败")?;
-        let mut messages=vec![tool_descriptions.into()];
+        let mut messages = vec![tool_descriptions.into()];
         let (tx, rx) = oneshot::channel();
         self.endpoint
             .send(

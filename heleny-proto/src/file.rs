@@ -8,5 +8,5 @@ pub enum HelenyFile {
 pub enum HelenyFileType {
     Text,
     Image,
-    Unknown
+    Unknown,
 }

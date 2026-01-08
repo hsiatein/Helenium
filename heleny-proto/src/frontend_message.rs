@@ -10,7 +10,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FrontendMessage {
     UpdateResource(Resource),
-    UserDecision(UserDecision)
+    UserDecision(UserDecision),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,20 +18,14 @@ pub enum FrontendCommand {
     GetHistory(i64),
     GetHealth,
     Shutdown,
-    GetImage{
-        id:i64,
-        path:PathBuf
-    },
-    MakeDecision{
-        req_id:Uuid,
-        approval:bool,
-    },
+    GetImage { id: i64, path: PathBuf },
+    MakeDecision { req_id: Uuid, approval: bool },
     GetConsentRequestions,
 }
 
 impl FrontendCommand {
     pub fn to_string(&self) -> String {
-        "!".to_string()+&serde_json::to_string(self).unwrap_or(String::new())
+        "!".to_string() + &serde_json::to_string(self).unwrap_or(String::new())
     }
 }
 
