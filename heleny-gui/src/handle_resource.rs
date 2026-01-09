@@ -29,11 +29,12 @@ impl FrontendHandler {
     pub async fn handle_resource(&self, resource: ResourcePayload) -> Result<()> {
         match resource {
             ResourcePayload::TotalBusTraffic(data) => {
-                let (svg, y_max, x_start, x_end) = generate_svg_path(&data, 300., 200.);
+                let (svg, y_max, y_mid, x_start, x_end) = generate_svg_path(&data, 600., 240.);
                 self.ui_weak
                     .upgrade_in_event_loop(move |ui| {
                         ui.set_bus_stats_chart(svg.into());
                         ui.set_bus_y_max(y_max.into());
+                        ui.set_bus_y_mid(y_mid.into());
                         ui.set_bus_x_start(x_start.into());
                         ui.set_bus_x_end(x_end.into());
                     })

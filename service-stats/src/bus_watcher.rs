@@ -83,6 +83,12 @@ impl BusWatcher {
         total_traffic: Arc<Mutex<VecDeque<(DateTime<Local>, usize)>>>,
         tx: watch::Sender<ResourcePayload>,
     ) -> Self {
+        if let Ok(mut traffic)=total_traffic.lock(){
+            let fill=duration-traffic.len();
+            for i in 1..fill+1{
+                traffic.push_front((Local::now()-chrono::Duration::seconds(i as i64),0));
+            }
+        };
         Self {
             duration,
             current_time: Local::now(),

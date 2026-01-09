@@ -8,6 +8,7 @@ export struct ServiceHealthItem {
 export component TerminalView inherits Rectangle {
     in property <string> bus_stats_chart;
     in property <string> y_max: "100";
+    in property <string> y_mid: "50";
     in property <string> x_start: "00:00:00";
     in property <string> x_end: "00:00:00";
     in property <[ServiceHealthItem]> services_health;
@@ -24,51 +25,86 @@ export component TerminalView inherits Rectangle {
                 horizontal-alignment: center;
             }
 
-            HorizontalLayout {
-                spacing: 5px;
-                height: 400px;
-                // Y-Axis Labels
-                VerticalLayout {
-                    width: 50px;
-                    alignment: space-between;
-                    Text { 
-                        text: root.y_max; 
-                        font-size: 12px; 
-                        horizontal-alignment: right;
-                    }
-                    Text { 
-                        text: "0"; 
-                        font-size: 12px; 
-                        horizontal-alignment: right;
-                    }
-                }
+            Rectangle {
+                border-radius: 16px;
+                background: #ffffff;
+                border-color: #dbe6ff;
+                border-width: 1px;
+                clip: true;
 
-                // Chart Area + X-Axis
-                VerticalLayout {
-                    Rectangle {
-                        background: #f0f0f0;
-                        border-color: #cccccc;
-                        border-width: 1px;
-                        
-                        Path {
-                            width: 100%;
-                            height: 100%;
-                            stroke: #007bff;
-                            stroke-width: 2px;
-                            commands: root.bus_stats_chart;
-                        }
-                    }
-
-                    // X-Axis Labels
+                VerticalBox {
+                    padding: 16px;
+                    spacing: 10px;
+                    // Chart Row
                     HorizontalLayout {
-                        alignment: space-between;
-                        Text { 
-                            text: root.x_start; 
-                            font-size: 12px; 
+                        spacing: 12px;
+                        height: Math.max(260px, root.height * 0.35);
+
+                        // Y-Axis Labels
+                        VerticalLayout {
+                            width: 56px;
+                            alignment: space-between;
+                            Text {
+                                text: root.y_max;
+                                font-size: 12px;
+                                horizontal-alignment: right;
+                                color: #3f4c67;
+                            }
+                            Text {
+                                text: root.y_mid;
+                                font-size: 12px;
+                                horizontal-alignment: right;
+                                color: #6b6b6b;
+                            }
+                            Text {
+                                text: "0";
+                                font-size: 12px;
+                                horizontal-alignment: right;
+                                color: #3f4c67;
+                            }
                         }
-                        Text { 
-                            text: root.x_end; 
-                            font-size: 12px; 
+
+                        // Chart Area + X-Axis
+                        VerticalLayout {
+                            spacing: 8px;
+                            Rectangle {
+                                background: #f6f9ff;
+                                border-color: #dbe6ff;
+                                border-width: 1px;
+                                border-radius: 12px;
+                                clip: true;
+
+                                // Grid lines
+                                for i in 5: Rectangle {
+                                    width: parent.width;
+                                    height: 1px;
+                                    y: (parent.height * i) / 4;
+                                    background: #e6edf7;
+                                }
+
+                                Path {
+                                    width: parent.width;
+                                    height: parent.height;
+                                    stroke: #3688ff;
+                                    stroke-width: 2px;
+                                    commands: root.bus_stats_chart;
+                                }
+                            }
+
+                            // X-Axis Labels
+                            HorizontalLayout {
+                                alignment: space-between;
+                                Text {
+                                    text: root.x_start;
+                                    font-size: 12px;
+                                    color: #3f4c67;
+                                }
+                                Text {
+                                    text: root.x_end;
+                                    font-size: 12px;
+                                    color: #3f4c67;
+                                }
+                            }
                         }
                     }
                 }

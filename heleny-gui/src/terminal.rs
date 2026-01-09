@@ -4,14 +4,33 @@ use chrono::TimeZone;
 use std::collections::VecDeque;
 use std::fmt::Write;
 
+fn nice_ceiling(value: f32) -> f32 {
+    if value <= 10.0 {
+        return 10.0;
+    }
+    let magnitude = 10f32.powf(value.log10().floor());
+    let normalized = value / magnitude;
+    let step = if normalized <= 1.0 {
+        1.0
+    } else if normalized <= 2.0 {
+        2.0
+    } else if normalized <= 5.0 {
+        5.0
+    } else {
+        10.0
+    };
+    step * magnitude
+}
+
 pub fn generate_svg_path(
     data: &VecDeque<(DateTime<Local>, usize)>,
     width: f32,
     height: f32,
-) -> (String, String, String, String) {
+) -> (String, String, String, String, String) {
     if data.is_empty() {
         return (
             String::new(),
+            "0".into(),
             "0".into(),
             "00:00:00".into(),
             "00:00:00".into(),
@@ -54,6 +73,7 @@ pub fn generate_svg_path(
         return (
             String::new(),
             "0".into(),
+            "0".into(),
             "00:00:00".into(),
             "00:00:00".into(),
         );
@@ -66,11 +86,10 @@ pub fn generate_svg_path(
     let max_time = points.last().unwrap().0;
     let time_range = (max_time - min_time).max(1) as f32;
 
-    let min_val = 0.0;
     let max_traffic = points.iter().map(|(_, v)| *v).max().unwrap_or(0);
-    // Fix: Remove the 1.2 multiplier so the graph fills the height.
-    // Ensure max_val is at least 1.0 to avoid flat lines or div by zero if traffic is 0.
-    let max_val = (max_traffic as f32).max(10.0);
+    let min_val = 0.0;
+    let max_val = nice_ceiling(max_traffic as f32);
+    let mid_val = max_val * 0.5;
     let val_range = (max_val - min_val).max(1.0);
 
     let mut path = String::with_capacity(points.len() * 30);
@@ -96,8 +115,9 @@ pub fn generate_svg_path(
     let max_time_dt = Local.timestamp_millis_opt(max_time).unwrap();
     let x_start = min_time_dt.format("%H:%M:%S").to_string();
     let x_end = max_time_dt.format("%H:%M:%S").to_string();
-    // Use max_val (the scaling ceiling) for the label, not just the max data point.
+    // Use the rounded ceiling for the labels to keep the scale clean.
     let y_max = format!("{}", max_val as usize);
+    let y_mid = format!("{}", mid_val.round() as usize);
 
-    (path, y_max, x_start, x_end)
+    (path, y_max, y_mid, x_start, x_end)
 }
