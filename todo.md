@@ -5,7 +5,7 @@ services:
 - [x] kernel_service
 - [ ] scheduler_service
 - [x] chat_service
-- [ ] task_service
+- [x] task_service
 - [ ] frontend_service(签名验证)
 - [ ] network_service
 - [ ] http_service
@@ -56,4 +56,5 @@ todo:
 - [x] 30.pub use减少路径长度
 - [x] 31.toolkit服务制作toolkit
 - [x] 32.审批
-- [ ] 33.TaskLogger开新任务来记录，基础信息发布到hub，详细信息需要订阅
+- [x] 33.TaskLogger开新任务来记录，基础信息发布到hub，详细信息需要订阅
+- [ ] 34.tools页面，安装配置tools

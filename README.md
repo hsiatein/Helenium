@@ -77,6 +77,7 @@ GUI的实现基于 Slint(当前), WEBUI的实现基于 Vue/TS(暂时停更)
 
 所需要的软件.
 * Rust
+* Docker
 
 ### 安装
 
