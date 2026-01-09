@@ -1,4 +1,5 @@
 use futures::prelude::*;
+use heleny_proto::FrontendCommand;
 use heleny_proto::FrontendMessage;
 use slint::Weak;
 use tokio::net::TcpStream;
@@ -15,12 +16,18 @@ use crate::FrontendHandler;
 pub fn handle_ws(
     stream: WebSocketStream<MaybeTlsStream<TcpStream>>,
     ui_weak: Weak<AppWindow>,
-) -> mpsc::Sender<Message> {
+) -> mpsc::Sender<FrontendCommand> {
     let (mut write, mut read) = stream.split();
-    let (write_tx, mut write_rx) = mpsc::channel::<Message>(32);
+    let (write_tx, mut write_rx) = mpsc::channel::<FrontendCommand>(32);
     tokio::spawn(async move {
         while let Some(msg) = write_rx.recv().await {
-            if let Err(e) = write.send(msg.into()).await {
+            let msg= match msg {
+                FrontendCommand::Close=>{
+                    Message::Close(None)
+                }
+                other=>other.into()
+            };
+            if let Err(e) = write.send(msg).await {
                 warn!("发送 Message 失败: {}", e)
             };
         }

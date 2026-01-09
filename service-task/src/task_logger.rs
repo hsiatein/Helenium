@@ -38,10 +38,9 @@ impl TaskLogger {
 
     pub async fn handle_command(&mut self,cmd:TaskLoggerCommand)->Result<()>{
         match cmd {
-            TaskLoggerCommand::AddTask { id, description, feedback }=>{
+            TaskLoggerCommand::AddTask { id, description }=>{
                 self.task_logs.insert(id,TaskLog::new(description));
                 self.watch_sender.send(ResourcePayload::TaskAbstract { task_abstracts: self.get_abstracts() })?;
-                let _=feedback.send(());
                 Ok(())
             }
             TaskLoggerCommand::SetStatus { id, status }=>{
@@ -103,9 +102,7 @@ impl TaskLoggerHandle {
     }
 
     pub async fn add_task(&self,id:Uuid,description:String)->Result<()> {
-        let (tx,rx)=oneshot::channel();
-        self.handle_tx.send(TaskLoggerCommand::AddTask { id, description, feedback:tx }).await?;
-        let _=rx.await?;
+        self.handle_tx.send(TaskLoggerCommand::AddTask { id, description }).await?;
         Ok(())
     }
 
@@ -162,7 +159,6 @@ pub enum TaskLoggerCommand {
     AddTask {
         id:Uuid,
         description:String,
-        feedback:oneshot::Sender<()>,
     },
     SetStatus {
         id:Uuid,

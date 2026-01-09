@@ -17,7 +17,6 @@ use slint::SharedPixelBuffer;
 use slint::Weak;
 use tokio::sync::mpsc;
 use tracing::debug;
-use tungstenite::Message;
 mod handle_ws;
 pub use handle_ws::*;
 mod set_callback;
@@ -29,12 +28,12 @@ use terminal::*;
 slint::include_modules!();
 
 pub struct FrontendHandler {
-    writer: mpsc::Sender<Message>,
+    writer: mpsc::Sender<FrontendCommand>,
     ui_weak: Weak<AppWindow>,
 }
 
 impl FrontendHandler {
-    pub fn new(writer: mpsc::Sender<Message>, ui_weak: Weak<AppWindow>) -> Self {
+    pub fn new(writer: mpsc::Sender<FrontendCommand>, ui_weak: Weak<AppWindow>) -> Self {
         Self { writer, ui_weak }
     }
     pub async fn handle_frontend_message(&self, msg: FrontendMessage) -> Result<()> {

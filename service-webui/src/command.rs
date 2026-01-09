@@ -1,6 +1,7 @@
 use crate::WebuiService;
 use anyhow::Result;
 use base64::prelude::*;
+use heleny_proto::CHAT_SERVICE;
 use heleny_proto::DISPLAY_MESSAGES;
 use heleny_proto::FS_SERVICE;
 use heleny_proto::FrontendCommand;
@@ -14,6 +15,7 @@ use heleny_proto::ResourcePayload;
 use heleny_proto::USER_SERVICE;
 use heleny_proto::UserDecision;
 use heleny_proto::WEBUI_SERVICE;
+use heleny_service::ChatServiceMessage;
 use heleny_service::FsServiceMessage;
 use heleny_service::HubServiceMessage;
 use heleny_service::KernelMessage;
@@ -26,6 +28,11 @@ use uuid::Uuid;
 impl WebuiService {
     pub async fn handle_command(&mut self, session: Uuid, command: FrontendCommand) -> Result<()> {
         match command {
+            FrontendCommand::UserInput(input)=>{
+                self.endpoint
+                    .send(CHAT_SERVICE, ChatServiceMessage::Chat { message: input })
+                    .await
+            }
             FrontendCommand::GetHistory(id_upper_bound) => {
                 let (tx, rx) = oneshot::channel();
                 self.endpoint
@@ -125,6 +132,9 @@ impl WebuiService {
                         UserServiceMessage::MakeDecision { req_id, approval },
                     )
                     .await
+            }
+            FrontendCommand::Close=>{
+                Ok(())
             }
         }
     }

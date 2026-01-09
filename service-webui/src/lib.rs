@@ -126,16 +126,9 @@ impl Service for WebuiService {
                 self.router.remove(&token);
                 Ok(())
             }
-            SessionMessage::UserInput { mut input } => {
-                if input.starts_with("!") {
-                    input.remove(0);
-                    let command = serde_json::from_str(&input)?;
-                    self.handle_command(token, command).await
-                } else {
-                    self.endpoint
-                        .send(CHAT_SERVICE, ChatServiceMessage::Chat { message: input })
-                        .await
-                }
+            SessionMessage::UserInput { input } => {
+                let command = serde_json::from_str(&input)?;
+                self.handle_command(token, command).await
             }
         }
     }

@@ -11,16 +11,15 @@ use slint::SharedString;
 use slint::VecModel;
 use tokio::sync::mpsc;
 use tracing::warn;
-use tungstenite::Message;
 use uuid::Uuid;
 
-pub fn set_callback(ui: &AppWindow, write_tx: &mpsc::Sender<Message>) {
+pub fn set_callback(ui: &AppWindow, write_tx: &mpsc::Sender<FrontendCommand>) {
     let write_tx_clone = write_tx.clone();
     ui.on_send(move |msg: SharedString| {
         let msg_string = msg.to_string();
         let tx_inner = write_tx_clone.clone();
         tokio::spawn(async move {
-            if let Err(e) = tx_inner.send(msg_string.into()).await {
+            if let Err(e) = tx_inner.send(FrontendCommand::UserInput(msg_string)).await {
                 warn!("消息发送失败: {}", e);
             }
         });

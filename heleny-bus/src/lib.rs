@@ -3,7 +3,6 @@ pub mod midware;
 
 use anyhow::Context;
 use anyhow::Result;
-use heleny_proto::HUB_SERVICE;
 use heleny_proto::ServiceRole;
 use heleny_proto::SignedMessage;
 use heleny_proto::TokenMessage;
@@ -14,7 +13,6 @@ use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use tokio::time::timeout;
 use tracing::Instrument;
-use tracing::debug;
 use tracing::info_span;
 use tracing::warn;
 use uuid::Uuid;
@@ -162,9 +160,9 @@ impl Bus {
             .clone();
         let msg = msg.sign(name, role);
         let source=msg.name.clone();
-        if msg.name==HUB_SERVICE{
-            debug!("已签名: 来源 {} 目标{} 内容{:?}", msg.name, msg.target, msg.payload);
-        }
+        // if msg.name==heleny_proto::HUB_SERVICE{
+        //     tracing::debug!("已签名: 来源 {} 目标{} 内容{:?}", msg.name, msg.target, msg.payload);
+        // }
         let target = msg.target.clone();
         self.send(msg)
             .await

@@ -12,7 +12,6 @@ use slint::ComponentHandle;
 use tokio_tungstenite::connect_async;
 use tracing::debug;
 use tracing::info_span;
-use tungstenite::Message;
 use tungstenite::client::IntoClientRequest;
 
 #[tokio::main]
@@ -22,7 +21,12 @@ async fn main() -> Result<()> {
     let _log_guard = init_tracing("./logs".into());
     let span = info_span!("Frontend");
     let _span_guard = span.enter();
-    let handle = launch_webui().await?;
+    let launch_backend=std::env::var("LAUNCH_HELENIUM_BACKEND")?.parse::<bool>()?;
+    let handle = if launch_backend {
+        Some(launch_webui().await?)
+    }else {
+        None
+    };
 
     // 设置 UI
     let ui = AppWindow::new()?;
@@ -39,22 +43,23 @@ async fn main() -> Result<()> {
 
     // 启动 UI
     write_tx
-        .send(FrontendCommand::GetHistory(1000000000).into())
+        .send(FrontendCommand::GetHistory(1000000000))
         .await
         .unwrap();
     write_tx
-        .send(FrontendCommand::GetHealth.into())
+        .send(FrontendCommand::GetHealth)
         .await
         .unwrap();
     write_tx
-        .send(FrontendCommand::GetConsentRequestions.into())
+        .send(FrontendCommand::GetConsentRequestions)
         .await
         .unwrap();
     ui.run()?;
-    if ui.get_kernel_shutdown() {
+    if let Some(handle)=handle {
+        let _ = write_tx.send(FrontendCommand::Shutdown).await;
         let _ = handle.await;
-    } else {
-        write_tx.send(Message::Close(None)).await.unwrap();
+    }else {
+        write_tx.send(FrontendCommand::Close).await.unwrap();
     }
     Ok(())
 }
