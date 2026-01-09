@@ -30,3 +30,5 @@ mod user_decision;
 pub use user_decision::*;
 mod file;
 pub use file::*;
+mod task_info;
+pub use task_info::*;

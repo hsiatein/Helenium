@@ -3,16 +3,15 @@ use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::AnyMessage;
-use heleny_proto::HUB_SERVICE;
 use heleny_proto::KERNEL_NAME;
 use heleny_proto::Resource;
 use heleny_proto::ServiceRole;
 use heleny_proto::TOTAL_BUS_TRAFFIC;
-use heleny_service::HubServiceMessage;
 use heleny_service::KernelMessage;
 use heleny_service::Service;
 use heleny_service::StatsServiceMessage;
 use heleny_service::get_from_config_service;
+use heleny_service::publish_resource;
 use tokio::sync::mpsc;
 use tokio::time::Instant;
 use tracing::debug;
@@ -45,16 +44,7 @@ impl Service for StatsService {
             .send(KERNEL_NAME, KernelMessage::GetBusStatsRx { sender: tx })
             .await?;
         let (bus_watcher, bus_watch_rx) = BusWatcherHandle::new(config.duration, rx)?;
-        endpoint
-            .send(
-                HUB_SERVICE,
-                HubServiceMessage::Publish {
-                    provider: Self::name().to_string(),
-                    resource_name: TOTAL_BUS_TRAFFIC.to_string(),
-                    receiver: bus_watch_rx,
-                },
-            )
-            .await?;
+        publish_resource(&endpoint, TOTAL_BUS_TRAFFIC, bus_watch_rx).await?;
         let instance = Self {
             endpoint,
             _stats_config: config,
@@ -75,7 +65,8 @@ impl Service for StatsService {
         }
         Ok(())
     }
-    async fn stop(&mut self) {}
+    async fn stop(&mut self) {
+    }
     async fn handle_sub_endpoint(&mut self, _msg: Box<dyn AnyMessage>) -> Result<()> {
         Ok(())
     }

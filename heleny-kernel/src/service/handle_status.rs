@@ -7,9 +7,9 @@ use heleny_proto::KERNEL_SERVICE;
 use heleny_proto::KernelHealth;
 use heleny_proto::ResourcePayload;
 use heleny_service::AdminCommand;
-use heleny_service::HubServiceMessage;
 use heleny_service::ServiceSignal;
 use heleny_service::ShutdownStage;
+use heleny_service::publish_resource;
 use tokio::sync::watch;
 use tracing::info;
 
@@ -45,16 +45,7 @@ impl KernelService {
                 } else if name == HUB_SERVICE {
                     let health = KernelHealth::get_mut(&self.health).to_owned();
                     let (tx, rx) = watch::channel(ResourcePayload::Health(health));
-                    self.endpoint
-                        .send(
-                            HUB_SERVICE,
-                            HubServiceMessage::Publish {
-                                provider: KERNEL_SERVICE.to_string(),
-                                resource_name: HEALTH.to_string(),
-                                receiver: rx,
-                            },
-                        )
-                        .await?;
+                    publish_resource(&self.endpoint, HEALTH, rx).await?;
                     self.health_tx = Some(tx);
                 }
                 info!("{} 成功初始化", name);

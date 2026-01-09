@@ -6,6 +6,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::KernelHealth;
+use crate::TaskAbstract;
 use crate::memory::DisplayMessage;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,6 +27,7 @@ impl Resource {
 pub static TOTAL_BUS_TRAFFIC: &'static str = "TotalBusTraffic";
 pub static DISPLAY_MESSAGES: &'static str = "DisplayMessages";
 pub static HEALTH: &'static str = "Health";
+pub static TASK_ABSTRACT: &'static str = "TaskAbstract";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ResourcePayload {
@@ -39,4 +41,7 @@ pub enum ResourcePayload {
         id: i64,
         base64: String,
     },
+    TaskAbstract {
+        task_abstracts:Vec<TaskAbstract>,
+    }
 }

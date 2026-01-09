@@ -7,6 +7,7 @@ use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::AnyMessage;
+use heleny_proto::HUB_SERVICE;
 use heleny_proto::Resource;
 use heleny_proto::ServiceRole;
 use heleny_service::HubServiceMessage;
@@ -49,11 +50,10 @@ impl Service for HubService {
     ) -> Result<()> {
         match msg {
             HubServiceMessage::Publish {
-                provider,
                 resource_name,
                 receiver,
             } => match self.providers.get_mut(&resource_name) {
-                Some(resource) if resource.name != provider => {
+                Some(provider) if provider.name != name => {
                     Err(anyhow::anyhow!("已经有服务注册了"))
                 }
                 _ => {
@@ -65,7 +65,7 @@ impl Service for HubService {
                     self.providers.insert(
                         resource_name.clone(),
                         Provider::new(
-                            provider,
+                            name,
                             resource_name.clone(),
                             endpoint,
                             receiver,
@@ -76,10 +76,23 @@ impl Service for HubService {
                     Ok(())
                 }
             },
+            HubServiceMessage::Unpublish { resource_name } =>{
+                let provider=self.providers.remove(&resource_name).context("没有这个资源")?;
+                if name==HUB_SERVICE {
+                    provider.cancel();
+                    info!("取消发布资源 {}",resource_name);
+                    Ok(())
+                }
+                else {
+                    self.providers.insert(resource_name, provider);
+                    Err(anyhow::anyhow!("不能取消发布其他服务的资源"))
+                }
+            }
             HubServiceMessage::Subscribe { resource_name } => {
                 match self.providers.get_mut(&resource_name) {
                     Some(provider) => provider.subscribe(name).await,
                     None => {
+                        info!("{} 订阅 {}",name,resource_name);
                         self.pending
                             .entry(resource_name)
                             .or_insert(HashSet::new())
@@ -109,7 +122,7 @@ impl Service for HubService {
     }
     async fn stop(&mut self) {
         self.providers.iter().for_each(|(_, p)| {
-            p.handle.abort();
+            p.cancel();
         });
     }
     async fn handle_sub_endpoint(&mut self, _msg: Box<dyn AnyMessage>) -> Result<()> {

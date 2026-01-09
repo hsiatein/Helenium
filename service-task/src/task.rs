@@ -1,42 +1,31 @@
-use std::sync::Arc;
-use std::sync::Mutex;
-
 use anyhow::Context;
 use anyhow::Result;
 use heleny_bus::endpoint::SubEndpoint;
 use heleny_proto::ExecutorModel;
 use heleny_proto::PlannerModel;
 use heleny_service::Toolkit;
+use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use tracing::info;
 use tracing::warn;
 use uuid::Uuid;
 
+use crate::TaskLoggerMessage;
 use crate::WorkerMessage;
 
 pub struct Task {
-    id: Uuid,
-    task_description: String,
+    pub id: Uuid,
+    pub task_description: String,
     sender: SubEndpoint,
+    log_tx: mpsc::Sender<TaskLoggerMessage>,
     max_working_loop: usize,
     current: usize,
-    log: Arc<Mutex<Vec<String>>>,
 }
 
 pub struct TaskHandle {
     pub id: Uuid,
     pub handle: JoinHandle<()>,
-    pub log: Arc<Mutex<Vec<String>>>,
-}
-
-impl TaskHandle {
-    pub fn get_log(&self) -> Result<Vec<String>> {
-        match self.log.lock() {
-            Ok(log) => Ok(log.to_owned()),
-            Err(e) => Err(anyhow::anyhow!("任务 {} 日志失效: {}", self.id, e)),
-        }
-    }
 }
 
 impl Task {
@@ -44,31 +33,31 @@ impl Task {
         id: Uuid,
         task_description: String,
         sender: SubEndpoint,
+        log_tx: mpsc::Sender<TaskLoggerMessage>,
         max_working_loop: usize,
     ) -> Self {
         Self {
             id,
             task_description,
             sender,
+            log_tx,
             max_working_loop,
             current: 0,
-            log: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
     pub fn launch(mut self) -> TaskHandle {
         let id = self.id;
-        let log = self.log.clone();
         info!("启动任务 {}, 描述: {}", id, self.task_description);
         let handle = tokio::spawn(async move {
             let success;
             match self.run().await {
                 Ok(_) => {
-                    self.log(format!("任务成功"));
+                    self.log(format!("任务成功")).await;
                     success = true;
                 }
                 Err(e) => {
-                    self.log(format!("任务失败: {}", e));
+                    self.log(format!("任务失败: {}", e)).await;
                     success = false;
                 }
             };
@@ -82,7 +71,7 @@ impl Task {
                 warn!("发送任务结束信息失败: {}", e);
             };
         });
-        TaskHandle { id, handle, log }
+        TaskHandle { id, handle }
     }
 
     pub async fn run(&mut self) -> Result<()> {
@@ -92,7 +81,7 @@ impl Task {
             let intent = match executor.get_intent(&input).await {
                 Ok(intent) => intent,
                 Err(e) => {
-                    self.log(format!("获取 Intent 失败, 重试: {}", e));
+                    self.log(format!("获取 Intent 失败, 重试: {}", e)).await;
                     self.current = self.current + 1;
                     continue;
                 }
@@ -101,66 +90,66 @@ impl Task {
                 return Ok(());
             }
             if let Ok(intent) = serde_json::to_string(&intent) {
-                self.log(intent);
+                self.log(intent).await;
             }
             let result = toolkit.invoke(intent).await;
             input = format!("<tool_result>{}</tool_result>", result);
-            self.log(&input);
+            self.log(&input).await;
             self.current = self.current + 1;
         }
         let context = "达到最大工作循环限制";
-        self.log(context);
+        self.log(context).await;
         Err(anyhow::anyhow!(context))
     }
 
     async fn preprocess(&self) -> Result<(ExecutorModel, Toolkit)> {
         let planner = match self.get_planner().await {
             Ok(planner) => {
-                self.log("成功获取 Planner");
+                self.log("成功获取 Planner").await;
                 planner
             }
             Err(e) => {
                 let context = format!("无法获取到所需工具说明书: {}", e);
-                self.log(&context);
+                self.log(&context).await;
                 return Err(anyhow::anyhow!(context));
             }
         };
         let tools_list = match planner.get_tools_list(&self.task_description).await {
             Ok(tools_list) => {
-                self.log(format!("成功获取所需工具列表: {:?}", tools_list));
+                self.log(format!("成功获取所需工具列表: {:?}", tools_list)).await;
                 tools_list
             }
             Err(e) => {
                 let context = format!("获取所需工具列表失败: {}", e);
-                self.log(&context);
+                self.log(&context).await;
                 return Err(anyhow::anyhow!(context));
             }
         };
         let Some(tool_names) = tools_list.tools else {
             let context = "工具无法满足任务需求, 无法继续";
-            self.log(context);
+            self.log(context).await;
             return Err(anyhow::anyhow!(context));
         };
         let toolkit = match self.get_toolkit(tool_names).await {
             Ok(manuals) => {
-                self.log("成功获取所需工具箱");
+                self.log("成功获取所需工具箱").await;
                 manuals
             }
             Err(e) => {
                 let context = format!("获取所需工具箱失败: {}", e);
-                self.log(&context);
+                self.log(&context).await;
                 return Err(anyhow::anyhow!(context));
             }
         };
         let executor = match self.get_executor().await {
             Ok(mut executor) => {
                 executor.add_preset(toolkit.get_manuals());
-                self.log("成功获取所需 Executor");
+                self.log("成功获取所需 Executor").await;
                 executor
             }
             Err(e) => {
                 let context = format!("获取所需 Executor 失败: {}", e);
-                self.log(&context);
+                self.log(&context).await;
                 return Err(anyhow::anyhow!(context));
             }
         };
@@ -174,15 +163,8 @@ impl Task {
             .context("发送消息给 Task Service 失败")
     }
 
-    fn log<T: Into<String>>(&self, text: T) {
-        match self.log.lock() {
-            Ok(mut log) => {
-                log.push(text.into());
-            }
-            Err(e) => {
-                warn!("任务 {} 日志失效: {}", self.id, e);
-            }
-        };
+    async fn log<T: Into<String>>(&self, text: T) {
+        let _=self.log_tx.send(TaskLoggerMessage::Log { id: self.id, context: text.into() }).await;
     }
 
     async fn get_planner(&self) -> Result<PlannerModel> {

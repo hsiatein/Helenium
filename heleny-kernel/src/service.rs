@@ -198,7 +198,6 @@ impl Service for KernelService {
 impl KernelService {
     /// 初始化一个列表里的各个服务
     async fn init_services(&mut self, can_init: HashSet<String>) {
-        info!("开始代理启动服务");
         for name in can_init {
             {
                 let mut health = KernelHealth::get_mut(&self.health);
@@ -272,7 +271,6 @@ impl KernelService {
 
     /// 终止一个列表里的各个服务
     async fn stop_services(&mut self, can_stop: HashSet<String>) {
-        info!("开始代理关闭服务");
         for name in can_stop {
             info!("开始代理关闭 {}", name);
             let mut killed = false;

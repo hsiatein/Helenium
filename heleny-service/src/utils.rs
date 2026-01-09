@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use crate::ConfigServiceMessage;
 use crate::FsServiceMessage;
+use crate::HubServiceMessage;
 use crate::KernelServiceMessage;
 use crate::ToolkitServiceMessage;
 use anyhow::Context;
@@ -10,11 +11,14 @@ use anyhow::Result;
 use heleny_bus::endpoint::Endpoint;
 use heleny_proto::CONFIG_SERVICE;
 use heleny_proto::FS_SERVICE;
+use heleny_proto::HUB_SERVICE;
 use heleny_proto::HelenyToolFactory;
 use heleny_proto::KERNEL_SERVICE;
+use heleny_proto::ResourcePayload;
 use heleny_proto::TOOLKIT_SERVICE;
 use serde::de::DeserializeOwned;
 use tokio::sync::oneshot;
+use tokio::sync::watch;
 use tokio::time::timeout;
 
 pub async fn get_from_config_service<T: DeserializeOwned>(endpoint: &Endpoint) -> Result<T> {
@@ -110,4 +114,16 @@ pub async fn register_tool_factory<T: HelenyToolFactory>(endpoint: &Endpoint, fa
             )
             .await;
     });
+}
+
+pub async fn publish_resource<T:Into<String>>(endpoint: &Endpoint, resource_name: T, receiver: watch::Receiver<ResourcePayload>)->Result<()> {
+    endpoint.send(HUB_SERVICE, HubServiceMessage::Publish { resource_name: resource_name.into(), receiver }).await
+}
+
+pub async fn subscribe_resource<T:Into<String>>(endpoint: &Endpoint, resource_name: T)->Result<()> {
+    endpoint.send(HUB_SERVICE, HubServiceMessage::Subscribe { resource_name: resource_name.into() }).await
+}
+
+pub async fn unsubscribe_resource<T:Into<String>>(endpoint: &Endpoint, resource_name: T)->Result<()> {
+    endpoint.send(HUB_SERVICE, HubServiceMessage::Unsubscribe { resource_name: resource_name.into() }).await
 }

@@ -180,6 +180,9 @@ impl FrontendHandler {
                         })
                         .context("更新图片失败")?;
                 }
+                ResourcePayload::TaskAbstract { task_abstracts }=>{
+                    debug!("任务摘要: {:?}",task_abstracts)
+                }
             },
             FrontendMessage::UserDecision(user_decison) => match user_decison {
                 UserDecision::ConsentRequestions(consent_requestions) => {

@@ -3,13 +3,16 @@ use std::collections::HashSet;
 use anyhow::Context;
 use anyhow::Result;
 use heleny_bus::endpoint::Endpoint;
+use heleny_proto::HUB_SERVICE;
 use heleny_proto::Resource;
 use heleny_proto::ResourcePayload;
 use heleny_service::CommonMessage;
+use heleny_service::HubServiceMessage;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use tokio::sync::watch;
 use tokio::task::JoinHandle;
+use tracing::info;
 use tracing::warn;
 
 pub struct Provider {
@@ -38,7 +41,17 @@ impl Provider {
         let handle = tokio::spawn(async move {
             loop {
                 tokio::select! {
-                    _ = worker.receiver.changed() => {
+                    status = worker.receiver.changed() => {
+                        if status.is_err(){
+                            info!("资源 {} 的提供者通道已关闭, 退出转发",worker.resource_name);
+                            worker.endpoint.send(
+                                HUB_SERVICE,
+                                HubServiceMessage::Unpublish {
+                                    resource_name: worker.resource_name.clone(),
+                                },
+                            ).await.ok();
+                            break;
+                        }
                         if let Err(e)=worker.handle().await{
                             warn!("{} 处理时出错: {}",worker.resource_name,e)
                         };
@@ -47,10 +60,12 @@ impl Provider {
                     Some(command) = rx.recv() =>{
                         match command {
                             Command::Add(name)=>{
+                                info!("{} 订阅 {}",name,worker.resource_name);
                                 worker.subscribers.insert(name);
                             }
                             Command::Delete(name)=>{
                                 worker.subscribers.remove(&name);
+                                info!("{} 取消订阅 {}",name,worker.resource_name);
                             }
                             Command::Get(feedback)=>{
                                 let resource=worker.receiver.borrow().to_owned();
@@ -81,6 +96,9 @@ impl Provider {
             .send(Command::Get(feedback))
             .await
             .context("发送失败")
+    }
+    pub fn cancel(&self){
+        self.handle.abort();
     }
 }
 

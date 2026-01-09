@@ -9,18 +9,19 @@ use heleny_proto::AnyMessage;
 use heleny_proto::ConsentRequestion;
 use heleny_proto::DISPLAY_MESSAGES;
 use heleny_proto::HEALTH;
-use heleny_proto::HUB_SERVICE;
 use heleny_proto::KERNEL_NAME;
 use heleny_proto::Resource;
 use heleny_proto::ServiceRole;
+use heleny_proto::TASK_ABSTRACT;
 use heleny_proto::TOTAL_BUS_TRAFFIC;
 use heleny_proto::UserDecision;
 use heleny_service::CommonMessage;
-use heleny_service::HubServiceMessage;
 use heleny_service::KernelMessage;
 use heleny_service::Service;
 use heleny_service::UserServiceMessage;
 use heleny_service::WebuiServiceMessage;
+use heleny_service::subscribe_resource;
+use heleny_service::unsubscribe_resource;
 use tokio::time::Instant;
 use tracing::info;
 use tracing::warn;
@@ -29,6 +30,8 @@ use uuid::Uuid;
 use crate::user::User;
 
 mod user;
+
+static RESOURCES: [&'static str;4] = [DISPLAY_MESSAGES, TOTAL_BUS_TRAFFIC, HEALTH, TASK_ABSTRACT];
 
 #[base_service(deps=["HubService"])]
 pub struct UserService {
@@ -44,30 +47,9 @@ enum _WorkerMessage {}
 impl Service for UserService {
     type MessageType = UserServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>> {
-        endpoint
-            .send(
-                HUB_SERVICE,
-                HubServiceMessage::Subscribe {
-                    resource_name: TOTAL_BUS_TRAFFIC.to_string(),
-                },
-            )
-            .await?;
-        endpoint
-            .send(
-                HUB_SERVICE,
-                HubServiceMessage::Subscribe {
-                    resource_name: DISPLAY_MESSAGES.to_string(),
-                },
-            )
-            .await?;
-        endpoint
-            .send(
-                HUB_SERVICE,
-                HubServiceMessage::Subscribe {
-                    resource_name: HEALTH.to_string(),
-                },
-            )
-            .await?;
+        for resource in RESOURCES {
+            subscribe_resource(&endpoint, resource).await?;
+        }
         let instance = Self {
             endpoint,
             users: Vec::new(),
@@ -136,41 +118,11 @@ impl Service for UserService {
         }
     }
     async fn stop(&mut self) {
-        if let Err(e) = self
-            .endpoint
-            .send(
-                HUB_SERVICE,
-                HubServiceMessage::Unsubscribe {
-                    resource_name: DISPLAY_MESSAGES.to_string(),
-                },
-            )
-            .await
-        {
-            warn!("{} 退订 {} 失败: {}", Self::name(), DISPLAY_MESSAGES, e);
-        }
-        if let Err(e) = self
-            .endpoint
-            .send(
-                HUB_SERVICE,
-                HubServiceMessage::Unsubscribe {
-                    resource_name: TOTAL_BUS_TRAFFIC.to_string(),
-                },
-            )
-            .await
-        {
-            warn!("{} 退订 {} 失败: {}", Self::name(), TOTAL_BUS_TRAFFIC, e);
-        }
-        if let Err(e) = self
-            .endpoint
-            .send(
-                HUB_SERVICE,
-                HubServiceMessage::Unsubscribe {
-                    resource_name: HEALTH.to_string(),
-                },
-            )
-            .await
-        {
-            warn!("{} 退订 {} 失败: {}", Self::name(), HEALTH, e);
+        for resource in RESOURCES {
+            if let Err(e) = unsubscribe_resource(&self.endpoint, resource).await
+            {
+                warn!("{} 退订 {} 失败: {}", Self::name(), resource, e);
+            }
         }
     }
     async fn handle_sub_endpoint(&mut self, _msg: Box<dyn AnyMessage>) -> Result<()> {

@@ -9,15 +9,14 @@ use heleny_macros::base_service;
 use heleny_proto::AnyMessage;
 use heleny_proto::DISPLAY_MESSAGES;
 use heleny_proto::DisplayMessage;
-use heleny_proto::HUB_SERVICE;
 use heleny_proto::MemoryEntry;
 use heleny_proto::Resource;
 use heleny_proto::ResourcePayload;
 use heleny_proto::ServiceRole;
-use heleny_service::HubServiceMessage;
 use heleny_service::MemoryServiceMessage;
 use heleny_service::Service;
 use heleny_service::get_from_config_service;
+use heleny_service::publish_resource;
 use tokio::fs;
 use tokio::sync::watch;
 use tokio::time::Instant;
@@ -57,16 +56,7 @@ impl Service for MemoryService {
             new: true,
             messages: Vec::new(),
         });
-        endpoint
-            .send(
-                HUB_SERVICE,
-                HubServiceMessage::Publish {
-                    provider: Self::name().to_string(),
-                    resource_name: DISPLAY_MESSAGES.to_string(),
-                    receiver: rx,
-                },
-            )
-            .await?;
+        publish_resource(&endpoint, DISPLAY_MESSAGES, rx).await?;
         // 新建实例
         let short_term = VecDeque::with_capacity(config.short_term_length);
         let instance = Self {

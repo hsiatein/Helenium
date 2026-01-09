@@ -3,6 +3,7 @@ pub mod midware;
 
 use anyhow::Context;
 use anyhow::Result;
+use heleny_proto::HUB_SERVICE;
 use heleny_proto::ServiceRole;
 use heleny_proto::SignedMessage;
 use heleny_proto::TokenMessage;
@@ -160,11 +161,14 @@ impl Bus {
             .context("消息携带未知 token, 忽略")?
             .clone();
         let msg = msg.sign(name, role);
-        debug!("已签名: 来源 {} 目标{}", msg.name, msg.target);
+        let source=msg.name.clone();
+        if msg.name==HUB_SERVICE{
+            debug!("已签名: 来源 {} 目标{} 内容{:?}", msg.name, msg.target, msg.payload);
+        }
         let target = msg.target.clone();
         self.send(msg)
             .await
-            .context(format!("发送给 {} 失败", target))?;
+            .context(format!("{} 发送给 {} 失败", source, target))?;
         Ok(())
     }
 

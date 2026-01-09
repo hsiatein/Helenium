@@ -5,9 +5,11 @@ use tokio::sync::watch;
 #[derive(Debug)]
 pub enum HubServiceMessage {
     Publish {
-        provider: String,
         resource_name: String,
         receiver: watch::Receiver<ResourcePayload>,
+    },
+    Unpublish {
+        resource_name: String,
     },
     Subscribe {
         resource_name: String,
