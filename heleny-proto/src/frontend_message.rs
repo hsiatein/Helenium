@@ -23,6 +23,8 @@ pub enum FrontendCommand {
     GetImage { id: i64, path: PathBuf },
     MakeDecision { req_id: Uuid, approval: bool },
     GetConsentRequestions,
+    CancelTask { id: Uuid },
+    ToggleTaskLogs { id: Uuid, expanded: bool },
 }
 
 impl FrontendCommand {

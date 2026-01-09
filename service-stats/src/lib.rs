@@ -65,8 +65,7 @@ impl Service for StatsService {
         }
         Ok(())
     }
-    async fn stop(&mut self) {
-    }
+    async fn stop(&mut self) {}
     async fn handle_sub_endpoint(&mut self, _msg: Box<dyn AnyMessage>) -> Result<()> {
         Ok(())
     }

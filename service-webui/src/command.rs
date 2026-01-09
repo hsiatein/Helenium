@@ -12,6 +12,7 @@ use heleny_proto::KERNEL_NAME;
 use heleny_proto::MEMORY_SERVICE;
 use heleny_proto::Resource;
 use heleny_proto::ResourcePayload;
+use heleny_proto::TASK_SERVICE;
 use heleny_proto::USER_SERVICE;
 use heleny_proto::UserDecision;
 use heleny_proto::WEBUI_SERVICE;
@@ -20,6 +21,7 @@ use heleny_service::FsServiceMessage;
 use heleny_service::HubServiceMessage;
 use heleny_service::KernelMessage;
 use heleny_service::MemoryServiceMessage;
+use heleny_service::TaskServiceMessage;
 use heleny_service::UserServiceMessage;
 use heleny_service::WebuiServiceMessage;
 use tokio::sync::oneshot;
@@ -28,7 +30,7 @@ use uuid::Uuid;
 impl WebuiService {
     pub async fn handle_command(&mut self, session: Uuid, command: FrontendCommand) -> Result<()> {
         match command {
-            FrontendCommand::UserInput(input)=>{
+            FrontendCommand::UserInput(input) => {
                 self.endpoint
                     .send(CHAT_SERVICE, ChatServiceMessage::Chat { message: input })
                     .await
@@ -133,7 +135,51 @@ impl WebuiService {
                     )
                     .await
             }
-            FrontendCommand::Close=>{
+            FrontendCommand::Close => Ok(()),
+            FrontendCommand::CancelTask { id } => {
+                self.endpoint
+                    .send(TASK_SERVICE, TaskServiceMessage::CancelTask { id })
+                    .await
+            }
+            FrontendCommand::ToggleTaskLogs { id, expanded } => {
+                let session_task_logs = match self.session_task_logs.get_mut(&session) {
+                    Some(logs) => logs,
+                    None => return Ok(()),
+                };
+                if expanded {
+                    let endpoint = self.endpoint.create_sender_endpoint();
+                    let handle = tokio::spawn(async move {
+                        let (tx, mut rx) = tokio::sync::mpsc::channel(32);
+                        let _ = endpoint
+                            .send(
+                                TASK_SERVICE,
+                                TaskServiceMessage::SubscribeTaskLogs { id, sender: tx },
+                            )
+                            .await;
+                        while let Some(log) = rx.recv().await {
+                            let _ = endpoint
+                                .send(
+                                    WEBUI_SERVICE,
+                                    WebuiServiceMessage::SendToFrontend {
+                                        session,
+                                        message: FrontendMessage::UpdateResource(Resource {
+                                            name: String::new(),
+                                            payload: ResourcePayload::TaskLogs {
+                                                id,
+                                                logs: log.log,
+                                            },
+                                        }),
+                                    },
+                                )
+                                .await;
+                        }
+                    });
+                    session_task_logs.insert(id, handle);
+                } else {
+                    if let Some(handle) = session_task_logs.remove(&id) {
+                        handle.abort();
+                    }
+                }
                 Ok(())
             }
         }

@@ -8,6 +8,7 @@ import { HelenyButton } from "utils.slint";
 import { ChatView,MessageItem } from "chat.slint";
 import { TerminalView, ServiceHealthItem } from "terminal.slint";
 import { ApprovalsView, ConsentRequestionSlint } from "approvals.slint";
+import { TasksView, TaskItem } from "tasks.slint";
 
 
 export component AppWindow inherits Window {
@@ -32,12 +33,37 @@ export component AppWindow inherits Window {
     in-out property <[ServiceHealthItem]> services_health: [];
     in-out property <[ConsentRequestionSlint]> consent_requestions: [
     ];
+    in-out property <[TaskItem]> tasks: [
+        {
+            id: "7135f2ff-0571-45c8-a7ba-03748c3238a5",
+            task_description: "从交换目录中获取图片文件并发送给用户HT",
+            status: "Success",
+            logs: ["开始扫描交换目录", "找到3个图片文件，准备发送", "全部文件发送完成"],
+            expanded: true,
+        },
+        {
+            id: "b1d2c3d4-1111-2222-3333-abcdefabcdef",
+            task_description: "拉起服务并监控启动日志",
+            status: "Running",
+            logs: ["启动 service-auth", "等待健康检查通过"],
+            expanded: false,
+        },
+        {
+            id: "9988-7766-5544",
+            task_description: "批量同步配置文件",
+            status: "Pending",
+            logs: [],
+            expanded: false,
+        },
+    ];
     in property <image> default_image: @image-url("icons/image_40dp_1F1F1F_FILL0_wght400_GRAD0_opsz40.png");
     in-out property <bool> kernel_shutdown:false;
     callback send(string);
     callback load_more_history([MessageItem]);
     callback shutdown();
     callback make_decision(string,bool);
+    callback cancel_task(string);
+    callback toggle_task_logs(string,bool);
     public function scroll_to_bottom() {
         chat_view.scroll_to_bottom()
     }
@@ -163,6 +189,14 @@ export component AppWindow inherits Window {
                 x_start: root.bus_x_start;
                 x_end: root.bus_x_end;
                 services_health: root.services_health;
+            }
+            TasksView {
+                visible: root.active-tab==3;
+                width: 100%;
+                height: 100%;
+                tasks: root.tasks;
+                cancel(id) => { root.cancel_task(id); }
+                toggle_logs(id,expanded) => { root.toggle_task_logs(id,expanded); }
             }
             ApprovalsView {
                 visible: root.active-tab==4;

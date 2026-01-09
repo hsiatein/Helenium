@@ -17,14 +17,12 @@ use axum::routing::any;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::AnyMessage;
-use heleny_proto::CHAT_SERVICE;
 use heleny_proto::FrontendMessage;
 use heleny_proto::FrontendType;
 use heleny_proto::Resource;
 use heleny_proto::ServiceRole;
 use heleny_proto::USER_SERVICE;
 use heleny_proto::downcast;
-use heleny_service::ChatServiceMessage;
 use heleny_service::Service;
 use heleny_service::UserServiceMessage;
 use heleny_service::WebuiServiceMessage;
@@ -52,6 +50,8 @@ pub struct WebuiService {
     endpoint: Endpoint,
     router: HashMap<Uuid, mpsc::Sender<FrontendMessage>>,
     app_handle: JoinHandle<()>,
+    /// 第一层session id，第二层task id
+    session_task_logs: HashMap<Uuid, HashMap<Uuid, JoinHandle<()>>>,
 }
 
 #[async_trait]
@@ -86,6 +86,7 @@ impl Service for WebuiService {
             endpoint,
             router: HashMap::new(),
             app_handle,
+            session_task_logs: HashMap::new(),
         };
         Ok(Box::new(instance))
     }
@@ -119,11 +120,13 @@ impl Service for WebuiService {
         match payload {
             SessionMessage::Register { sender, feedback } => {
                 self.router.insert(token, sender);
+                self.session_task_logs.insert(token, HashMap::new());
                 let _ = feedback.send(());
                 Ok(())
             }
             SessionMessage::Logout => {
                 self.router.remove(&token);
+                self.session_task_logs.remove(&token);
                 Ok(())
             }
             SessionMessage::UserInput { input } => {

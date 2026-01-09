@@ -21,11 +21,9 @@ pub fn handle_ws(
     let (write_tx, mut write_rx) = mpsc::channel::<FrontendCommand>(32);
     tokio::spawn(async move {
         while let Some(msg) = write_rx.recv().await {
-            let msg= match msg {
-                FrontendCommand::Close=>{
-                    Message::Close(None)
-                }
-                other=>other.into()
+            let msg = match msg {
+                FrontendCommand::Close => Message::Close(None),
+                other => other.into(),
             };
             if let Err(e) = write.send(msg).await {
                 warn!("发送 Message 失败: {}", e)

@@ -97,7 +97,7 @@ impl Provider {
             .await
             .context("发送失败")
     }
-    pub fn cancel(&self){
+    pub fn cancel(&self) {
         self.handle.abort();
     }
 }

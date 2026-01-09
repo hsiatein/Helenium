@@ -21,10 +21,10 @@ async fn main() -> Result<()> {
     let _log_guard = init_tracing("./logs".into());
     let span = info_span!("Frontend");
     let _span_guard = span.enter();
-    let launch_backend=std::env::var("LAUNCH_HELENIUM_BACKEND")?.parse::<bool>()?;
+    let launch_backend = std::env::var("LAUNCH_HELENIUM_BACKEND")?.parse::<bool>()?;
     let handle = if launch_backend {
         Some(launch_webui().await?)
-    }else {
+    } else {
         None
     };
 
@@ -46,19 +46,16 @@ async fn main() -> Result<()> {
         .send(FrontendCommand::GetHistory(1000000000))
         .await
         .unwrap();
-    write_tx
-        .send(FrontendCommand::GetHealth)
-        .await
-        .unwrap();
+    write_tx.send(FrontendCommand::GetHealth).await.unwrap();
     write_tx
         .send(FrontendCommand::GetConsentRequestions)
         .await
         .unwrap();
     ui.run()?;
-    if let Some(handle)=handle {
+    if let Some(handle) = handle {
         let _ = write_tx.send(FrontendCommand::Shutdown).await;
         let _ = handle.await;
-    }else {
+    } else {
         write_tx.send(FrontendCommand::Close).await.unwrap();
     }
     Ok(())

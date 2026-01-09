@@ -17,12 +17,7 @@ pub fn set_callback(ui: &AppWindow, write_tx: &mpsc::Sender<FrontendCommand>) {
     let write_tx_clone = write_tx.clone();
     ui.on_send(move |msg: SharedString| {
         let msg_string = msg.to_string();
-        let tx_inner = write_tx_clone.clone();
-        tokio::spawn(async move {
-            if let Err(e) = tx_inner.send(FrontendCommand::UserInput(msg_string)).await {
-                warn!("消息发送失败: {}", e);
-            }
-        });
+        send(&write_tx_clone, FrontendCommand::UserInput(msg_string));
     });
 
     let write_tx_clone = write_tx.clone();
@@ -32,52 +27,64 @@ pub fn set_callback(ui: &AppWindow, write_tx: &mpsc::Sender<FrontendCommand>) {
             return;
         };
         if id > 0 {
-            let tx_inner = write_tx_clone.clone();
-            tokio::spawn(async move {
-                if let Err(e) = tx_inner.send(FrontendCommand::GetHistory(id).into()).await {
-                    warn!("消息发送失败: {}", e);
-                }
-            });
+            send(&write_tx_clone, FrontendCommand::GetHistory(id));
         };
     });
 
     let write_tx_clone = write_tx.clone();
     ui.on_shutdown(move || {
-        let tx_inner = write_tx_clone.clone();
-        tokio::spawn(async move {
-            if let Err(e) = tx_inner.send(FrontendCommand::Shutdown.into()).await {
-                warn!("消息发送失败: {}", e);
-            }
-        });
+        send(&write_tx_clone, FrontendCommand::Shutdown);
         let _ = slint::quit_event_loop();
     });
 
     let write_tx_clone = write_tx.clone();
     let ui_weak = ui.as_weak();
     ui.on_make_decision(move |id_str, approval| {
-        let id_str = id_str.to_string();
         let id_clone = id_str.clone();
         let _ = ui_weak.upgrade_in_event_loop(move |ui| {
             let mut reqs: Vec<ConsentRequestionSlint> =
                 ui.get_consent_requestions().iter().collect();
-            reqs.retain(|req| req.request_id.as_str() != &id_clone);
+            reqs.retain(|req| req.request_id.as_str() != id_clone.as_str());
             ui.set_consent_requestions(ModelRc::new(VecModel::from(reqs)));
         });
-        let req_id = match Uuid::from_str(&id_str) {
+        let req_id = match Uuid::from_str(id_str.as_str()) {
             Ok(id) => id,
             Err(e) => {
                 warn!("id 字符串转 uuid 失败: {}", e);
                 return;
             }
         };
-        let tx_inner = write_tx_clone.clone();
-        tokio::spawn(async move {
-            if let Err(e) = tx_inner
-                .send(FrontendCommand::MakeDecision { req_id, approval }.into())
-                .await
-            {
-                warn!("消息发送失败: {}", e);
-            }
-        });
+        send(
+            &write_tx_clone,
+            FrontendCommand::MakeDecision { req_id, approval },
+        );
+    });
+
+    let write_tx_clone = write_tx.clone();
+    ui.on_cancel_task(move |id| {
+        let Ok(id) = Uuid::from_str(id.as_str()) else {
+            return;
+        };
+        send(&write_tx_clone, FrontendCommand::CancelTask { id });
+    });
+
+    let write_tx_clone = write_tx.clone();
+    ui.on_toggle_task_logs(move |id, expanded| {
+        let Ok(id) = Uuid::from_str(id.as_str()) else {
+            return;
+        };
+        send(
+            &write_tx_clone,
+            FrontendCommand::ToggleTaskLogs { id, expanded },
+        );
+    });
+}
+
+fn send(write_tx_clone: &mpsc::Sender<FrontendCommand>, cmd: FrontendCommand) {
+    let tx_inner = write_tx_clone.clone();
+    tokio::spawn(async move {
+        if let Err(e) = tx_inner.send(cmd.into()).await {
+            warn!("消息发送失败: {}", e);
+        }
     });
 }

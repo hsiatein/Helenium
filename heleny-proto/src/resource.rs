@@ -42,6 +42,10 @@ pub enum ResourcePayload {
         base64: String,
     },
     TaskAbstract {
-        task_abstracts:Vec<TaskAbstract>,
-    }
+        task_abstracts: Vec<TaskAbstract>,
+    },
+    TaskLogs {
+        id: uuid::Uuid,
+        logs: Vec<String>,
+    },
 }

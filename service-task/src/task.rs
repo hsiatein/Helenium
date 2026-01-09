@@ -116,7 +116,8 @@ impl Task {
         };
         let tools_list = match planner.get_tools_list(&self.task_description).await {
             Ok(tools_list) => {
-                self.log(format!("成功获取所需工具列表: {:?}", tools_list)).await;
+                self.log(format!("成功获取所需工具列表: {:?}", tools_list))
+                    .await;
                 tools_list
             }
             Err(e) => {
@@ -164,7 +165,13 @@ impl Task {
     }
 
     async fn log<T: Into<String>>(&self, text: T) {
-        let _=self.log_tx.send(TaskLoggerMessage::Log { id: self.id, context: text.into() }).await;
+        let _ = self
+            .log_tx
+            .send(TaskLoggerMessage::Log {
+                id: self.id,
+                context: text.into(),
+            })
+            .await;
     }
 
     async fn get_planner(&self) -> Result<PlannerModel> {

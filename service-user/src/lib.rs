@@ -31,7 +31,7 @@ use crate::user::User;
 
 mod user;
 
-static RESOURCES: [&'static str;4] = [DISPLAY_MESSAGES, TOTAL_BUS_TRAFFIC, HEALTH, TASK_ABSTRACT];
+static RESOURCES: [&'static str; 4] = [DISPLAY_MESSAGES, TOTAL_BUS_TRAFFIC, HEALTH, TASK_ABSTRACT];
 
 #[base_service(deps=["HubService"])]
 pub struct UserService {
@@ -119,8 +119,7 @@ impl Service for UserService {
     }
     async fn stop(&mut self) {
         for resource in RESOURCES {
-            if let Err(e) = unsubscribe_resource(&self.endpoint, resource).await
-            {
+            if let Err(e) = unsubscribe_resource(&self.endpoint, resource).await {
                 warn!("{} 退订 {} 失败: {}", Self::name(), resource, e);
             }
         }

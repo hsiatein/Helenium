@@ -159,7 +159,7 @@ impl Bus {
             .context("消息携带未知 token, 忽略")?
             .clone();
         let msg = msg.sign(name, role);
-        let source=msg.name.clone();
+        let source = msg.name.clone();
         // if msg.name==heleny_proto::HUB_SERVICE{
         //     tracing::debug!("已签名: 来源 {} 目标{} 内容{:?}", msg.name, msg.target, msg.payload);
         // }

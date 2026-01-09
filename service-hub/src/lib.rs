@@ -53,9 +53,7 @@ impl Service for HubService {
                 resource_name,
                 receiver,
             } => match self.providers.get_mut(&resource_name) {
-                Some(provider) if provider.name != name => {
-                    Err(anyhow::anyhow!("已经有服务注册了"))
-                }
+                Some(provider) if provider.name != name => Err(anyhow::anyhow!("已经有服务注册了")),
                 _ => {
                     let endpoint = self.endpoint.create_sender_endpoint();
                     let subsribers = match self.pending.remove(&resource_name) {
@@ -64,26 +62,22 @@ impl Service for HubService {
                     };
                     self.providers.insert(
                         resource_name.clone(),
-                        Provider::new(
-                            name,
-                            resource_name.clone(),
-                            endpoint,
-                            receiver,
-                            subsribers,
-                        )?,
+                        Provider::new(name, resource_name.clone(), endpoint, receiver, subsribers)?,
                     );
                     info!("{} 已发布", resource_name);
                     Ok(())
                 }
             },
-            HubServiceMessage::Unpublish { resource_name } =>{
-                let provider=self.providers.remove(&resource_name).context("没有这个资源")?;
-                if name==HUB_SERVICE {
+            HubServiceMessage::Unpublish { resource_name } => {
+                let provider = self
+                    .providers
+                    .remove(&resource_name)
+                    .context("没有这个资源")?;
+                if name == HUB_SERVICE {
                     provider.cancel();
-                    info!("取消发布资源 {}",resource_name);
+                    info!("取消发布资源 {}", resource_name);
                     Ok(())
-                }
-                else {
+                } else {
                     self.providers.insert(resource_name, provider);
                     Err(anyhow::anyhow!("不能取消发布其他服务的资源"))
                 }
@@ -92,7 +86,7 @@ impl Service for HubService {
                 match self.providers.get_mut(&resource_name) {
                     Some(provider) => provider.subscribe(name).await,
                     None => {
-                        info!("{} 订阅 {}",name,resource_name);
+                        info!("{} 订阅 {}", name, resource_name);
                         self.pending
                             .entry(resource_name)
                             .or_insert(HashSet::new())

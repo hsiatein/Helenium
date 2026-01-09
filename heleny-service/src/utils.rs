@@ -116,14 +116,46 @@ pub async fn register_tool_factory<T: HelenyToolFactory>(endpoint: &Endpoint, fa
     });
 }
 
-pub async fn publish_resource<T:Into<String>>(endpoint: &Endpoint, resource_name: T, receiver: watch::Receiver<ResourcePayload>)->Result<()> {
-    endpoint.send(HUB_SERVICE, HubServiceMessage::Publish { resource_name: resource_name.into(), receiver }).await
+pub async fn publish_resource<T: Into<String>>(
+    endpoint: &Endpoint,
+    resource_name: T,
+    receiver: watch::Receiver<ResourcePayload>,
+) -> Result<()> {
+    endpoint
+        .send(
+            HUB_SERVICE,
+            HubServiceMessage::Publish {
+                resource_name: resource_name.into(),
+                receiver,
+            },
+        )
+        .await
 }
 
-pub async fn subscribe_resource<T:Into<String>>(endpoint: &Endpoint, resource_name: T)->Result<()> {
-    endpoint.send(HUB_SERVICE, HubServiceMessage::Subscribe { resource_name: resource_name.into() }).await
+pub async fn subscribe_resource<T: Into<String>>(
+    endpoint: &Endpoint,
+    resource_name: T,
+) -> Result<()> {
+    endpoint
+        .send(
+            HUB_SERVICE,
+            HubServiceMessage::Subscribe {
+                resource_name: resource_name.into(),
+            },
+        )
+        .await
 }
 
-pub async fn unsubscribe_resource<T:Into<String>>(endpoint: &Endpoint, resource_name: T)->Result<()> {
-    endpoint.send(HUB_SERVICE, HubServiceMessage::Unsubscribe { resource_name: resource_name.into() }).await
+pub async fn unsubscribe_resource<T: Into<String>>(
+    endpoint: &Endpoint,
+    resource_name: T,
+) -> Result<()> {
+    endpoint
+        .send(
+            HUB_SERVICE,
+            HubServiceMessage::Unsubscribe {
+                resource_name: resource_name.into(),
+            },
+        )
+        .await
 }
