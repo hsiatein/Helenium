@@ -32,7 +32,7 @@ mod tool;
 #[base_service(deps=["ConfigService"])]
 pub struct FsService {
     endpoint: Endpoint,
-    temp_dir: PathBuf,
+    _temp_dir: PathBuf,
     cache: HashMap<PathBuf, CacheEntry>,
 }
 
@@ -44,12 +44,12 @@ impl Service for FsService {
         tokio::fs::create_dir_all(&config.exchange_dir).await?;
         let exchange_dir = tokio::fs::canonicalize(&config.exchange_dir).await?;
         tokio::fs::create_dir_all(&config.temp_dir).await?;
-        let temp_dir = tokio::fs::canonicalize(&config.temp_dir).await?;
+        let _temp_dir = tokio::fs::canonicalize(&config.temp_dir).await?;
         let factory = FsToolFactory::new(endpoint.create_sender_endpoint(), exchange_dir);
         register_tool_factory(&endpoint, factory).await;
         let instance = Self {
             endpoint,
-            temp_dir,
+            _temp_dir,
             cache: HashMap::new(),
         };
         Ok(Box::new(instance))

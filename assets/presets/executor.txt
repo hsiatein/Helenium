@@ -20,7 +20,8 @@
                     "name":"command",
                     "description":"要执行的shell命令",
                     "type":"string",
-                    "required":true
+                    "required":true,
+                    "default": null
                 }
             ]
         }
@@ -29,7 +30,8 @@
 - name为工具名
 - commands.name为命令名
 - commands.args.name为参数名
-- commands.args.type为参数类型，可以是string或integer或number或bool，即使参数类型是integer或number或bool，也需要用""来包裹，如"42"，"3.3"，"true"，"false"
+- commands.args.type为参数类型，可以是string或integer或number或boolean或array，即使参数类型是integer或number或boolean或array，也需要用""来包裹，如"42"，"3.3"，"true"，"false"，"[1,2]"，"[\"a\",\"b\"]"
+- commands.args.default为不提供参数时，本参数的默认值
 
 ---
 
@@ -69,7 +71,7 @@
    - 每个参数对象：{ "name": "参数名", "value": "参数值" }。
    - 必为数组（即使为空）。
    - 仅可使用系统提供的参数定义，禁止自创参数。
-   - 如果参数类型是integer或number或bool，也需要用""来包裹，如"42"，"3.3"，"true"，"false"。
+   - 如果参数类型是integer或number或boolean，也需要用""来包裹，如"42"，"3.3"，"true"，"false"。
 
 ---
 

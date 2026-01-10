@@ -16,7 +16,8 @@
                     "name": "path",
                     "description": "文件路径，相对于交换目录",
                     "type": "string",
-                    "required": true
+                    "required": true,
+                    "default": null
                 }
             ]
         },
@@ -28,7 +29,8 @@
                     "name": "path",
                     "description": "图片路径，路径相对于交换目录",
                     "type": "string",
-                    "required": true
+                    "required": true,
+                    "default": null
                 }
             ]
         }

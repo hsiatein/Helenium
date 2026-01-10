@@ -20,7 +20,6 @@ tracing = { workspace = true }
 chrono = {workspace = true}
 service_fs ={ path = "../service-fs"}
 service_auth ={ path = "../service-auth"}
-service_bridge ={ path = "../service-bridge"}
 service_stats ={ path = "../service-stats"}
 service_user ={ path = "../service-user"}
 service_hub ={ path = "../service-hub"}
@@ -30,3 +29,4 @@ service_memory ={ path = "../service-memory"}
 service_task ={ path = "../service-task"}
 service_toolkit ={ path = "../service-toolkit"}
 service_test ={ path = "../service-test"}
+service_schedule ={ path = "../service-schedule"}

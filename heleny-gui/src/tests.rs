@@ -23,7 +23,7 @@ fn test_base64() {
 
     let rgba = img2.to_rgba8();
     let (w, h) = rgba.dimensions();
-    let slint_img = slint::Image::from_rgba8(SharedPixelBuffer::<Rgba8Pixel>::clone_from_slice(
+    let _ = slint::Image::from_rgba8(SharedPixelBuffer::<Rgba8Pixel>::clone_from_slice(
         rgba.as_raw(),
         w,
         h,

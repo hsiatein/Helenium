@@ -18,8 +18,6 @@ mod hub_service_message;
 pub use hub_service_message::*;
 mod fs_service_message;
 pub use fs_service_message::*;
-mod bridge_service_message;
-pub use bridge_service_message::*;
 mod webui_service_message;
 pub use webui_service_message::*;
 mod chat_service_message;
@@ -33,3 +31,6 @@ pub use toolkit_service_message::*;
 
 mod test_service_message;
 pub use test_service_message::*;
+
+mod schedule_service_message;
+pub use schedule_service_message::*;

@@ -2323,12 +2323,12 @@ dependencies = [
  "serde",
  "serde_json",
  "service_auth",
- "service_bridge",
  "service_chat",
  "service_config",
  "service_fs",
  "service_hub",
  "service_memory",
+ "service_schedule",
  "service_stats",
  "service_task",
  "service_test",
@@ -5241,21 +5241,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "service_bridge"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "heleny_bus",
- "heleny_macros",
- "heleny_proto",
- "heleny_service",
- "inventory",
- "tokio",
- "tracing",
-]
-
-[[package]]
 name = "service_chat"
 version = "0.1.0"
 dependencies = [
@@ -5347,6 +5332,23 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "service_schedule"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "heleny_bus",
+ "heleny_macros",
+ "heleny_proto",
+ "heleny_service",
+ "inventory",
+ "serde",
+ "serde_json",
  "tokio",
  "tracing",
 ]
