@@ -45,18 +45,18 @@ async fn main() -> Result<()> {
     write_tx
         .send(FrontendCommand::GetHistory(1000000000))
         .await
-        .unwrap();
-    write_tx.send(FrontendCommand::GetHealth).await.unwrap();
+        ?;
+    write_tx.send(FrontendCommand::GetHealth).await?;
     write_tx
         .send(FrontendCommand::GetConsentRequestions)
         .await
-        .unwrap();
+        ?;
     ui.run()?;
     if let Some(handle) = handle {
         let _ = write_tx.send(FrontendCommand::Shutdown).await;
         let _ = handle.await;
     } else {
-        write_tx.send(FrontendCommand::Close).await.unwrap();
+        write_tx.send(FrontendCommand::Close).await?;
     }
     Ok(())
 }

@@ -9,7 +9,7 @@ use anyhow::Result;
 use heleny_proto::Resource;
 
 
-#[base_service(deps=[])]
+#[base_service(deps=["TaskService"])]
 pub struct ScheduleService{
     endpoint:Endpoint,
 }

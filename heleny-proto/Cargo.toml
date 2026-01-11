@@ -16,3 +16,4 @@ async-trait = {workspace = true}
 heleny_macros = {path = "../heleny-macros"}
 tungstenite = {workspace = true}
 image = {workspace = true}
+itertools = {workspace = true}
