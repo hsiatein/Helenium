@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
-use chrono::{DateTime, Datelike, Days, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta, TimeZone, Utc};
+use chrono::{DateTime, Datelike, Days, FixedOffset, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta, TimeZone, Utc};
 use itertools::iproduct;
-use tracing::warn;
 use uuid::Uuid;
 
 
@@ -449,7 +448,7 @@ mod tests {
             next_trigger: Some(now - TimeDelta::minutes(1)),
         };
         assert!(task.ready());
-        task.update_next_trigger();
+        task.update_next_trigger().unwrap();
         let far_future = now + TimeDelta::minutes(60);
         assert!(task.next_trigger.unwrap() < far_future);
         task.next_trigger = Some(now + TimeDelta::minutes(1));
