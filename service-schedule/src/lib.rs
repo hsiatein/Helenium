@@ -62,10 +62,11 @@ impl Service for ScheduleService {
         let schedule_path = PathBuf::from(config.schedule_dir).join("schedule.json");
         let offset = FixedOffset::east_opt(config.offset).context("获取 offset 失败")?;
         let schedule_str = read_via_fs_service(&endpoint, &schedule_path).await;
-        let schedule: HashMap<Uuid, ScheduledTask> = match schedule_str {
+        let mut schedule: HashMap<Uuid, ScheduledTask> = match schedule_str {
             Ok(str) => serde_json::from_str(&str)?,
             Err(_) => HashMap::new(),
         };
+        schedule.values_mut().for_each(|task| task.update_next_trigger());
         // 向工具服务注册
         let factory = ScheduleToolFactory::new(endpoint.create_sender_endpoint(), config.offset);
         register_tool_factory(&endpoint, factory).await;
@@ -75,7 +76,7 @@ impl Service for ScheduleService {
         });
         publish_resource(&endpoint, SCHEDULE, rx).await?;
         // 实例化
-        let instance = Self {
+        let mut instance = Self {
             endpoint,
             offset,
             scheduled_tasks: schedule,
@@ -83,6 +84,7 @@ impl Service for ScheduleService {
             schedule_path,
             schedule_tx: tx,
         };
+        instance.find_next_trigger();
         Ok(Box::new(instance))
     }
     async fn handle(
@@ -95,7 +97,7 @@ impl Service for ScheduleService {
             ScheduleServiceMessage::AddTask { mut task } => {
                 task.update_next_trigger();
                 self.scheduled_tasks.insert(Uuid::new_v4(), task);
-                self.find_next_trigger()?;
+                self.find_next_trigger();
                 self.persist().await
             }
             ScheduleServiceMessage::ListTask { feedback } => {
@@ -105,7 +107,7 @@ impl Service for ScheduleService {
             ScheduleServiceMessage::CancelTask { id } => {
                 let elem = self.scheduled_tasks.remove(&id);
                 if elem.is_some() {
-                    self.find_next_trigger()?;
+                    self.find_next_trigger();
                     self.persist().await
                 } else {
                     Ok(())
@@ -134,7 +136,7 @@ impl Service for ScheduleService {
                         task.update_next_trigger();
                     }
                 }
-                self.find_next_trigger()?;
+                self.find_next_trigger();
                 self.persist().await
             }
         }
@@ -176,7 +178,7 @@ impl ScheduleService {
         Ok(())
     }
     /// 不会更新每个任务的下次时间，清除给不出下次时间的任务，开一个任务提醒服务
-    fn find_next_trigger(&mut self) -> Result<()> {
+    fn find_next_trigger(&mut self) {
         let mut next = None;
         self.scheduled_tasks
             .retain(|id, task| match task.next_trigger {
@@ -196,10 +198,10 @@ impl ScheduleService {
                 }
             });
         let Some(next) = next else {
-            return Ok(());
+            return ;
         };
         let offset = self.offset;
-        let endpoint = self.endpoint.create_sub_endpoint()?;
+        let endpoint = self.endpoint.create_sub_endpoint().expect("服务创建sub endpoint必须成功");
         let handle = tokio::spawn(async move {
             let millis = (next - Utc::now().with_timezone(&offset))
                 .num_milliseconds()
@@ -211,6 +213,5 @@ impl ScheduleService {
             handle.abort();
         }
         self.notifier = Some(handle);
-        Ok(())
     }
 }
