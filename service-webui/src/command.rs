@@ -7,23 +7,23 @@ use heleny_proto::FS_SERVICE;
 use heleny_proto::FrontendCommand;
 use heleny_proto::FrontendMessage;
 use heleny_proto::HEALTH;
-use heleny_proto::HUB_SERVICE;
 use heleny_proto::KERNEL_NAME;
 use heleny_proto::MEMORY_SERVICE;
 use heleny_proto::Resource;
 use heleny_proto::ResourcePayload;
+use heleny_proto::SCHEDULE;
 use heleny_proto::TASK_SERVICE;
 use heleny_proto::USER_SERVICE;
 use heleny_proto::UserDecision;
 use heleny_proto::WEBUI_SERVICE;
 use heleny_service::ChatServiceMessage;
 use heleny_service::FsServiceMessage;
-use heleny_service::HubServiceMessage;
 use heleny_service::KernelMessage;
 use heleny_service::MemoryServiceMessage;
 use heleny_service::TaskServiceMessage;
 use heleny_service::UserServiceMessage;
 use heleny_service::WebuiServiceMessage;
+use heleny_service::get_resource;
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
@@ -60,17 +60,7 @@ impl WebuiService {
                 .await
             }
             FrontendCommand::GetHealth => {
-                let (tx, rx) = oneshot::channel();
-                self.endpoint
-                    .send(
-                        HUB_SERVICE,
-                        HubServiceMessage::Get {
-                            resource_name: HEALTH.to_string(),
-                            feedback: tx,
-                        },
-                    )
-                    .await?;
-                let health = rx.await?;
+                let health=get_resource(&self.endpoint, HEALTH).await?;
                 self.send_to_session(
                     session,
                     FrontendMessage::UpdateResource(Resource {
@@ -181,6 +171,10 @@ impl WebuiService {
                     }
                 }
                 Ok(())
+            }
+            FrontendCommand::GetSchedule=>{
+                let resource=get_resource(&self.endpoint, SCHEDULE).await?;
+                self.send_to_session(session, FrontendMessage::UpdateResource(Resource { name: "".into(), payload: resource })).await
             }
         }
     }

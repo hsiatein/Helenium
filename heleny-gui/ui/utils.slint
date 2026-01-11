@@ -51,3 +51,28 @@ export component HelenyButton inherits Rectangle {
         }
     ]
 }
+
+export component CircleId inherits Rectangle {
+    in property <string> text: "ID";
+
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    background: #dbe6ff;
+    border-color: #7fb5ff;
+    border-width: 1px;
+    clip: true;
+
+    HorizontalLayout {
+        alignment: LayoutAlignment.center;
+        padding: 6px;
+        Text {
+            text: root.text;
+            font-size: 13px;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+            wrap: word-wrap;
+            overflow: elide;
+        }
+    }
+}

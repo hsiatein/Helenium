@@ -156,11 +156,19 @@ export component AppWindow inherits Window {
                     }
 
                     HelenyButton {
+                        text: "工具";
+                        height: 4%;
+                        icon: @image-url("icons/home_repair_service_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                        btn-color: root.active-tab == 5 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 5; }
+                    }
+
+                    HelenyButton {
                         text: "设置";
                         height: 4%;
                         icon: @image-url("icons/settings_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
-                        btn-color: root.active-tab == 5 ? #7fb5ff : #9ec8ff;
-                        clicked => { root.active-tab = 5; }
+                        btn-color: root.active-tab == 6 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 6; }
                     }
 
                     HelenyButton {
@@ -180,9 +188,7 @@ export component AppWindow inherits Window {
                 load_more_history => {root.load_more_history(root.chat_model)};
             }
             
-            Rectangle{
-                visible: root.active-tab==1;
-            }
+            
             TerminalView {
                 visible: root.active-tab==2;
                 bus_stats_chart: root.bus_stats_chart;

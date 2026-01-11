@@ -1,10 +1,10 @@
-heleny-gui\src\lib.rs的ResourcePayload::TaskAbstract { task_abstracts }=>{
-                    debug!("任务摘要: {:?}",task_abstracts)
-                }部分会收到形如这样的任务摘要，
-[TaskAbstract { id: 7135f2ff-0571-45c8-a7ba-03748c3238a5, task_description: "从交换目录中获取图片文件并发送给用户HT", status: Success }]
+heleny-gui\src\handle_resource.rs的ResourcePayload::Schedule { schedule } => {
+                debug!("ResourcePayload::Schedule: {:?}", schedule);
+            }部分会收到形如这样的日程，
+{22737e10-0af2-4c79-8d37-a92be0755bfd: ScheduledTask { description: "去爬山", triggers: [Once { time: 2028-01-01T09:00:00+08:00 }], offset: 28800, next_trigger: Some(2028-01-01T09:00:00+08:00) }}
 
 注意，你只负责slint的ui设计，rust的具体实现由我完成！
-在heleny-gui/ui/tasks.slint里设计其ui，对应root.active-tab = 3; 的情况，要求：
-1.足够圆角，id展示要包在圆圈里, status展示要包在颜色胶囊里，Success绿色，Fail红色，Running蓝色，Pending灰色，Canceled黄色。
-2.每一条任务都要有1个按钮，用来取消任务，接受任务id为参数。
-3.然后每个任务都要预留Vec<String>用来装任务日志，默认不显示日志只显示task_description，但是任务词条本身要可以点击，接受任务id为参数，用来切换“下拉显示日志/收回不显示日志”。搞完生成一些slint里面的例子给我用来测试ui布局。
+在heleny-gui\ui\schedule.slint里设计其ui，对应heleny-gui\ui\app.slint里面root.active-tab = 1; 的情况，要求：
+1.足够圆角，id和description的展示布局类似task.slint，要展示下一次触发时间，位置就放id和description的下面，触发时间气泡的上面
+2.然后列出各个触发时间，要包在胶囊里，时间要用方便的形式，比方Once { time: 2028-01-01T09:00:00+08:00 }就展示成“单次 2028-01-01 09:00:00”，其他几个展示形如“间隔 30 分钟，锚点 2026-01-01 09:00:00”，“每周一 11:00:00”，“每月 25 日 13:00:00”，“每日 08:00:00”。
+3.每一条任务都要有1个按钮，用来取消日程，接受任务id为参数。

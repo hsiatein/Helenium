@@ -140,6 +140,11 @@ impl Service for ScheduleService {
         }
     }
     async fn handle_tick(&mut self, _tick: Instant) -> Result<()> {
+        if let Err(e) = self.schedule_tx.send(ResourcePayload::Schedule {
+            schedule: self.scheduled_tasks.clone(),
+        }) {
+            warn!("推送 Schedule 资源失败: {}", e);
+        };
         Ok(())
     }
     async fn handle_resource(&mut self, _resource: Resource) -> Result<()> {
