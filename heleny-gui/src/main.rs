@@ -44,13 +44,11 @@ async fn main() -> Result<()> {
     // 启动 UI
     write_tx
         .send(FrontendCommand::GetHistory(1000000000))
-        .await
-        ?;
+        .await?;
     write_tx.send(FrontendCommand::GetHealth).await?;
     write_tx
         .send(FrontendCommand::GetConsentRequestions)
-        .await
-        ?;
+        .await?;
     ui.run()?;
     if let Some(handle) = handle {
         let _ = write_tx.send(FrontendCommand::Shutdown).await;

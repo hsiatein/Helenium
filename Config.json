@@ -65,5 +65,9 @@
     "TaskService":{
         "max_running_tasks":10,
         "max_working_loop":100
+    },
+    "ScheduleService":{
+        "schedule_dir":"./storage",
+        "offset":28800
     }
 }

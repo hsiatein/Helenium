@@ -1,11 +1,14 @@
+use std::collections::HashMap;
 use std::collections::VecDeque;
 
 use chrono::DateTime;
 use chrono::Local;
 use serde::Deserialize;
 use serde::Serialize;
+use uuid::Uuid;
 
 use crate::KernelHealth;
+use crate::ScheduledTask;
 use crate::TaskAbstract;
 use crate::memory::DisplayMessage;
 
@@ -28,6 +31,7 @@ pub static TOTAL_BUS_TRAFFIC: &'static str = "TotalBusTraffic";
 pub static DISPLAY_MESSAGES: &'static str = "DisplayMessages";
 pub static HEALTH: &'static str = "Health";
 pub static TASK_ABSTRACT: &'static str = "TaskAbstract";
+pub static SCHEDULE: &'static str = "Schedule";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ResourcePayload {
@@ -47,5 +51,8 @@ pub enum ResourcePayload {
     TaskLogs {
         id: uuid::Uuid,
         logs: Vec<String>,
+    },
+    Schedule {
+        schedule: HashMap<Uuid, ScheduledTask>,
     },
 }

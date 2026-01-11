@@ -115,11 +115,11 @@ impl Service for TaskService {
                     .is_some()
                 {
                     self.pending_tasks.retain(|task| task.id != id);
-                    let _ = self.task_logs.set_status(id, TaskStatus::Canceled).await;
+                    self.task_logs.set_status(id, TaskStatus::Canceled).await?;
                 }
             }
             TaskServiceMessage::SubscribeTaskLogs { id, sender } => {
-                let _ = self.task_logs.subscribe(id, sender).await;
+                self.task_logs.subscribe(id, sender).await?;
             }
         }
         Ok(())

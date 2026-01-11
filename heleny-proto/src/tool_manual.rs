@@ -28,7 +28,7 @@ pub struct Argument {
     #[serde(rename = "type")] // 因为 type 是 Rust 关键字，需要重命名
     pub arg_type: String,
     pub required: bool,
-    pub default: String,
+    pub default: Option<String>,
 }
 
 impl ToolManual {

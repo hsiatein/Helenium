@@ -20,6 +20,7 @@ use heleny_service::publish_resource;
 use tokio::fs;
 use tokio::sync::watch;
 use tokio::time::Instant;
+use tracing::debug;
 use tracing::info;
 
 use crate::config::MemoryConfig;
@@ -58,7 +59,15 @@ impl Service for MemoryService {
         });
         publish_resource(&endpoint, DISPLAY_MESSAGES, rx).await?;
         // 新建实例
-        let short_term = VecDeque::with_capacity(config.short_term_length);
+        let mut short_term = VecDeque::with_capacity(config.short_term_length);
+        let _short_term = memory_db
+            .get_chat_messages(config.short_term_length as i64)
+            .await?;
+        short_term.extend(_short_term);
+        debug!(
+            "短期记忆: {:?}，长度: {}",
+            short_term, config.short_term_length as i64
+        );
         let instance = Self {
             endpoint,
             config,

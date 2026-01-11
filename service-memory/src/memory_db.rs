@@ -1,5 +1,4 @@
 use anyhow::Result;
-use async_openai::types::chat::ChatCompletionRequestMessage;
 use chrono::DateTime;
 use chrono::Local;
 use heleny_proto::ChatRole;
@@ -69,10 +68,8 @@ impl MemoryDb {
         Ok(result.last_insert_rowid())
     }
 
-    pub async fn _get_chat_messages(
-        &self,
-        n: i64,
-    ) -> anyhow::Result<Vec<ChatCompletionRequestMessage>> {
+    /// 旧->新
+    pub async fn get_chat_messages(&self, n: i64) -> anyhow::Result<Vec<MemoryEntry>> {
         // 1. 执行查询
         // 使用 DESC 排序获取物理上最后存入的 n 条
         let rows = sqlx::query("SELECT role, time, content FROM memories ORDER BY id DESC LIMIT ?")
@@ -95,14 +92,11 @@ impl MemoryDb {
             // 还原 ChatRole (假设你实现了从 String 到 Enum 的转换，或者简单匹配)
             let role = ChatRole::from(&role_str);
 
-            entries.push(
-                MemoryEntry {
-                    role,
-                    time,
-                    content,
-                }
-                .to_chat_message()?,
-            );
+            entries.push(MemoryEntry {
+                role,
+                time,
+                content,
+            });
         }
         entries.reverse();
 

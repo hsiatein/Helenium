@@ -221,6 +221,9 @@ impl FrontendHandler {
                     ui.set_tasks(ModelRc::new(slint::VecModel::from(tasks)));
                 });
             }
+            ResourcePayload::Schedule { schedule } => {
+                debug!("ResourcePayload::Schedule: {:?}", schedule);
+            }
         }
         Ok(())
     }

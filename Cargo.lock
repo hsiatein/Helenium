@@ -5343,6 +5343,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "chrono",
  "heleny_bus",
  "heleny_macros",
  "heleny_proto",
@@ -5352,6 +5353,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
+ "uuid",
 ]
 
 [[package]]

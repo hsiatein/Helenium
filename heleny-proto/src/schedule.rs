@@ -1,13 +1,25 @@
-use anyhow::{Context, Result};
-use chrono::{DateTime, Datelike, Days, FixedOffset, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta, TimeZone, Utc};
+use std::time::Duration;
+
+use anyhow::Context;
+use anyhow::Result;
+use chrono::DateTime;
+use chrono::Datelike;
+use chrono::Days;
+use chrono::FixedOffset;
+use chrono::NaiveDate;
+use chrono::NaiveDateTime;
+use chrono::NaiveTime;
+use chrono::TimeDelta;
+use chrono::TimeZone;
+use chrono::Utc;
 use itertools::iproduct;
-use uuid::Uuid;
+use serde::Deserialize;
+use serde::Serialize;
 
-
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TriggerTime {
     Once {
-        time:DateTime<FixedOffset>
+        time: DateTime<FixedOffset>,
     },
     Interval {
         anchor: DateTime<FixedOffset>,
@@ -27,79 +39,116 @@ pub enum TriggerTime {
 }
 
 impl TriggerTime {
-    pub fn from_once(rfc3339_str: &str)->Result<Vec<TriggerTime>>{
-        let strs=rfc3339_str.split(",").collect::<Vec<&str>>();
-        let triggers=strs.iter().filter_map(|str| DateTime::parse_from_rfc3339(str).ok()).map(|time| TriggerTime::Once { time }).collect::<Vec<TriggerTime>>();
-        if strs.len()!=triggers.len(){
+    pub fn from_once(rfc3339_str: &str) -> Result<Vec<TriggerTime>> {
+        let strs = rfc3339_str.split(",").collect::<Vec<&str>>();
+        let triggers = strs
+            .iter()
+            .filter_map(|str| DateTime::parse_from_rfc3339(str).ok())
+            .map(|time| TriggerTime::Once { time })
+            .collect::<Vec<TriggerTime>>();
+        if strs.len() != triggers.len() {
             Err(anyhow::anyhow!("RFC3339 时间格式错误"))
-        }
-        else {
+        } else {
             Ok(triggers)
         }
     }
 
-    pub fn from_interval(interval_str:&str,offset:&FixedOffset)->Result<TriggerTime>{
-        let interval_minutes: u64 = interval_str.parse().context("Interval 字段格式错误，应为正整数")?;
+    pub fn from_interval(interval_str: &str, offset: &FixedOffset) -> Result<TriggerTime> {
+        let interval_minutes: u64 = interval_str
+            .parse()
+            .context("Interval 字段格式错误，应为正整数")?;
         if interval_minutes == 0 {
             anyhow::bail!("Interval 必须 >= 1 分钟");
         }
-        let anchor=Utc::now().with_timezone(offset);
-        let interval=TriggerTime::Interval {
+        let anchor = Utc::now().with_timezone(offset);
+        let interval = TriggerTime::Interval {
             anchor,
             interval_minutes,
         };
         Ok(interval)
     }
 
-    pub fn from_cron(cron_str:&str)->Result<Vec<TriggerTime>>{
-        let fields:Vec<&str> = cron_str.split_whitespace().collect();
-        if fields.len()!=5 {
+    pub fn from_cron(cron_str: &str) -> Result<Vec<TriggerTime>> {
+        let fields: Vec<&str> = cron_str.split_whitespace().collect();
+        if fields.len() != 5 {
             return Err(anyhow::anyhow!("Cron 表达式格式错误，应为 5 个字段"));
         }
-        let raw_minutes:Vec<&str>=fields.get(0).context("minute 获取失败")?.split(",").collect();
-        let minutes:Vec<u32>=raw_minutes.iter().filter_map(|str| str.parse().ok()).collect();
-        if raw_minutes.len()!=minutes.len() {
+        let raw_minutes: Vec<&str> = fields
+            .get(0)
+            .context("minute 获取失败")?
+            .split(",")
+            .collect();
+        let minutes: Vec<u32> = raw_minutes
+            .iter()
+            .filter_map(|str| str.parse().ok())
+            .collect();
+        if raw_minutes.len() != minutes.len() {
             return Err(anyhow::anyhow!("Cron 表达式中的分钟字段格式错误"));
         }
-        let raw_hours:Vec<&str>=fields.get(1).context("hour 获取失败")?.split(",").collect();
-        let hours:Vec<u32>=raw_hours.iter().filter_map(|str| str.parse().ok()).collect();
-        if raw_hours.len()!=hours.len() {
+        let raw_hours: Vec<&str> = fields.get(1).context("hour 获取失败")?.split(",").collect();
+        let hours: Vec<u32> = raw_hours
+            .iter()
+            .filter_map(|str| str.parse().ok())
+            .collect();
+        if raw_hours.len() != hours.len() {
             return Err(anyhow::anyhow!("Cron 表达式中的小时字段格式错误"));
         }
-        let nts:Vec<NaiveTime>=iproduct!(hours, minutes).filter_map(|(h,m)|NaiveTime::from_hms_opt(h, m, 0)).collect();
-        if nts.is_empty(){
+        let nts: Vec<NaiveTime> = iproduct!(hours, minutes)
+            .filter_map(|(h, m)| NaiveTime::from_hms_opt(h, m, 0))
+            .collect();
+        if nts.is_empty() {
             return Err(anyhow::anyhow!("Cron 表达式中的小时或分钟字段格式错误"));
         }
-        let dom_str=*fields.get(2).context("day of month 获取失败")?;
+        let dom_str = *fields.get(2).context("day of month 获取失败")?;
         if *fields.get(3).context("month 获取失败")? != "*" {
             return Err(anyhow::anyhow!("Cron 表达式中的月份字段必须为 '*'"));
         }
-        let dow_str=*fields.get(4).context("day of week 获取失败")?;
-        let triggers:Vec<TriggerTime>=match (dom_str, dow_str) {
-            ("*", "*") => {
-                nts.into_iter().map(|nt|TriggerTime::Daily { time: nt}).collect()
-            }
-            (dom_str,dow_str)=>{
-                let doms=dom_str.split(",").filter_map(|s|s.parse::<u8>().ok()).collect::<Vec<u8>>();
-                let dows=dow_str.split(",").filter_map(|s|{
-                    match s.parse::<u8>() {
-                        Ok(0)=>Some(chrono::Weekday::Sun),
-                        Ok(1)=>Some(chrono::Weekday::Mon),
-                        Ok(2)=>Some(chrono::Weekday::Tue),
-                        Ok(3)=>Some(chrono::Weekday::Wed),
-                        Ok(4)=>Some(chrono::Weekday::Thu),
-                        Ok(5)=>Some(chrono::Weekday::Fri),
-                        Ok(6)=>Some(chrono::Weekday::Sat),
-                        Ok(7)=>Some(chrono::Weekday::Sun),
-                        _=>None,
-                    }
-                }).collect::<Vec<chrono::Weekday>>();
-                let mut trigger_m:Vec<TriggerTime>=doms.into_iter().flat_map(|dom| {
-                    nts.iter().cloned().map(|nt| TriggerTime::Monthly { day: dom, time: nt}).collect::<Vec<TriggerTime>>()
-                }).collect();
-                let trigger_w:Vec<TriggerTime>=dows.into_iter().flat_map(|dow| {
-                    nts.iter().cloned().map(|nt| TriggerTime::Weekly { weekday: dow, time: nt}).collect::<Vec<TriggerTime>>()
-                }).collect();
+        let dow_str = *fields.get(4).context("day of week 获取失败")?;
+        let triggers: Vec<TriggerTime> = match (dom_str, dow_str) {
+            ("*", "*") => nts
+                .into_iter()
+                .map(|nt| TriggerTime::Daily { time: nt })
+                .collect(),
+            (dom_str, dow_str) => {
+                let doms = dom_str
+                    .split(",")
+                    .filter_map(|s| s.parse::<u8>().ok())
+                    .collect::<Vec<u8>>();
+                let dows = dow_str
+                    .split(",")
+                    .filter_map(|s| match s.parse::<u8>() {
+                        Ok(0) => Some(chrono::Weekday::Sun),
+                        Ok(1) => Some(chrono::Weekday::Mon),
+                        Ok(2) => Some(chrono::Weekday::Tue),
+                        Ok(3) => Some(chrono::Weekday::Wed),
+                        Ok(4) => Some(chrono::Weekday::Thu),
+                        Ok(5) => Some(chrono::Weekday::Fri),
+                        Ok(6) => Some(chrono::Weekday::Sat),
+                        Ok(7) => Some(chrono::Weekday::Sun),
+                        _ => None,
+                    })
+                    .collect::<Vec<chrono::Weekday>>();
+                let mut trigger_m: Vec<TriggerTime> = doms
+                    .into_iter()
+                    .flat_map(|dom| {
+                        nts.iter()
+                            .cloned()
+                            .map(|nt| TriggerTime::Monthly { day: dom, time: nt })
+                            .collect::<Vec<TriggerTime>>()
+                    })
+                    .collect();
+                let trigger_w: Vec<TriggerTime> = dows
+                    .into_iter()
+                    .flat_map(|dow| {
+                        nts.iter()
+                            .cloned()
+                            .map(|nt| TriggerTime::Weekly {
+                                weekday: dow,
+                                time: nt,
+                            })
+                            .collect::<Vec<TriggerTime>>()
+                    })
+                    .collect();
                 trigger_m.extend(trigger_w);
                 trigger_m
             }
@@ -107,7 +156,7 @@ impl TriggerTime {
         Ok(triggers)
     }
 
-    pub fn next_trigger(&self,offset:&FixedOffset)->Result<DateTime<FixedOffset>>{
+    pub fn next_trigger(&self, offset: &FixedOffset) -> Result<DateTime<FixedOffset>> {
         let now: DateTime<FixedOffset> = Utc::now().with_timezone(offset);
         match self {
             TriggerTime::Once { time } => {
@@ -116,10 +165,11 @@ impl TriggerTime {
                 } else {
                     Ok(*time)
                 }
-            },
-            TriggerTime::Interval { anchor, interval_minutes } => {
-                Ok(next_interval_trigger(anchor, *interval_minutes)?)
             }
+            TriggerTime::Interval {
+                anchor,
+                interval_minutes,
+            } => Ok(next_interval_trigger(anchor, *interval_minutes)?),
             TriggerTime::Daily { time } => {
                 let today = now.date_naive();
                 let scheduled_naive = NaiveDateTime::new(today, *time);
@@ -127,11 +177,13 @@ impl TriggerTime {
                     .from_local_datetime(&scheduled_naive)
                     .single()
                     .context("FixedOffset 转换失败（理论上不该发生）")?;
-                Ok(next_interval_trigger(&scheduled_today, 24*60)?)
+                Ok(next_interval_trigger(&scheduled_today, 24 * 60)?)
             }
-            TriggerTime::Weekly { weekday, time }=>{
+            TriggerTime::Weekly { weekday, time } => {
                 let today = now.date_naive();
-                let days_ahead: u32 =(weekday.num_days_from_monday() + 7 - today.weekday().num_days_from_monday()) % 7;
+                let days_ahead: u32 = (weekday.num_days_from_monday() + 7
+                    - today.weekday().num_days_from_monday())
+                    % 7;
                 let candidate_date = today
                     .checked_add_days(Days::new(days_ahead as u64))
                     .context("Weekly 计算候选日期失败")?;
@@ -140,9 +192,9 @@ impl TriggerTime {
                     .from_local_datetime(&candidate_naive)
                     .single()
                     .context("Weekly FixedOffset 转换失败（理论上不该发生）")?;
-                Ok(next_interval_trigger(&candidate, 7*24*60)?)
+                Ok(next_interval_trigger(&candidate, 7 * 24 * 60)?)
             }
-            TriggerTime::Monthly { day, time }=>{
+            TriggerTime::Monthly { day, time } => {
                 if *day == 0 {
                     return Err(anyhow::anyhow!("Monthly day 必须 >= 1"));
                 }
@@ -153,8 +205,14 @@ impl TriggerTime {
                 if candidate > now {
                     Ok(candidate)
                 } else {
-                    let (next_year, next_month) = if month == 12 { (year + 1, 1) } else { (year, month + 1) };
-                    Ok(monthly_candidate(next_year, next_month, *day, *time, offset)?)
+                    let (next_year, next_month) = if month == 12 {
+                        (year + 1, 1)
+                    } else {
+                        (year, month + 1)
+                    };
+                    Ok(monthly_candidate(
+                        next_year, next_month, *day, *time, offset,
+                    )?)
                 }
             }
         }
@@ -162,7 +220,11 @@ impl TriggerTime {
 }
 
 fn last_day_of_month(year: i32, month: u32) -> Result<u32> {
-    let (next_year, next_month) = if month == 12 { (year + 1, 1) } else { (year, month + 1) };
+    let (next_year, next_month) = if month == 12 {
+        (year + 1, 1)
+    } else {
+        (year, month + 1)
+    };
     let first_next = NaiveDate::from_ymd_opt(next_year, next_month, 1)
         .context("Monthly 计算下个月第一天失败")?;
     let last = first_next
@@ -180,8 +242,8 @@ fn monthly_candidate(
 ) -> Result<DateTime<FixedOffset>> {
     let last_day = last_day_of_month(year, month)?;
     let candidate_day = std::cmp::min(day as u32, last_day);
-    let date = NaiveDate::from_ymd_opt(year, month, candidate_day)
-        .context("Monthly 计算候选日期失败")?;
+    let date =
+        NaiveDate::from_ymd_opt(year, month, candidate_day).context("Monthly 计算候选日期失败")?;
     let naive = NaiveDateTime::new(date, time);
     offset
         .from_local_datetime(&naive)
@@ -189,86 +251,117 @@ fn monthly_candidate(
         .context("Monthly FixedOffset 转换失败（理论上不该发生）")
 }
 
-fn next_interval_trigger(anchor: &DateTime<FixedOffset>, interval_minutes: u64)->Result<DateTime<FixedOffset>>{
-    let now=Utc::now().with_timezone(anchor.offset());
+fn next_interval_trigger(
+    anchor: &DateTime<FixedOffset>,
+    interval_minutes: u64,
+) -> Result<DateTime<FixedOffset>> {
+    let now = Utc::now().with_timezone(anchor.offset());
     if now < *anchor {
         return Ok(*anchor);
     }
-    let interval=if interval_minutes > 0 {
+    let interval = if interval_minutes > 0 {
         interval_minutes as i64
-    }else {
+    } else {
         return Err(anyhow::anyhow!("Interval 必须大于 0"));
     };
-    let t=(now-anchor).num_minutes()/interval;
-    Ok(*anchor+TimeDelta::minutes((t+1)*interval))
+    let t = (now - anchor).num_minutes() / interval;
+    Ok(*anchor + TimeDelta::minutes((t + 1) * interval))
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScheduledTask {
-    pub id: Uuid,
     pub description: String,
     pub triggers: Vec<TriggerTime>,
-    pub offset: FixedOffset,
+    pub offset: i32,
     pub next_trigger: Option<DateTime<FixedOffset>>,
 }
 
 impl ScheduledTask {
-    pub fn from_once(id:Uuid, description: String, offset: &FixedOffset, once_str:&str)->Result<ScheduledTask>{
-        let triggers=TriggerTime::from_once(once_str)?;
-        let mut task=ScheduledTask {
-            id,description,triggers,offset:*offset,next_trigger:None
+    pub fn from_once(description: String, offset: i32, once_str: &str) -> Result<ScheduledTask> {
+        let triggers = TriggerTime::from_once(once_str)?;
+        let mut task = ScheduledTask {
+            description,
+            triggers,
+            offset: offset,
+            next_trigger: None,
         };
-        task.update_next_trigger()?;
+        task.update_next_trigger();
         Ok(task)
     }
 
-    pub fn from_interval(id:Uuid, description: String, offset: &FixedOffset, interval_str:&str)->Result<ScheduledTask>{
-        let triggers=vec![TriggerTime::from_interval(interval_str,offset)?];
-        let mut task=ScheduledTask {
-            id,description,triggers,offset:*offset,next_trigger:None
+    pub fn from_interval(
+        description: String,
+        offset: i32,
+        interval_str: &str,
+    ) -> Result<ScheduledTask> {
+        let triggers = vec![TriggerTime::from_interval(
+            interval_str,
+            &FixedOffset::east_opt(offset).context("解析 offset 失败")?,
+        )?];
+        let mut task = ScheduledTask {
+            description,
+            triggers,
+            offset: offset,
+            next_trigger: None,
         };
-        task.update_next_trigger()?;
+        task.update_next_trigger();
         Ok(task)
     }
 
-    pub fn from_cron(id:Uuid, description: String, offset: &FixedOffset, cron_str:&str)->Result<ScheduledTask>{
-        let triggers=TriggerTime::from_cron(cron_str)?;
-        let mut task=ScheduledTask {
-            id,description,triggers,offset:*offset,next_trigger:None
+    pub fn from_cron(description: String, offset: i32, cron_str: &str) -> Result<ScheduledTask> {
+        let triggers = TriggerTime::from_cron(cron_str)?;
+        let mut task = ScheduledTask {
+            description,
+            triggers,
+            offset: offset,
+            next_trigger: None,
         };
-        task.update_next_trigger()?;
+        task.update_next_trigger();
         Ok(task)
     }
 
-    pub fn ready(&self)->bool{
+    pub fn is_ready(&self) -> bool {
         match self.next_trigger {
-            Some(next_trigger)=> next_trigger <= Utc::now().with_timezone(&self.offset),
-            None=> false,
+            Some(next_trigger) => next_trigger <= Utc::now().with_timezone(&self.offset()),
+            None => false,
         }
     }
 
-    pub fn update_next_trigger(&mut self)->Result<()>{
-        let mut min_next: Option<DateTime<FixedOffset>> = None;
-        self.triggers.retain(|t| {
-            match t.next_trigger(&self.offset) {
-                Ok(next) => {
-                    min_next = Some(match min_next {
-                        Some(cur) => cur.min(next),
-                        None => next,
-                    });
-                    true
-                }
-                Err(_) => false,
-            }
-        });
-        match min_next {
-            Some(next)=>{
-                self.next_trigger=Some(next);
+    pub async fn ready(&self) -> Result<()> {
+        match self.next_trigger {
+            Some(next_trigger) => {
+                let dt =
+                    (next_trigger - Utc::now().with_timezone(&self.offset())).num_milliseconds();
+                let dt = if dt <= 0 {
+                    return Ok(());
+                } else {
+                    dt as u64
+                };
+                tokio::time::sleep(Duration::from_millis(dt + 1)).await;
                 Ok(())
             }
-            None=>{
-                Err(anyhow::anyhow!("计算下一次触发时间失败"))
-            }
+            None => Err(anyhow::anyhow!("没有下次运行时间")),
         }
+    }
+
+    pub fn update_next_trigger(&mut self) {
+        let mut min_next: Option<DateTime<FixedOffset>> = None;
+        let offset = self.offset();
+        self.triggers.retain(|t| match t.next_trigger(&offset) {
+            Ok(next) => {
+                min_next = Some(match min_next {
+                    Some(cur) => cur.min(next),
+                    None => next,
+                });
+                true
+            }
+            Err(_) => false,
+        });
+        self.next_trigger = min_next;
+    }
+
+    fn offset(&self) -> FixedOffset {
+        FixedOffset::east_opt(self.offset).expect("offset 设置错误")
     }
 }
 
@@ -304,7 +397,9 @@ mod tests {
         let offset = FixedOffset::east_opt(0).unwrap();
         let trigger = TriggerTime::from_interval("5", &offset).unwrap();
         match trigger {
-            TriggerTime::Interval { interval_minutes, .. } => assert_eq!(interval_minutes, 5),
+            TriggerTime::Interval {
+                interval_minutes, ..
+            } => assert_eq!(interval_minutes, 5),
             _ => panic!("expected Interval"),
         }
         assert!(TriggerTime::from_interval("0", &offset).is_err());
@@ -315,7 +410,9 @@ mod tests {
         let daily = TriggerTime::from_cron("0 9 * * *").unwrap();
         assert_eq!(daily.len(), 1);
         match daily[0] {
-            TriggerTime::Daily { time } => assert_eq!(time, NaiveTime::from_hms_opt(9, 0, 0).unwrap()),
+            TriggerTime::Daily { time } => {
+                assert_eq!(time, NaiveTime::from_hms_opt(9, 0, 0).unwrap())
+            }
             _ => panic!("expected Daily"),
         }
 
@@ -394,7 +491,10 @@ mod tests {
             .unwrap();
         assert_eq!(daily_next, daily_expected);
 
-        let weekly = TriggerTime::Weekly { weekday: now.weekday(), time };
+        let weekly = TriggerTime::Weekly {
+            weekday: now.weekday(),
+            time,
+        };
         let weekly_next = weekly.next_trigger(&offset).unwrap();
         let weekly_date = if time > now.time() {
             now.date_naive()
@@ -421,7 +521,11 @@ mod tests {
         let monthly_expected = if candidate_dt > now {
             candidate_dt
         } else {
-            let (next_year, next_month) = if month == 12 { (year + 1, 1) } else { (year, month + 1) };
+            let (next_year, next_month) = if month == 12 {
+                (year + 1, 1)
+            } else {
+                (year, month + 1)
+            };
             let next_last = last_day_of_month(next_year, next_month).unwrap();
             let next_day = std::cmp::min(31u32, next_last);
             let next_date = NaiveDate::from_ymd_opt(next_year, next_month, next_day).unwrap();
@@ -438,20 +542,24 @@ mod tests {
         let offset = FixedOffset::east_opt(0).unwrap();
         let now = Utc::now().with_timezone(&offset);
         let mut task = ScheduledTask {
-            id: Uuid::new_v4(),
             description: "test".to_string(),
             triggers: vec![
-                TriggerTime::Once { time: now + TimeDelta::minutes(60) },
-                TriggerTime::Interval { anchor: now - TimeDelta::minutes(1), interval_minutes: 1 },
+                TriggerTime::Once {
+                    time: now + TimeDelta::minutes(60),
+                },
+                TriggerTime::Interval {
+                    anchor: now - TimeDelta::minutes(1),
+                    interval_minutes: 1,
+                },
             ],
-            offset,
+            offset: offset.local_minus_utc(),
             next_trigger: Some(now - TimeDelta::minutes(1)),
         };
-        assert!(task.ready());
-        task.update_next_trigger().unwrap();
+        assert!(task.is_ready());
+        task.update_next_trigger();
         let far_future = now + TimeDelta::minutes(60);
         assert!(task.next_trigger.unwrap() < far_future);
         task.next_trigger = Some(now + TimeDelta::minutes(1));
-        assert!(!task.ready());
+        assert!(!task.is_ready());
     }
 }

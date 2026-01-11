@@ -9,3 +9,4 @@ pub static CHAT_SERVICE: &'static str = "ChatService";
 pub static TOOLKIT_SERVICE: &'static str = "ToolkitService";
 pub static TASK_SERVICE: &'static str = "TaskService";
 pub static WEBUI_SERVICE: &'static str = "WebuiService";
+pub static SCHEDULE_SERVICE: &'static str = "ScheduleService";
