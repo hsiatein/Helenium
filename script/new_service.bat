@@ -1,1 +1,1 @@
-./target/debug/new_service.exe "test"
+./target/debug/new_service.exe "docker"

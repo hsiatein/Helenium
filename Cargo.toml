@@ -1,5 +1,5 @@
 [workspace]
-members = [ "heleny-bus", "heleny-gui", "heleny-kernel", "heleny-macros", "heleny-proto", "heleny-server", "heleny-service", "heleny-utils", "script", "service-auth", "service-chat", "service-config", "service-fs", "service-hub", "service-memory", "service-schedule", "service-stats", "service-task", "service-test", "service-toolkit", "service-user", "service-webui", "tests"]
+members = [ "heleny-bus", "heleny-gui", "heleny-kernel", "heleny-macros", "heleny-proto", "heleny-server", "heleny-service", "heleny-utils", "script", "service-auth", "service-chat", "service-config", "service-docker", "service-fs", "service-hub", "service-mcp", "service-memory", "service-schedule", "service-stats", "service-task", "service-test", "service-toolkit", "service-user", "service-webui", "tests"]
 resolver = "3"
 
 [workspace.dependencies]
@@ -31,3 +31,4 @@ image = "0.25.9"
 base64 = "0.22.1"
 pathdiff = "0.2.3"
 itertools = "0.14.0"
+bollard = "0.20.0"

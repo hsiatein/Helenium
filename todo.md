@@ -3,7 +3,7 @@ services:
   - [x] 初步实现，但是还没有并发优化
 - [ ] log_service
 - [x] kernel_service
-- [ ] scheduler_service
+- [x] scheduler_service
 - [x] chat_service
 - [x] task_service
 - [ ] frontend_service(签名验证)

@@ -17,3 +17,6 @@ extern crate service_user;
 extern crate service_webui;
 
 extern crate service_schedule;
+
+extern crate service_mcp;
+extern crate service_docker;

@@ -30,3 +30,5 @@ service_task ={ path = "../service-task"}
 service_toolkit ={ path = "../service-toolkit"}
 service_test ={ path = "../service-test"}
 service_schedule ={ path = "../service-schedule"}
+service_mcp ={ path = "../service-mcp"}
+service_docker ={ path = "../service-docker"}

@@ -34,3 +34,8 @@ pub use test_service_message::*;
 
 mod schedule_service_message;
 pub use schedule_service_message::*;
+
+mod mcp_service_message;
+pub use mcp_service_message::*;
+mod docker_service_message;
+pub use docker_service_message::*;
