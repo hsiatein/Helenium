@@ -58,7 +58,26 @@ export component AppWindow inherits Window {
         //     expanded: false,
         // },
     ];
-    in-out property <[ScheduleItem]> schedules: [];
+    in-out property <[ScheduleItem]> schedules: [
+        {
+            id: "f3c2b0e9-1a23-4f67-9f01-6a5b7c8d9012",
+            description: "Nightly backup for user documents",
+            next_trigger: "2026-01-12 02:00:00",
+            triggers: ["Daily 02:00", "Weekly Mon 02:00"],
+        },
+        {
+            id: "9b7d6c5a-4e32-1f09-8a76-5c4b3a2d1e0f",
+            description: "Monthly report aggregation and upload",
+            next_trigger: "2026-01-31 09:30:00",
+            triggers: ["Monthly 31 09:30", "Monthly 15 09:30"],
+        },
+        {
+            id: "2c1d0e9f-8a7b-6c5d-4e3f-2a1b0c9d8e7f",
+            description: "Security patch check for core services",
+            next_trigger: "2026-01-12 06:15:00",
+            triggers: ["Interval 120 min", "Weekly Fri 06:15"],
+        },
+    ];
     in property <image> default_image: @image-url("icons/image_40dp_1F1F1F_FILL0_wght400_GRAD0_opsz40.png");
     in-out property <bool> kernel_shutdown:false;
     callback send(string);

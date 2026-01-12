@@ -19,7 +19,6 @@ component TriggerCapsule inherits Rectangle {
 
     HorizontalLayout {
         alignment: LayoutAlignment.center;
-        padding: 10px;
         Text {
             text: root.text;
             font-size: 13px;
@@ -178,7 +177,7 @@ export component ScheduleView inherits Rectangle {
                             alignment: LayoutAlignment.start;
                             Text {
                                 text: "下一次触发";
-                                font-size: 14px;
+                                font-size: 16px;
                                 color: #3f4c67;
                                 vertical-alignment: center;
                             }
@@ -187,12 +186,12 @@ export component ScheduleView inherits Rectangle {
 
                         Text {
                             text: "触发时间";
-                            font-size: 14px;
+                            font-size: 16px;
                             color: #3f4c67;
                         }
 
                         VerticalBox {
-                            spacing: 8px;
+                            spacing: 4px;
                             for trigger in schedule.triggers: HorizontalLayout {
                                 TriggerCapsule { text: trigger; }
                             }
