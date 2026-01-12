@@ -116,6 +116,9 @@ impl Service for ScheduleService {
         }
     }
     async fn stop(&mut self) {
+        if let Some(notifier)=self.notifier.take(){
+            notifier.abort();
+        }
         let _ = self.persist().await;
     }
     async fn handle_sub_endpoint(&mut self, msg: Box<dyn AnyMessage>) -> Result<()> {
