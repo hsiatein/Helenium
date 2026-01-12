@@ -52,7 +52,7 @@ pub enum ResourcePayload {
         id: uuid::Uuid,
         logs: Vec<String>,
     },
-    Schedule {
-        schedule: HashMap<Uuid, ScheduledTask>,
+    Schedules {
+        schedules: HashMap<Uuid, ScheduledTask>,
     },
 }

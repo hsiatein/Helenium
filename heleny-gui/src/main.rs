@@ -49,6 +49,9 @@ async fn main() -> Result<()> {
     write_tx
         .send(FrontendCommand::GetConsentRequestions)
         .await?;
+    write_tx
+        .send(FrontendCommand::GetSchedules)
+        .await?;
     ui.run()?;
     if let Some(handle) = handle {
         let _ = write_tx.send(FrontendCommand::Shutdown).await;

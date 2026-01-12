@@ -172,7 +172,7 @@ impl WebuiService {
                 }
                 Ok(())
             }
-            FrontendCommand::GetSchedule=>{
+            FrontendCommand::GetSchedules=>{
                 let resource=get_resource(&self.endpoint, SCHEDULE).await?;
                 self.send_to_session(session, FrontendMessage::UpdateResource(Resource { name: "".into(), payload: resource })).await
             }

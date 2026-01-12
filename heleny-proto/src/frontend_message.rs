@@ -25,7 +25,7 @@ pub enum FrontendCommand {
     GetConsentRequestions,
     CancelTask { id: Uuid },
     ToggleTaskLogs { id: Uuid, expanded: bool },
-    GetSchedule,
+    GetSchedules,
 }
 
 impl FrontendCommand {

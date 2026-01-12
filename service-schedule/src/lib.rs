@@ -71,8 +71,8 @@ impl Service for ScheduleService {
         let factory = ScheduleToolFactory::new(endpoint.create_sender_endpoint(), config.offset);
         register_tool_factory(&endpoint, factory).await;
         // 向 Hub 服务注册
-        let (tx, rx) = watch::channel(ResourcePayload::Schedule {
-            schedule: schedule.clone(),
+        let (tx, rx) = watch::channel(ResourcePayload::Schedules {
+            schedules: schedule.clone(),
         });
         publish_resource(&endpoint, SCHEDULE, rx).await?;
         // 实例化
@@ -145,11 +145,6 @@ impl Service for ScheduleService {
         }
     }
     async fn handle_tick(&mut self, _tick: Instant) -> Result<()> {
-        if let Err(e) = self.schedule_tx.send(ResourcePayload::Schedule {
-            schedule: self.scheduled_tasks.clone(),
-        }) {
-            warn!("推送 Schedule 资源失败: {}", e);
-        };
         Ok(())
     }
     async fn handle_resource(&mut self, _resource: Resource) -> Result<()> {
@@ -160,8 +155,8 @@ impl Service for ScheduleService {
 impl ScheduleService {
     /// 持久化 schedule
     async fn persist(&self) -> Result<()> {
-        if let Err(e) = self.schedule_tx.send(ResourcePayload::Schedule {
-            schedule: self.scheduled_tasks.clone(),
+        if let Err(e) = self.schedule_tx.send(ResourcePayload::Schedules {
+            schedules: self.scheduled_tasks.clone(),
         }) {
             warn!("推送 Schedule 资源失败: {}", e);
         };

@@ -1,5 +1,7 @@
 use anyhow::Result;
 use heleny_proto::ResourcePayload;
+use heleny_proto::ScheduledTask;
+use slint::VecModel;
 use std::collections::HashMap;
 use std::str::FromStr;
 
@@ -222,15 +224,27 @@ impl FrontendHandler {
                     ui.set_tasks(ModelRc::new(slint::VecModel::from(tasks)));
                 });
             }
-            ResourcePayload::Schedule { schedule } => {
-                debug!("ResourcePayload::Schedule: {:?}", schedule);
+            ResourcePayload::Schedules { schedules } => {
+                debug!("ResourcePayload::Schedule: {:?}", schedules);
                 let _ = self.ui_weak.upgrade_in_event_loop(move |ui| {
-                    let schedules=schedule.into_iter().map(|(id,task)|{
+                    let schedules:Vec<ScheduleItem>=schedules.into_iter().map(|(id,task)|{
+                        let ScheduledTask { description, triggers, offset:_, next_trigger } =task;
+                        let next_trigger=if let Some(next_trigger)=next_trigger{
+                            next_trigger.format("%Y-%m-%d %H:%M:%S").to_string()
+                        }else {
+                            format!("没有下次运行")
+                        };
+                        let triggers:Vec<SharedString>=triggers.into_iter().map(|trigger| {
+                            SharedString::from(trigger.to_string())
+                        }).collect();
                         ScheduleItem{
-                            id,description:task.description,next_trigger:task.
+                            id:SharedString::from(id.to_string()),
+                            description:SharedString::from(description),
+                            next_trigger:SharedString::from(next_trigger),
+                            triggers:ModelRc::new(VecModel::from(triggers)),
                         }
-                    });
-                    let schedules:Vec<ScheduleItem>=ui.get_schedules().iter().collect();
+                    }).collect();
+                    ui.set_schedules(ModelRc::new(VecModel::from(schedules)));
                 });
             }
         }
