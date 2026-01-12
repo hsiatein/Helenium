@@ -24,6 +24,7 @@ pub enum FrontendCommand {
     MakeDecision { req_id: Uuid, approval: bool },
     GetConsentRequestions,
     CancelTask { id: Uuid },
+    CancelSchedule { id: Uuid },
     ToggleTaskLogs { id: Uuid, expanded: bool },
     GetSchedules,
 }

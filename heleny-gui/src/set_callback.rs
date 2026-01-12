@@ -78,6 +78,14 @@ pub fn set_callback(ui: &AppWindow, write_tx: &mpsc::Sender<FrontendCommand>) {
             FrontendCommand::ToggleTaskLogs { id, expanded },
         );
     });
+
+    let write_tx_clone = write_tx.clone();
+    ui.on_cancel_schedule(move |id|{
+        let Ok(id)=Uuid::from_str(&id) else {
+            return;
+        };
+        send(&write_tx_clone,FrontendCommand::CancelSchedule { id } );
+    });
 }
 
 fn send(write_tx_clone: &mpsc::Sender<FrontendCommand>, cmd: FrontendCommand) {

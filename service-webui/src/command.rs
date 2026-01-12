@@ -12,6 +12,7 @@ use heleny_proto::MEMORY_SERVICE;
 use heleny_proto::Resource;
 use heleny_proto::ResourcePayload;
 use heleny_proto::SCHEDULE;
+use heleny_proto::SCHEDULE_SERVICE;
 use heleny_proto::TASK_SERVICE;
 use heleny_proto::USER_SERVICE;
 use heleny_proto::UserDecision;
@@ -20,6 +21,7 @@ use heleny_service::ChatServiceMessage;
 use heleny_service::FsServiceMessage;
 use heleny_service::KernelMessage;
 use heleny_service::MemoryServiceMessage;
+use heleny_service::ScheduleServiceMessage;
 use heleny_service::TaskServiceMessage;
 use heleny_service::UserServiceMessage;
 use heleny_service::WebuiServiceMessage;
@@ -175,6 +177,11 @@ impl WebuiService {
             FrontendCommand::GetSchedules=>{
                 let resource=get_resource(&self.endpoint, SCHEDULE).await?;
                 self.send_to_session(session, FrontendMessage::UpdateResource(Resource { name: "".into(), payload: resource })).await
+            }
+            FrontendCommand::CancelSchedule { id }=>{
+                self.endpoint
+                    .send(SCHEDULE_SERVICE, ScheduleServiceMessage::CancelTask { id })
+                    .await
             }
         }
     }
