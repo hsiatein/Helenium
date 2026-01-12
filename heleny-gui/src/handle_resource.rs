@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 use crate::FrontendHandler;
 use crate::MessageItem;
+use crate::ScheduleItem;
 use crate::ServiceHealthItem;
 use crate::TaskItem;
 use crate::terminal::generate_svg_path;
@@ -223,6 +224,14 @@ impl FrontendHandler {
             }
             ResourcePayload::Schedule { schedule } => {
                 debug!("ResourcePayload::Schedule: {:?}", schedule);
+                let _ = self.ui_weak.upgrade_in_event_loop(move |ui| {
+                    let schedules=schedule.into_iter().map(|(id,task)|{
+                        ScheduleItem{
+                            id,description:task.description,next_trigger:task.
+                        }
+                    });
+                    let schedules:Vec<ScheduleItem>=ui.get_schedules().iter().collect();
+                });
             }
         }
         Ok(())

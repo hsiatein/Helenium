@@ -12,6 +12,7 @@ use chrono::NaiveTime;
 use chrono::TimeDelta;
 use chrono::TimeZone;
 use chrono::Utc;
+use chrono::Weekday;
 use itertools::iproduct;
 use serde::Deserialize;
 use serde::Serialize;
@@ -214,6 +215,35 @@ impl TriggerTime {
                         next_year, next_month, *day, *time, offset,
                     )?)
                 }
+            }
+        }
+    }
+
+    pub fn to_string(&self)->String{
+        match self {
+            TriggerTime::Once { time }=>{
+                format!("单次 {}",time.format("%Y-%m-%d %H:%M:%S"))
+            }
+            TriggerTime::Interval { anchor, interval_minutes }=>{
+                format!("间隔 {} 分钟, 锚点 {}",interval_minutes,anchor.format("%Y-%m-%d %H:%M:%S"))
+            }
+            TriggerTime::Daily { time }=>{
+                format!("每日 {}",time.format("%H:%M:%S"))
+            }
+            TriggerTime::Weekly { weekday, time }=>{
+                let day=match *weekday {
+                    Weekday::Mon=>"周一",
+                    Weekday::Tue=>"周二",
+                    Weekday::Wed=>"周三",
+                    Weekday::Thu=>"周四",
+                    Weekday::Fri=>"周五",
+                    Weekday::Sat=>"周六",
+                    Weekday::Sun=>"周日"
+                };
+                format!("每{} {}",day,time.format("%H:%M:%S"))
+            }
+            TriggerTime::Monthly { day, time }=>{
+                format!("每月 {} 日 {}",day,time.format("%H:%M:%S"))
             }
         }
     }
