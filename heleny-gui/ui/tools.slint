@@ -1,0 +1,194 @@
+import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
+
+export struct CommandItem {
+    name: string,
+    description: string,
+}
+
+export struct ToolAbstractItem {
+    name: string,
+    description: string,
+    commands: [CommandItem],
+    available: bool,
+    expanded: bool,
+}
+
+component CommandCapsule inherits Rectangle {
+    in property <string> text: "";
+
+    height: 26px;
+    border-radius: 13px;
+    background: #dbe6ff;
+    border-width: 1px;
+    border-color: #b6ceff;
+    width: label.preferred-width + 16px;
+
+    HorizontalLayout {
+        alignment: LayoutAlignment.center;
+        padding: 6px;
+        label := Text {
+            text: root.text;
+            font-size: 12px;
+            color: #1c1c1c;
+        }
+    }
+}
+
+component NameCapsule inherits Rectangle {
+    in property <string> text: "";
+
+    height: 30px;
+    border-radius: 15px;
+    background: #cfe2ff;
+    border-width: 1px;
+    border-color: #9ec8ff;
+    width: label.preferred-width + 18px;
+
+    HorizontalLayout {
+        alignment: LayoutAlignment.center;
+        padding: 6px;
+        label := Text {
+            text: root.text;
+            font-size: 13px;
+            color: #1c1c1c;
+        }
+    }
+}
+
+component CommandsPanel inherits Rectangle {
+    in property <[CommandItem]> commands: [];
+
+    background: #f6f9ff;
+    border-radius: 20px;
+    border-width: 1px;
+    border-color: #dbe6ff;
+
+    VerticalBox {
+        padding: 12px;
+        spacing: 8px;
+        width: 100%;
+
+        Text {
+            text: "命令列表";
+            font-size: 14px;
+            color: #1c1c1c;
+        }
+
+        if (commands.length == 0): Text {
+            text: "暂无命令";
+            font-size: 13px;
+            color: #6b6b6b;
+        }
+
+        for cmd in commands: HorizontalBox {
+            spacing: 8px;
+            CommandCapsule { text: cmd.name; }
+            Text {
+                text: cmd.description;
+                font-size: 13px;
+                color: #1c1c1c;
+                wrap: word-wrap;
+            }
+        }
+    }
+}
+
+export component ToolsView inherits Rectangle {
+    in property <[ToolAbstractItem]> tools: [];
+
+    background: #f0f8ff;
+
+    VerticalBox {
+        padding: 18px;
+        spacing: 12px;
+        width: 100%;
+        height: 100%;
+
+        Text {
+            text: "工具中心";
+            font-size: 24px;
+            horizontal-alignment: center;
+            color: #1c1c1c;
+        }
+
+        ScrollView {
+            viewport-width: self.width;
+            viewport-height: content.preferred-height;
+            content := VerticalBox {
+                spacing: 14px;
+                width: 100%;
+
+                if (root.tools.length == 0): Rectangle {
+                    height: 120px;
+                    border-radius: 24px;
+                    background: #ffffff;
+                    border-width: 1px;
+                    border-color: #dbe6ff;
+                    Text {
+                        text: "暂无工具";
+                        font-size: 16px;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                        color: #6b6b6b;
+                    }
+                }
+
+                for tool in root.tools: Rectangle {
+                    background: #ffffff;
+                    border-radius: 28px;
+                    border-width: 1px;
+                    border-color: #dbe6ff;
+                    clip: true;
+                    drop-shadow-color: #d3e5ff;
+                    drop-shadow-offset-x: 0px;
+                    drop-shadow-offset-y: 2px;
+                    drop-shadow-blur: 8px;
+
+                    VerticalBox {
+                        width: 100%;
+
+                        TouchArea {
+                            width: parent.width;
+                            height: header.preferred-height;
+                            clicked => { tool.expanded = !tool.expanded; }
+
+                            header := VerticalBox {
+                                width: 100%;
+                                padding: 16px;
+                                spacing: 16px;
+                                VerticalLayout {
+                                    width: 100%;
+                                    spacing: 6px;
+                                    HorizontalLayout {
+                                        alignment: start;
+                                        spacing: 16px;
+                                        VerticalLayout {
+                                            alignment: center;
+                                            Rectangle {
+                                                width: 10px;
+                                                height: 10px;
+                                                border-radius: 5px;
+                                                background: tool.available ? #39d98a : #ff5b5b;
+                                            }
+                                        }
+                                        NameCapsule { text: tool.name; }
+                                    }
+                                    
+                                    Text {
+                                        text: tool.description;
+                                        font-size: 14px;
+                                        color: #3f4c67;
+                                        wrap: word-wrap;
+                                        overflow: elide;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (tool.expanded): CommandsPanel { commands: tool.commands; }
+                    }
+                }
+            }
+        }
+    }
+}
