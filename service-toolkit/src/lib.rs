@@ -51,33 +51,8 @@ impl Service for ToolkitService {
     type MessageType = ToolkitServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>> {
         let config: ToolkitConfig = get_from_config_service(&endpoint).await?;
-        // endpoint.send(CONFIG_SERVICE, ConfigServiceMessage::Export { key: "tools_dir".into(), value: serde_json::from_str::<Value>(&config.tools_dir)? }).await?;
-        // // 读取工具描述
-        // let tool_paths = list_via_fs_service(&endpoint, &config.tools_dir).await?;
-        // let mut tool_strings = Vec::new();
-        // for path in tool_paths {
-        //     let content = read_via_fs_service(&endpoint, path).await?;
-        //     tool_strings.push(content);
-        // }
-        // let tool_manuals: Vec<ToolManual> = tool_strings
-        //     .into_iter()
-        //     .filter_map(|str| match serde_json::from_str(&str) {
-        //         Ok(value) => Some(value),
-        //         Err(e) => {
-        //             warn!("读取 {} 时失败: {:?}", str, e);
-        //             None
-        //         }
-        //     })
-        //     .collect();
-        // let tool_descriptions: Vec<ToolDescription> = tool_manuals
-        //     .iter()
-        //     .map(|manual| manual.get_description())
-        //     .collect();
-        // info!("读取到 {} 个工具手册", tool_manuals.len());
-        // let tool_manuals = tool_manuals
-        //     .into_iter()
-        //     .map(|manual| (manual.name.clone(), manual))
-        //     .collect();
+        endpoint.send(CONFIG_SERVICE, ConfigServiceMessage::Export { key: "tools_dir".into(), value: Value::String(config.tools_dir.clone()) }).await?;
+
         // 发布
         let (abstract_sender, abstract_receiver)=watch::channel(ResourcePayload::ToolAbstracts { abstracts: Vec::new() });
         publish_resource(&endpoint, TOOL_ABSTRACTS, abstract_receiver).await?;

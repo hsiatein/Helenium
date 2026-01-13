@@ -33,7 +33,12 @@ impl FrontendHandler {
                     }
                 }
             };
-            let new_abstracts:Vec<ToolAbstractItem>=new_abstracts.into_values().collect();
+            let mut new_abstracts:Vec<ToolAbstractItem>=new_abstracts.into_values().collect();
+            new_abstracts.sort_by(|a, b| {
+                b.available
+                    .cmp(&a.available)
+                    .then_with(|| a.name.cmp(&b.name))
+            });
             ui.set_tool_abstracts(ModelRc::new(VecModel::from(new_abstracts)));
         }).context("工具摘要显示失败")
     }
