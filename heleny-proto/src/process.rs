@@ -29,6 +29,7 @@ impl HelenyProcessCommand {
     }
 }
 
+#[derive(Debug)]
 pub struct HelenyProcess {
     child:Child,
     stdin:ChildStdin,

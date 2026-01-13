@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::Context;
 use anyhow::Result;
 use async_trait::async_trait;
@@ -7,9 +9,9 @@ use heleny_proto::HelenyTool;
 use heleny_proto::HelenyToolFactory;
 use heleny_proto::SCHEDULE_SERVICE;
 use heleny_proto::ScheduledTask;
-use heleny_proto::ToolArg;
 use heleny_proto::get_tool_arg;
 use heleny_service::ScheduleServiceMessage;
+use serde_json::Value;
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
@@ -53,13 +55,13 @@ impl HelenyTool for ScheduleTool {
     async fn invoke(
         &mut self,
         command: String,
-        args: Vec<ToolArg>,
+        mut args: HashMap<String,Value>,
         request: Box<&dyn CanRequestConsent>,
     ) -> Result<String> {
         match command.as_str() {
             "once" => {
-                let time: String = get_tool_arg(&args, "time")?;
-                let description: String = get_tool_arg(&args, "description")?;
+                let time: String = get_tool_arg(&mut args, "time")?;
+                let description: String = get_tool_arg(&mut args, "description")?;
                 let task = ScheduledTask::from_once(description, self.offset, &time)?;
                 request
                     .request_consent(format!("申请新建日程任务: {:?}", task))
@@ -70,8 +72,8 @@ impl HelenyTool for ScheduleTool {
                 Ok("新建 Once 日程任务完成".into())
             }
             "interval" => {
-                let every: String = get_tool_arg(&args, "every")?;
-                let description: String = get_tool_arg(&args, "description")?;
+                let every: String = get_tool_arg(&mut args, "every")?;
+                let description: String = get_tool_arg(&mut args, "description")?;
                 let task = ScheduledTask::from_interval(description, self.offset, &every)?;
                 request
                     .request_consent(format!("申请新建日程任务: {:?}", task))
@@ -82,8 +84,8 @@ impl HelenyTool for ScheduleTool {
                 Ok("新建 Interval 日程任务完成".into())
             }
             "cron" => {
-                let cron: String = get_tool_arg(&args, "cron")?;
-                let description: String = get_tool_arg(&args, "description")?;
+                let cron: String = get_tool_arg(&mut args, "cron")?;
+                let description: String = get_tool_arg(&mut args, "description")?;
                 let task = ScheduledTask::from_cron(description, self.offset, &cron)?;
                 request
                     .request_consent(format!("申请新建日程任务: {:?}", task))
@@ -105,7 +107,7 @@ impl HelenyTool for ScheduleTool {
                 Ok(format!("{:?}", list))
             }
             "cancel" => {
-                let id: Uuid = get_tool_arg(&args, "id")?;
+                let id: Uuid = get_tool_arg(&mut args, "id")?;
                 request
                     .request_consent(format!("申请取消日程任务: {}", id))
                     .await?;

@@ -1,3 +1,5 @@
+use heleny_service::get_from_config_service;
+use heleny_service::register_tool_factory;
 use tokio::time::Instant;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
@@ -8,9 +10,13 @@ use async_trait::async_trait;
 use anyhow::Result;
 use heleny_proto::Resource;
 
-mod tool;
+use crate::config::Config;
+use crate::tool::McpToolFactory;
 
-#[base_service(deps=[])]
+mod tool;
+mod config;
+
+#[base_service(deps=["ConfigService"])]
 pub struct McpService{
     endpoint:Endpoint,
 }
@@ -24,6 +30,14 @@ enum _WorkerMessage{
 impl Service for McpService {
     type MessageType= McpServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>>{
+        let config:Config=get_from_config_service(&endpoint).await?;
+        let Config { mcp_servers }=config;
+        let factories:Vec<McpToolFactory>=mcp_servers.into_iter().map(|(name,command)|{
+            McpToolFactory::new(name, command)
+        }).collect();
+        for factory in factories {
+            register_tool_factory(&endpoint, factory).await;
+        }
         // 实例化
         let instance=Self {
             endpoint,

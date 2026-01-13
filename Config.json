@@ -69,5 +69,18 @@
     "ScheduleService":{
         "schedule_dir":"./storage",
         "offset":28800
+    },
+    "McpService":{
+        "mcp_servers":{
+            "duckduckgo": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "mcp/duckduckgo"
+                ]
+            }
+        }
     }
 }

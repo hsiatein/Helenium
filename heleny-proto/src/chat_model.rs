@@ -222,25 +222,12 @@ pub static EXECUTOR_SCHEMA: &'static str = r#"{
       ]
     },
     "args": {
-      "type": "array",
-      "description": "传递给工具命令的参数列表。",
-      "items": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "参数名称。"
-          },
-          "value": {
-            "type": "string",
-            "description": "参数值。"
-          }
-        },
-        "required": ["name", "value"],
-        "additionalProperties": false
-      }
+      "type": "object",
+      "description": "给命令的参数，键为参数名，值为参数值",
+      "additionalProperties": true,
+      "default": {}
     }
   },
-  "required": ["reason", "tool", "command", "args"],
+  "required": ["reason"],
   "additionalProperties": false
 }"#;

@@ -5,7 +5,7 @@ use serde::Serialize;
 pub struct ToolManual {
     pub name: String,
     pub description: String,
-    pub commands: Vec<Command>,
+    pub commands: Vec<ToolCommand>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -15,17 +15,17 @@ pub struct ToolDescription {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Command {
+pub struct ToolCommand {
     pub name: String,
     pub description: String,
-    pub args: Vec<Argument>,
+    pub args: Vec<ToolArgument>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Argument {
+pub struct ToolArgument {
     pub name: String,
     pub description: String,
-    #[serde(rename = "type")] // 因为 type 是 Rust 关键字，需要重命名
+    #[serde(rename = "type")]
     pub arg_type: String,
     pub required: bool,
     pub default: Option<String>,

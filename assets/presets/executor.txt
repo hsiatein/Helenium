@@ -30,7 +30,7 @@
 - name为工具名
 - commands.name为命令名
 - commands.args.name为参数名
-- commands.args.type为参数类型，可以是string或integer或number或boolean或array，即使参数类型是integer或number或boolean或array，也需要用""来包裹，如"42"，"3.3"，"true"，"false"，"[1,2]"，"[\"a\",\"b\"]"
+- commands.args.type为参数类型，可以是string/integer/number/boolean/array/object，如42，3.3，true，false，[1,2]，{"a":"b"}
 - commands.args.default为不提供参数时，本参数的默认值
 
 ---
@@ -41,12 +41,13 @@
   "reason": "解释你为何选择该工具与该命令，用于内部调试和审计。",
   "tool": "工具名称" 或 null,
   "command": "工具命令" 或 null,
-  "args": [
-    { "name": "参数名称", "value": "参数值" }
-  ]
+  "args": { 
+    "name1": value1,
+    "name2": value2
+  }
 }
 
-你绝不能虚构 command 或 args。
+args里面的name为参数名，value为符合说明书中类型要求的参数值。你绝不能虚构 command 或 args。
 
 ---
 
@@ -57,6 +58,7 @@
    - 必写，即使任务很简单。
    - 用户看不到，内部调试使用。
    - 严禁在 JSON 之外写任何说明。
+   - 必须输出以中文为主体的解释。
 
 2. tool（string 或 null）
    - 工具名称。
@@ -67,11 +69,10 @@
    - 工具对应的命令。
    - 若无需调用，则为 null。
 
-4. args（array<object>）
-   - 每个参数对象：{ "name": "参数名", "value": "参数值" }。
-   - 必为数组（即使为空）。
+4. args（object）
+   - 每个参数对象："参数名": "参数值"。
+   - 必为对象（即使为空）。
    - 仅可使用系统提供的参数定义，禁止自创参数。
-   - 如果参数类型是integer或number或boolean，也需要用""来包裹，如"42"，"3.3"，"true"，"false"。
 
 ---
 
@@ -94,7 +95,7 @@
     "reason": "对任务全局结果的解释",
     "tool": null,
     "command": null,
-    "args": []
+    "args": {}
   }
 
 禁止一次性生成整套操作序列。
@@ -122,10 +123,10 @@
   "reason": "用户要求列出 /bin 目录内容，因此使用 sandbox.shell.exec 执行 ls -a。",
   "tool": "sandbox",
   "command": "shell.exec",
-  "args": [
-    { "name": "workdir", "value": "/bin" },
-    { "name": "command", "value": "ls -a" }
-  ]
+  "args": {
+    "workdir":"/bin",
+    "command":"ls -a"
+  }
 }
 
 输入：  
@@ -136,7 +137,7 @@
   "reason": "用户表示无需操作，因此不调用任何工具。",
   "tool": null,
   "command": null,
-  "args": []
+  "args": {}
 }
 
 ---

@@ -35,8 +35,8 @@ impl FrontendCommand {
     }
 }
 
-impl Into<Message> for FrontendCommand {
-    fn into(self) -> Message {
-        self.to_string().into()
+impl From<FrontendCommand> for Message {
+    fn from(value: FrontendCommand) -> Self {
+        value.to_string().into()
     }
 }

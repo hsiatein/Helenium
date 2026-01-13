@@ -10,11 +10,12 @@ use heleny_proto::HelenyToolFactory;
 use heleny_proto::MEMORY_SERVICE;
 use heleny_proto::MemoryContent;
 use heleny_proto::MemoryEntry;
-use heleny_proto::ToolArg;
 use heleny_proto::get_tool_arg;
 use heleny_service::FsServiceMessage;
 use heleny_service::MemoryServiceMessage;
 use pathdiff::diff_paths;
+use serde_json::Value;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use tokio::fs::canonicalize;
 use tokio::sync::oneshot;
@@ -68,7 +69,7 @@ impl HelenyTool for FsTool {
     async fn invoke(
         &mut self,
         command: String,
-        args: Vec<ToolArg>,
+        mut args: HashMap<String,Value>,
         _request: Box<&dyn CanRequestConsent>,
     ) -> Result<String> {
         match command.as_str() {
@@ -91,7 +92,7 @@ impl HelenyTool for FsTool {
                 serde_json::to_string(&files).context("解析目录内容列表失败")
             }
             "load" => {
-                let path: PathBuf = get_tool_arg(&args, "path")?;
+                let path: PathBuf = get_tool_arg(&mut args, "path")?;
                 let path = match canonicalize(self.exchange_dir.join(path)).await {
                     Ok(path) => path,
                     Err(e) => {
@@ -106,7 +107,7 @@ impl HelenyTool for FsTool {
                 Ok("加载完成".into())
             }
             "send" => {
-                let path: PathBuf = get_tool_arg(&args, "path")?;
+                let path: PathBuf = get_tool_arg(&mut args, "path")?;
                 let path = match canonicalize(self.exchange_dir.join(path)).await {
                     Ok(path) => path,
                     Err(e) => {

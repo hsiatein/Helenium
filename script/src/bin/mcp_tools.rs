@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fs};
 
 use anyhow::{Context, Result};
-use heleny_proto::{HelenyProcessCommand, McpOutput, McpToolManual};
+use heleny_proto::{HelenyProcessCommand, McpOutput, McpToolManual, ToolManual};
 use serde_json::{Value, json};
 
 
@@ -37,5 +37,10 @@ async fn main()->Result<()>{
     let mut output:McpOutput=serde_json::from_str(&output)?;
     let output:Vec<McpToolManual>=serde_json::from_value(output.result.remove("tools").context("获取tools失败")?)?;
     println!("{:?}",output);
+    let path=format!("./script/{}.json",name);
+    let commands: Vec<heleny_proto::ToolCommand>=output.into_iter().map(|tool| tool.into()).collect();
+    let description=commands.iter().map(|command| command.description.as_str()).collect::<Vec<&str>>().join(" ");
+    let manual=ToolManual {name,description,commands};
+    fs::write(path, serde_json::to_string_pretty(&manual)?)?;
     Ok(())
 }
