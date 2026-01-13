@@ -1,13 +1,5 @@
 {
-    "mcpServers": {
-        "duckduckgo": {
-            "command": "docker",
-            "args": [
-                "run",
-                "-i",
-                "--rm",
-                "mcp/duckduckgo"
-            ]
-        }
-    }
+  "mcpServers": {
+    
+  }
 }

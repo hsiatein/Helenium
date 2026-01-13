@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -46,40 +47,61 @@ pub struct McpToolManual {
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct McpInputSchema {
-    pub r#type:String,
-    pub title:String,
-    pub required:Vec<String>,
-    pub properties: HashMap<String,McpArg>
+    pub required: Vec<String>,
+    pub properties: HashMap<String,McpArg>,
+    #[serde(flatten)]
+    pub extra: HashMap<String, Value>,
 }
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct McpArg {
-    pub r#type:String,
-    pub title:String,
-    pub default:Option<Value>
+    #[serde(rename="type")]
+    pub arg_type:String,
+    #[serde(default)]
+    pub description:String,
+    pub default:Option<Value>,
+    #[serde(flatten)]
+    pub extra: HashMap<String, Value>,
 }
 
 impl From<McpToolManual> for ToolCommand {
+    // fn from(value: McpToolManual) -> Self {
+    //     let McpToolManual { name, description, input_schema }=value;
+    //     let mut descriptions:Vec<&str>=description.split("Args:").collect();
+    //     let description=descriptions.remove(0).trim().to_string();
+    //     let arg_descriptions:Vec<&str>=if let Some(arg_descriptions)=descriptions.get(0).copied(){
+    //         arg_descriptions.trim().split("\n").collect()
+    //     }
+    //     else {
+    //         Vec::new()
+    //     };
+    //     let mut arg_descriptions:HashMap<String,String>=arg_descriptions.into_iter().filter_map(|arg_description|{
+    //         let mut split:Vec<&str>=arg_description.split(":").collect();
+    //         // println!("split: {:?}",split);
+    //         let name=split.remove(0).trim().to_string();
+    //         let description=split.join(":").trim().to_string();
+    //         Some((name,description))
+    //     }).collect();
+    //     let McpInputSchema { extra:_, required, properties }=input_schema;
+    //     let args=properties.into_iter().map(|(arg_name,arg)|{
+    //         let McpArg { arg_type, extra:_, default }=arg;
+    //         let required=required.contains(&arg_name);
+    //         let default=if let Some(default)=default {
+    //             Some(default.to_string())
+    //         }
+    //         else {
+    //             None
+    //         };
+    //         let description=arg_descriptions.remove(&arg_name).unwrap_or(arg_name.clone());
+    //         ToolArgument { name:arg_name, description, arg_type, required, default }
+    //     }).collect();
+    //     Self { name, description, args }
+    // }
     fn from(value: McpToolManual) -> Self {
         let McpToolManual { name, description, input_schema }=value;
-        let mut descriptions:Vec<&str>=description.split("Args:").collect();
-        let description=descriptions.remove(0).trim().to_string();
-        let arg_descriptions:Vec<&str>=if let Some(arg_descriptions)=descriptions.get(0).copied(){
-            arg_descriptions.trim().split("\n").collect()
-        }
-        else {
-            Vec::new()
-        };
-        let mut arg_descriptions:HashMap<String,String>=arg_descriptions.into_iter().filter_map(|arg_description|{
-            let mut split:Vec<&str>=arg_description.split(":").collect();
-            // println!("split: {:?}",split);
-            let name=split.remove(0).trim().to_string();
-            let description=split.join(":").trim().to_string();
-            Some((name,description))
-        }).collect();
-        let McpInputSchema { r#type:_, title:_, required, properties }=input_schema;
+        let McpInputSchema { extra:_, required, properties }=input_schema;
         let args=properties.into_iter().map(|(arg_name,arg)|{
-            let McpArg { r#type, title:_, default }=arg;
+            let McpArg { arg_type, description, default, extra }=arg;
             let required=required.contains(&arg_name);
             let default=if let Some(default)=default {
                 Some(default.to_string())
@@ -87,8 +109,18 @@ impl From<McpToolManual> for ToolCommand {
             else {
                 None
             };
-            let description=arg_descriptions.remove(&arg_name).unwrap_or(arg_name.clone());
-            ToolArgument { name:arg_name, description, arg_type:r#type, required, default }
+            let extra_info;
+            if extra.is_empty() {
+                extra_info="".to_string()
+            }
+            else {
+                let extra=extra.into_iter().map(|(k,v)|{
+                    k+": "+&v.to_string()
+                }).join(", ");
+                extra_info=format!(", 额外信息: {}",extra)
+            }
+            let description=format!("{}{}",description,extra_info);
+            ToolArgument { name:arg_name, description, arg_type, required, default }
         }).collect();
         Self { name, description, args }
     }

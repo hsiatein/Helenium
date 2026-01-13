@@ -1,4 +1,4 @@
-use std::process::Stdio;
+use std::{collections::HashMap, process::Stdio};
 
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,9 @@ use tracing::warn;
 #[derive(Serialize,Deserialize,Clone,Debug)]
 pub struct HelenyProcessCommand {
     command:String,
-    args:Vec<String>
+    args:Vec<String>,
+    #[serde(default)]
+    env:HashMap<String,String>,
 }
 
 impl HelenyProcessCommand {
@@ -17,6 +19,9 @@ impl HelenyProcessCommand {
         let mut cmd=&mut _cmd;
         for arg in &self.args{
             cmd=cmd.arg(arg);
+        }
+        for (k,v) in &self.env{
+            cmd=cmd.env(k, v);
         }
         match cmd.stdin(Stdio::piped())
         .stdout(Stdio::piped())

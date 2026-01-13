@@ -34,6 +34,7 @@ async fn main()->Result<()>{
     process.write(&initialized).await?;
     process.write(&tools_list).await?;
     let output=process.read().await?;
+    println!("{}",output);
     let mut output:McpOutput=serde_json::from_str(&output)?;
     let output:Vec<McpToolManual>=serde_json::from_value(output.result.remove("tools").context("获取tools失败")?)?;
     println!("{:?}",output);
