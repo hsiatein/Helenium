@@ -11,6 +11,7 @@ export struct ToolAbstractItem {
     commands: [CommandItem],
     available: bool,
     expanded: bool,
+    desc_expanded: bool,
 }
 
 component CommandCapsule inherits Rectangle {
@@ -37,8 +38,8 @@ component CommandCapsule inherits Rectangle {
 component NameCapsule inherits Rectangle {
     in property <string> text: "";
 
-    height: 30px;
-    border-radius: 15px;
+    height: 32px;
+    border-radius: 16px;
     background: #cfe2ff;
     border-width: 1px;
     border-color: #9ec8ff;
@@ -49,7 +50,7 @@ component NameCapsule inherits Rectangle {
         padding: 6px;
         label := Text {
             text: root.text;
-            font-size: 13px;
+            font-size: 16px;
             color: #1c1c1c;
         }
     }
@@ -154,14 +155,16 @@ export component ToolsView inherits Rectangle {
 
                             header := VerticalBox {
                                 width: 100%;
-                                padding: 16px;
-                                spacing: 16px;
+                                padding: 12px;
+                                spacing: 0px;
                                 VerticalLayout {
                                     width: 100%;
                                     spacing: 6px;
-                                    HorizontalLayout {
+                                    height: base.height+desc.height+button.height;
+                                    base:= HorizontalLayout {
                                         alignment: start;
                                         spacing: 16px;
+                                        height: name.height;
                                         VerticalLayout {
                                             alignment: center;
                                             Rectangle {
@@ -171,15 +174,50 @@ export component ToolsView inherits Rectangle {
                                                 background: tool.available ? #39d98a : #ff5b5b;
                                             }
                                         }
-                                        NameCapsule { text: tool.name; }
+                                        name:=NameCapsule { text: tool.name; }
+                                    }
+                                    desc:=Rectangle {
+                                        height: payload.height;
+                                        clip: true;
+                                        payload:=HorizontalLayout {
+                                            width: 100%;
+                                            height: tool.desc_expanded?text.preferred-height+20px:min(132px,text.preferred-height+20px);
+                                            text:=Text {
+                                                text: tool.description;
+                                                font-size: 16px;
+                                                color: #000000;
+                                                wrap: word-wrap;
+                                                overflow: elide;
+                                            }
+                                        }
                                     }
                                     
-                                    Text {
-                                        text: tool.description;
-                                        font-size: 14px;
-                                        color: #3f4c67;
-                                        wrap: word-wrap;
-                                        overflow: elide;
+                                }
+                                button:=HorizontalLayout {
+                                    width: 100%;
+                                    alignment: start;
+                                    height: 32px;
+                                    Rectangle {
+                                        height: 32px;
+                                        border-radius: 16px;
+                                        background: #eef4ff;
+                                        border-width: 1px;
+                                        border-color: #dbe6ff;
+                                        width: desc_label.preferred-width + 16px;
+                                        HorizontalLayout {
+                                            alignment: LayoutAlignment.center;
+                                            padding: 4px;
+                                            desc_label := Text {
+                                                text: tool.desc_expanded ? "收起" : "展开";
+                                                font-size: 16px;
+                                                color: #3f4c67;
+                                            }
+                                        }
+                                        TouchArea {
+                                            width: parent.width;
+                                            height: parent.height;
+                                            clicked => { tool.desc_expanded = !tool.desc_expanded; }
+                                        }
                                     }
                                 }
                             }

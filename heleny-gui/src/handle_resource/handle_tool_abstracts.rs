@@ -28,7 +28,7 @@ impl FrontendHandler {
                         abs.description=SharedString::from(description);
                     }
                     None=>{
-                        let item=ToolAbstractItem { available, commands: ModelRc::new(VecModel::from(commands)), description:SharedString::from(description), expanded:false, name:SharedString::from(name.clone()) };
+                        let item=ToolAbstractItem { available, commands: ModelRc::new(VecModel::from(commands)), description:SharedString::from(description), expanded:false, name:SharedString::from(name.clone()),desc_expanded:false };
                         new_abstracts.insert(name, item);
                     }
                 }
