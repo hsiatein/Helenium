@@ -29,6 +29,7 @@ pub enum ToolkitServiceMessage {
     Register {
         factory: Box<dyn HelenyToolFactory>,
     },
+    Reload,
 }
 
 #[derive(Debug)]

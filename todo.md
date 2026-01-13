@@ -61,5 +61,6 @@ todo:
 - [x] 33.TaskLogger开新任务来记录，基础信息发布到hub，详细信息需要订阅
 - [ ] 34.tools页面，安装配置tools
 - [x] 35.McpToolManual to ToolManual
-- [ ] 35.重载tools
+- [x] 35.重载tools
 - [ ] 36.热安装tools
+- [ ] 37.工具排序

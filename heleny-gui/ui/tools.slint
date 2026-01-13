@@ -80,7 +80,7 @@ component CommandsPanel inherits Rectangle {
             color: #6b6b6b;
         }
 
-        for cmd in commands: HorizontalBox {
+        for cmd in commands: VerticalBox {
             spacing: 8px;
             CommandCapsule { text: cmd.name; }
             Text {

@@ -6,6 +6,7 @@ use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::AnyMessage;
+use heleny_proto::CONFIG_SERVICE;
 use heleny_proto::HelenyToolFactory;
 use heleny_proto::Resource;
 use heleny_proto::ResourcePayload;
@@ -14,6 +15,7 @@ use heleny_proto::TOOL_ABSTRACTS;
 use heleny_proto::ToolAbstract;
 use heleny_proto::ToolDescription;
 use heleny_proto::ToolManual;
+use heleny_service::ConfigServiceMessage;
 use heleny_service::Service;
 use heleny_service::Toolkit;
 use heleny_service::ToolkitServiceMessage;
@@ -21,6 +23,7 @@ use heleny_service::get_from_config_service;
 use heleny_service::list_via_fs_service;
 use heleny_service::publish_resource;
 use heleny_service::read_via_fs_service;
+use serde_json::Value;
 use tokio::sync::watch;
 use tokio::time::Instant;
 use tracing::info;
@@ -37,6 +40,7 @@ pub struct ToolkitService {
     tool_descriptions: Vec<ToolDescription>,
     tool_factories: HashMap<String, Box<dyn HelenyToolFactory>>,
     abstract_sender: watch::Sender<ResourcePayload>,
+    config:ToolkitConfig,
 }
 
 #[derive(Debug)]
@@ -47,43 +51,46 @@ impl Service for ToolkitService {
     type MessageType = ToolkitServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>> {
         let config: ToolkitConfig = get_from_config_service(&endpoint).await?;
-        // 读取工具描述
-        let tool_paths = list_via_fs_service(&endpoint, config.tools_dir).await?;
-        let mut tool_strings = Vec::new();
-        for path in tool_paths {
-            let content = read_via_fs_service(&endpoint, path).await?;
-            tool_strings.push(content);
-        }
-        let tool_manuals: Vec<ToolManual> = tool_strings
-            .into_iter()
-            .filter_map(|str| match serde_json::from_str(&str) {
-                Ok(value) => Some(value),
-                Err(e) => {
-                    warn!("读取 {} 时失败: {:?}", str, e);
-                    None
-                }
-            })
-            .collect();
-        let tool_descriptions: Vec<ToolDescription> = tool_manuals
-            .iter()
-            .map(|manual| manual.get_description())
-            .collect();
-        info!("读取到 {} 个工具手册", tool_manuals.len());
-        let tool_manuals = tool_manuals
-            .into_iter()
-            .map(|manual| (manual.name.clone(), manual))
-            .collect();
+        // endpoint.send(CONFIG_SERVICE, ConfigServiceMessage::Export { key: "tools_dir".into(), value: serde_json::from_str::<Value>(&config.tools_dir)? }).await?;
+        // // 读取工具描述
+        // let tool_paths = list_via_fs_service(&endpoint, &config.tools_dir).await?;
+        // let mut tool_strings = Vec::new();
+        // for path in tool_paths {
+        //     let content = read_via_fs_service(&endpoint, path).await?;
+        //     tool_strings.push(content);
+        // }
+        // let tool_manuals: Vec<ToolManual> = tool_strings
+        //     .into_iter()
+        //     .filter_map(|str| match serde_json::from_str(&str) {
+        //         Ok(value) => Some(value),
+        //         Err(e) => {
+        //             warn!("读取 {} 时失败: {:?}", str, e);
+        //             None
+        //         }
+        //     })
+        //     .collect();
+        // let tool_descriptions: Vec<ToolDescription> = tool_manuals
+        //     .iter()
+        //     .map(|manual| manual.get_description())
+        //     .collect();
+        // info!("读取到 {} 个工具手册", tool_manuals.len());
+        // let tool_manuals = tool_manuals
+        //     .into_iter()
+        //     .map(|manual| (manual.name.clone(), manual))
+        //     .collect();
         // 发布
-        let (abstract_sender, abstract_receiver)=watch::channel(ResourcePayload::ToolAbstracts { abstracts: get_tool_abstracts(&tool_manuals) });
+        let (abstract_sender, abstract_receiver)=watch::channel(ResourcePayload::ToolAbstracts { abstracts: Vec::new() });
         publish_resource(&endpoint, TOOL_ABSTRACTS, abstract_receiver).await?;
         // 实例化
-        let instance = Self {
+        let mut instance = Self {
             endpoint,
-            tool_manuals,
-            tool_descriptions,
+            tool_manuals:HashMap::new(),
+            tool_descriptions:Vec::new(),
             tool_factories: HashMap::new(),
             abstract_sender,
+            config,
         };
+        instance.read_manuals().await?;
         Ok(Box::new(instance))
     }
     async fn handle(
@@ -139,6 +146,10 @@ impl Service for ToolkitService {
                 self.tool_factories.insert(name, factory);
                 self.send_tool_abstracts()?;
             }
+            ToolkitServiceMessage::Reload=>{
+                self.read_manuals().await?;
+                info!("工具列表重载完成");
+            }
         }
         Ok(())
     }
@@ -155,6 +166,34 @@ impl Service for ToolkitService {
 }
 
 impl ToolkitService {
+    async fn read_manuals(&mut self)->Result<()>{
+        let tool_paths = list_via_fs_service(&self.endpoint, &self.config.tools_dir).await?;
+        let mut tool_strings = Vec::new();
+        for path in tool_paths {
+            let content = read_via_fs_service(&self.endpoint, path).await?;
+            tool_strings.push(content);
+        }
+        let tool_manuals: Vec<ToolManual> = tool_strings
+            .into_iter()
+            .filter_map(|str| match serde_json::from_str(&str) {
+                Ok(value) => Some(value),
+                Err(e) => {
+                    warn!("读取 {} 时失败: {:?}", str, e);
+                    None
+                }
+            })
+            .collect();
+        self.tool_descriptions = tool_manuals
+            .iter()
+            .map(|manual| manual.get_description())
+            .collect();
+        info!("读取到 {} 个工具手册", tool_manuals.len());
+        self.tool_manuals = tool_manuals
+            .into_iter()
+            .map(|manual| (manual.name.clone(), manual))
+            .collect();
+        self.send_tool_abstracts()
+    }
     fn send_tool_abstracts(&self)->Result<()>{
         let mut abstracts=get_tool_abstracts(&self.tool_manuals);
         abstracts.iter_mut().for_each(|abs|{
