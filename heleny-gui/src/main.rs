@@ -4,6 +4,7 @@ use anyhow::Context;
 use anyhow::Result;
 use heleny_gui::AppWindow;
 use heleny_gui::handle_ws;
+use heleny_gui::init_resource;
 use heleny_gui::set_callback;
 use heleny_proto::FrontendCommand;
 use heleny_server::launch_webui;
@@ -38,20 +39,11 @@ async fn main() -> Result<()> {
     debug!("{:?}", response);
     let write_tx = handle_ws(stream, ui_weak);
 
-    // 设置 callback 函数
+    // 设置 callback 函数, 初始化资源
     set_callback(&ui, &write_tx);
-
+    init_resource(&write_tx).await?;
+    
     // 启动 UI
-    write_tx
-        .send(FrontendCommand::GetHistory(1000000000))
-        .await?;
-    write_tx.send(FrontendCommand::GetHealth).await?;
-    write_tx
-        .send(FrontendCommand::GetConsentRequestions)
-        .await?;
-    write_tx
-        .send(FrontendCommand::GetSchedules)
-        .await?;
     ui.run()?;
     if let Some(handle) = handle {
         let _ = write_tx.send(FrontendCommand::Shutdown).await;

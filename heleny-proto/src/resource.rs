@@ -10,6 +10,7 @@ use uuid::Uuid;
 use crate::KernelHealth;
 use crate::ScheduledTask;
 use crate::TaskAbstract;
+use crate::ToolAbstract;
 use crate::memory::DisplayMessage;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -32,6 +33,7 @@ pub static DISPLAY_MESSAGES: &'static str = "DisplayMessages";
 pub static HEALTH: &'static str = "Health";
 pub static TASK_ABSTRACT: &'static str = "TaskAbstract";
 pub static SCHEDULE: &'static str = "Schedule";
+pub static TOOL_ABSTRACTS: &'static str = "ToolAbstracts";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ResourcePayload {
@@ -55,4 +57,7 @@ pub enum ResourcePayload {
     Schedules {
         schedules: HashMap<Uuid, ScheduledTask>,
     },
+    ToolAbstracts {
+        abstracts: Vec<ToolAbstract>
+    }
 }

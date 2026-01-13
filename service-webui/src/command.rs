@@ -14,6 +14,7 @@ use heleny_proto::ResourcePayload;
 use heleny_proto::SCHEDULE;
 use heleny_proto::SCHEDULE_SERVICE;
 use heleny_proto::TASK_SERVICE;
+use heleny_proto::TOOL_ABSTRACTS;
 use heleny_proto::USER_SERVICE;
 use heleny_proto::UserDecision;
 use heleny_proto::WEBUI_SERVICE;
@@ -182,6 +183,10 @@ impl WebuiService {
                 self.endpoint
                     .send(SCHEDULE_SERVICE, ScheduleServiceMessage::CancelTask { id })
                     .await
+            }
+            FrontendCommand::GetToolAbstrats=>{
+                let resource=get_resource(&self.endpoint, TOOL_ABSTRACTS).await?;
+                self.send_to_session(session, FrontendMessage::UpdateResource(Resource { name: "".into(), payload: resource })).await
             }
         }
     }

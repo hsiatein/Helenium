@@ -27,6 +27,7 @@ pub enum FrontendCommand {
     CancelSchedule { id: Uuid },
     ToggleTaskLogs { id: Uuid, expanded: bool },
     GetSchedules,
+    GetToolAbstrats,
 }
 
 impl FrontendCommand {

@@ -8,7 +8,10 @@ use heleny_macros::base_service;
 use heleny_proto::AnyMessage;
 use heleny_proto::HelenyToolFactory;
 use heleny_proto::Resource;
+use heleny_proto::ResourcePayload;
 use heleny_proto::ServiceRole;
+use heleny_proto::TOOL_ABSTRACTS;
+use heleny_proto::ToolAbstract;
 use heleny_proto::ToolDescription;
 use heleny_proto::ToolManual;
 use heleny_service::Service;
@@ -16,7 +19,9 @@ use heleny_service::Toolkit;
 use heleny_service::ToolkitServiceMessage;
 use heleny_service::get_from_config_service;
 use heleny_service::list_via_fs_service;
+use heleny_service::publish_resource;
 use heleny_service::read_via_fs_service;
+use tokio::sync::watch;
 use tokio::time::Instant;
 use tracing::info;
 use tracing::warn;
@@ -25,12 +30,13 @@ use crate::config::*;
 
 mod config;
 
-#[base_service(deps=["ConfigService","FsService"])]
+#[base_service(deps=["ConfigService","FsService","HubService"])]
 pub struct ToolkitService {
     endpoint: Endpoint,
     tool_manuals: HashMap<String, ToolManual>,
     tool_descriptions: Vec<ToolDescription>,
     tool_factories: HashMap<String, Box<dyn HelenyToolFactory>>,
+    abstract_sender: watch::Sender<ResourcePayload>,
 }
 
 #[derive(Debug)]
@@ -67,12 +73,16 @@ impl Service for ToolkitService {
             .into_iter()
             .map(|manual| (manual.name.clone(), manual))
             .collect();
+        // 发布
+        let (abstract_sender, abstract_receiver)=watch::channel(ResourcePayload::ToolAbstracts { abstracts: get_tool_abstracts(&tool_manuals) });
+        publish_resource(&endpoint, TOOL_ABSTRACTS, abstract_receiver).await?;
         // 实例化
         let instance = Self {
             endpoint,
             tool_manuals,
             tool_descriptions,
             tool_factories: HashMap::new(),
+            abstract_sender,
         };
         Ok(Box::new(instance))
     }
@@ -127,6 +137,7 @@ impl Service for ToolkitService {
                 let name = factory.name();
                 info!("成功注册工具: {}", name);
                 self.tool_factories.insert(name, factory);
+                self.send_tool_abstracts()?;
             }
         }
         Ok(())
@@ -143,4 +154,18 @@ impl Service for ToolkitService {
     }
 }
 
-impl ToolkitService {}
+impl ToolkitService {
+    fn send_tool_abstracts(&self)->Result<()>{
+        let mut abstracts=get_tool_abstracts(&self.tool_manuals);
+        abstracts.iter_mut().for_each(|abs|{
+            abs.available=self.tool_factories.contains_key(&abs.name);
+        });
+        self.abstract_sender.send(ResourcePayload::ToolAbstracts { abstracts }).context("更新 ToolAbstracts 失败")
+    }
+}
+
+fn get_tool_abstracts(tool_manuals:&HashMap<String,ToolManual>)->Vec<ToolAbstract>{
+    tool_manuals.values().map(|manual|{
+        manual.clone().into()
+    }).collect()
+}

@@ -17,6 +17,8 @@ mod terminal;
 
 slint::include_modules!();
 mod handle_resource;
+mod init_resource;
+pub use init_resource::*;
 
 pub struct FrontendHandler {
     writer: mpsc::Sender<FrontendCommand>,

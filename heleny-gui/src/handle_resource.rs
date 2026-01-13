@@ -225,7 +225,7 @@ impl FrontendHandler {
                 });
             }
             ResourcePayload::Schedules { schedules } => {
-                debug!("ResourcePayload::Schedule: {:?}", schedules);
+                debug!("Schedule: {:?}", schedules);
                 let _ = self.ui_weak.upgrade_in_event_loop(move |ui| {
                     let schedules:Vec<ScheduleItem>=schedules.into_iter().map(|(id,task)|{
                         let ScheduledTask { description, triggers, offset:_, next_trigger } =task;
@@ -246,6 +246,9 @@ impl FrontendHandler {
                     }).collect();
                     ui.set_schedules(ModelRc::new(VecModel::from(schedules)));
                 });
+            }
+            ResourcePayload::ToolAbstracts { abstracts }=>{
+                debug!("ToolAbstracts: {:?}",abstracts);
             }
         }
         Ok(())

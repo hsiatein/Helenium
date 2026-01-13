@@ -14,6 +14,7 @@ use heleny_proto::Resource;
 use heleny_proto::SCHEDULE;
 use heleny_proto::ServiceRole;
 use heleny_proto::TASK_ABSTRACT;
+use heleny_proto::TOOL_ABSTRACTS;
 use heleny_proto::TOTAL_BUS_TRAFFIC;
 use heleny_proto::UserDecision;
 use heleny_service::CommonMessage;
@@ -32,12 +33,13 @@ use crate::user::User;
 
 mod user;
 
-static RESOURCES: [&'static str; 5] = [
+static RESOURCES: [&'static str; 6] = [
     DISPLAY_MESSAGES,
     TOTAL_BUS_TRAFFIC,
     HEALTH,
     TASK_ABSTRACT,
     SCHEDULE,
+    TOOL_ABSTRACTS,
 ];
 
 #[base_service(deps=["HubService"])]
