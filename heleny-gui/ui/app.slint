@@ -80,34 +80,34 @@ export component AppWindow inherits Window {
         // },
     ];
     in-out property <[ToolAbstractItem]> tool_abstracts: [
-        {
-            name: "网页抓取",
-            description: "抓取网页内容并提取关键信息",
-            available: true,
-            expanded: false,
-            commands: [
-                { name: "fetch_url", description: "抓取指定 URL 的页面" },
-                { name: "extract_text", description: "提取正文与标题" },
-                { name: "screenshot", description: "生成页面截图" },
-            ],
-        },
-        {
-            name: "文件处理",
-            description: "本地文件读取与批量处理",
-            available: false,
-            expanded: true,
-            commands: [
-                { name: "read_file", description: "读取文件内容" },
-                { name: "batch_rename", description: "批量重命名文件" },
-            ],
-        },
-        {
-            name: "终端执行",
-            description: "安全地执行终端命令并回传结果",
-            available: true,
-            expanded: false,
-            commands: [],
-        },
+        // {
+        //     name: "网页抓取",
+        //     description: "抓取网页内容并提取关键信息",
+        //     available: true,
+        //     expanded: false,
+        //     commands: [
+        //         { name: "fetch_url", description: "抓取指定 URL 的页面" },
+        //         { name: "extract_text", description: "提取正文与标题" },
+        //         { name: "screenshot", description: "生成页面截图" },
+        //     ],
+        // },
+        // {
+        //     name: "文件处理",
+        //     description: "本地文件读取与批量处理",
+        //     available: false,
+        //     expanded: true,
+        //     commands: [
+        //         { name: "read_file", description: "读取文件内容" },
+        //         { name: "batch_rename", description: "批量重命名文件" },
+        //     ],
+        // },
+        // {
+        //     name: "终端执行",
+        //     description: "安全地执行终端命令并回传结果",
+        //     available: true,
+        //     expanded: false,
+        //     commands: [],
+        // },
     ];
     in property <image> default_image: @image-url("icons/image_40dp_1F1F1F_FILL0_wght400_GRAD0_opsz40.png");
     in-out property <bool> kernel_shutdown:false;
