@@ -39,3 +39,5 @@ mod mcp_service_message;
 pub use mcp_service_message::*;
 mod docker_service_message;
 pub use docker_service_message::*;
+mod process_service_message;
+pub use process_service_message::*;

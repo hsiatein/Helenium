@@ -32,3 +32,4 @@ service_test ={ path = "../service-test"}
 service_schedule ={ path = "../service-schedule"}
 service_mcp ={ path = "../service-mcp"}
 service_docker ={ path = "../service-docker"}
+service_process ={ path = "../service-process"}

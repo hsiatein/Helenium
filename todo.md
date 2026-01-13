@@ -58,3 +58,4 @@ todo:
 - [x] 32.审批
 - [x] 33.TaskLogger开新任务来记录，基础信息发布到hub，详细信息需要订阅
 - [ ] 34.tools页面，安装配置tools
+- [ ] 35.McpToolManual to ToolManual

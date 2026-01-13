@@ -1,4 +1,4 @@
 #!/bin/bash
-name="db"
+name="process"
 
 ./target/debug/new_service ${name}

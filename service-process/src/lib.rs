@@ -2,16 +2,17 @@ use tokio::time::Instant;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_service::Service;
-use heleny_service::McpServiceMessage;
+use heleny_service::ProcessServiceMessage;
 use heleny_proto::{AnyMessage, ServiceRole};
 use async_trait::async_trait;
 use anyhow::Result;
 use heleny_proto::Resource;
 
-mod tool;
+#[cfg(test)]
+mod tests;
 
 #[base_service(deps=[])]
-pub struct McpService{
+pub struct ProcessService{
     endpoint:Endpoint,
 }
 
@@ -21,8 +22,8 @@ enum _WorkerMessage{
 }
 
 #[async_trait]
-impl Service for McpService {
-    type MessageType= McpServiceMessage;
+impl Service for ProcessService {
+    type MessageType= ProcessServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>>{
         // 实例化
         let instance=Self {
@@ -34,7 +35,7 @@ impl Service for McpService {
         &mut self,
         _name: String,
         _role: ServiceRole,
-        _msg: McpServiceMessage,
+        _msg: ProcessServiceMessage,
     ) -> Result<()>{
         Ok(())
     }
@@ -52,6 +53,6 @@ impl Service for McpService {
     }
 }
 
-impl McpService {
+impl ProcessService {
     
 }

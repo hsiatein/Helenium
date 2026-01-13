@@ -1,0 +1,41 @@
+[
+    {
+        "description": "\n    Search DuckDuckGo and return formatted results.\n\n    Args:\n        query: The search query string\n        max_results: Maximum number of results to return (default: 10)\n        ctx: MCP context for logging\n    ",
+        "inputSchema": {
+            "properties": {
+                "max_results": {
+                    "default": 10,
+                    "title": "Max Results",
+                    "type": "integer"
+                },
+                "query": {
+                    "title": "Query",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "query"
+            ],
+            "title": "searchArguments",
+            "type": "object"
+        },
+        "name": "search"
+    },
+    {
+        "description": "\n    Fetch and parse content from a webpage URL.\n\n    Args:\n        url: The webpage URL to fetch content from\n        ctx: MCP context for logging\n    ",
+        "inputSchema": {
+            "properties": {
+                "url": {
+                    "title": "Url",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "url"
+            ],
+            "title": "fetch_contentArguments",
+            "type": "object"
+        },
+        "name": "fetch_content"
+    }
+]

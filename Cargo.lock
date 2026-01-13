@@ -2388,6 +2388,7 @@ dependencies = [
  "service_hub",
  "service_mcp",
  "service_memory",
+ "service_process",
  "service_schedule",
  "service_stats",
  "service_task",
@@ -5229,6 +5230,19 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "script"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "heleny_bus",
+ "heleny_macros",
+ "heleny_proto",
+ "heleny_service",
+ "inventory",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
 
 [[package]]
 name = "sctk-adwaita"
@@ -5533,6 +5547,23 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "service_process"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "heleny_bus",
+ "heleny_macros",
+ "heleny_proto",
+ "heleny_service",
+ "inventory",
+ "serde",
+ "serde_json",
  "tokio",
  "tracing",
 ]
