@@ -107,6 +107,15 @@
                     "./.temp/mcp-code-interpreter:/local-directory",
                     "mcp/mcp-code-interpreter"
                 ]
+            },
+            "wikipedia-mcp": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "mcp/wikipedia-mcp"
+                ]
             }
         }
     }

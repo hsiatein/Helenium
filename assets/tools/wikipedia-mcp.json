@@ -1,0 +1,197 @@
+{
+  "name": "wikipedia-mcp",
+  "description": "Search Wikipedia for articles matching a query. Provide diagnostics for Wikipedia API connectivity. Get the full content of a Wikipedia article. Get a summary of a Wikipedia article. Get a summary of a Wikipedia article tailored to a specific query. Get a summary of a specific section of a Wikipedia article. Extract key facts from a Wikipedia article, optionally focused on a topic. Get topics related to a Wikipedia article based on links and categories. Get the sections of a Wikipedia article. Get the links contained within a Wikipedia article. Get the coordinates of a Wikipedia article.",
+  "commands": [
+    {
+      "name": "search_wikipedia",
+      "description": "Search Wikipedia for articles matching a query.",
+      "args": [
+        {
+          "name": "query",
+          "description": "",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "limit",
+          "description": "",
+          "type": "integer",
+          "required": false,
+          "default": 10
+        }
+      ]
+    },
+    {
+      "name": "test_wikipedia_connectivity",
+      "description": "Provide diagnostics for Wikipedia API connectivity.",
+      "args": []
+    },
+    {
+      "name": "get_article",
+      "description": "Get the full content of a Wikipedia article.",
+      "args": [
+        {
+          "name": "title",
+          "description": "",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "get_summary",
+      "description": "Get a summary of a Wikipedia article.",
+      "args": [
+        {
+          "name": "title",
+          "description": "",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "summarize_article_for_query",
+      "description": "Get a summary of a Wikipedia article tailored to a specific query.",
+      "args": [
+        {
+          "name": "query",
+          "description": "",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "max_length",
+          "description": "",
+          "type": "integer",
+          "required": false,
+          "default": 250
+        },
+        {
+          "name": "title",
+          "description": "",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "summarize_article_section",
+      "description": "Get a summary of a specific section of a Wikipedia article.",
+      "args": [
+        {
+          "name": "title",
+          "description": "",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "max_length",
+          "description": "",
+          "type": "integer",
+          "required": false,
+          "default": 150
+        },
+        {
+          "name": "section_title",
+          "description": "",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "extract_key_facts",
+      "description": "Extract key facts from a Wikipedia article, optionally focused on a topic.",
+      "args": [
+        {
+          "name": "count",
+          "description": "",
+          "type": "integer",
+          "required": false,
+          "default": 5
+        },
+        {
+          "name": "title",
+          "description": "",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "topic_within_article",
+          "description": "",
+          "type": "string",
+          "required": false,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "name": "get_related_topics",
+      "description": "Get topics related to a Wikipedia article based on links and categories.",
+      "args": [
+        {
+          "name": "limit",
+          "description": "",
+          "type": "integer",
+          "required": false,
+          "default": 10
+        },
+        {
+          "name": "title",
+          "description": "",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "get_sections",
+      "description": "Get the sections of a Wikipedia article.",
+      "args": [
+        {
+          "name": "title",
+          "description": "",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "get_links",
+      "description": "Get the links contained within a Wikipedia article.",
+      "args": [
+        {
+          "name": "title",
+          "description": "",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "get_coordinates",
+      "description": "Get the coordinates of a Wikipedia article.",
+      "args": [
+        {
+          "name": "title",
+          "description": "",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    }
+  ]
+}

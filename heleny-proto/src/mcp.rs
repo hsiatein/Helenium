@@ -47,6 +47,7 @@ pub struct McpToolManual {
 
 #[derive(Debug,Clone,Serialize,Deserialize)]
 pub struct McpInputSchema {
+    #[serde(default)]
     pub required: Vec<String>,
     pub properties: HashMap<String,McpArg>,
     #[serde(flatten)]
