@@ -21,3 +21,5 @@ extern crate service_schedule;
 extern crate service_docker;
 extern crate service_mcp;
 extern crate service_process;
+
+extern crate service_tools;
