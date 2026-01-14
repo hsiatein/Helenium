@@ -103,12 +103,6 @@ impl From<McpToolManual> for ToolCommand {
         let args=properties.into_iter().map(|(arg_name,arg)|{
             let McpArg { arg_type, description, default, extra }=arg;
             let required=required.contains(&arg_name);
-            let default=if let Some(default)=default {
-                Some(default.to_string())
-            }
-            else {
-                None
-            };
             let extra_info;
             if extra.is_empty() {
                 extra_info="".to_string()

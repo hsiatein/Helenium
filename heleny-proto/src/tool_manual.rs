@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 use serde::Serialize;
+use serde_json::Value;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ToolManual {
@@ -30,7 +31,7 @@ pub struct ToolArgument {
     #[serde(rename = "type")]
     pub arg_type: String,
     pub required: bool,
-    pub default: Option<String>,
+    pub default: Option<Value>,
 }
 
 impl ToolManual {
