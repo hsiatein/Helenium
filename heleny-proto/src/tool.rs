@@ -24,3 +24,20 @@ pub trait HelenyTool: Debug + Send + 'static {
 pub trait CanRequestConsent: Sync {
     async fn request_consent(&self, description: String) -> Result<()>;
 }
+
+
+pub struct TestCanRequestConsent {
+}
+
+#[async_trait]
+impl CanRequestConsent for TestCanRequestConsent {
+    async fn request_consent(&self, _: String) -> Result<()>{
+        Ok(())
+    }
+}
+
+impl TestCanRequestConsent {
+    pub fn new()->Self{
+        Self{}
+    }
+}

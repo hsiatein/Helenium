@@ -32,3 +32,4 @@ base64 = "0.22.1"
 pathdiff = "0.2.3"
 itertools = "0.14.0"
 bollard = "0.20.0"
+reqwest = { version = "0.13.1", features = ["json"] }

@@ -7,6 +7,13 @@
             "description": "生成图片并自动发送给用户",
             "args": [
                 {
+                    "name": "extra",
+                    "description": "额外内容",
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                {
                     "name": "appearance",
                     "description": "外貌",
                     "type": "string",
@@ -25,21 +32,21 @@
                     "description": "动作",
                     "type": "string",
                     "required": false,
-                    "default": "looking_at_viewer, "
+                    "default": "looking_at_viewer,"
                 },
                 {
                     "name": "style",
                     "description": "风格",
                     "type": "string",
                     "required": false,
-                    "default": "from side, girl, solo, female focus,dynamic angle,depth of field,high contrast,colorful,detailed light,light leaks,beautiful detailed glow,best shadow,shiny skin,ray tracing,detailed light,sunlight,shine on girl's body,cinematic lighting,oiled,(artist:mika pikazo:0.5),(artist:ciloranko:0.5),(artist:kazutake hazano:0.5),(artist:kedama milk:0.5),(artist:ask_(askzy):0.5),(artist:wanke:0.5),(artist:fujiyama:0.5),year 2024, "
+                    "default": "from side, girl, solo, female focus,dynamic angle,depth of field,high contrast,colorful,detailed light,light leaks,beautiful detailed glow,best shadow,shiny skin,ray tracing,detailed light,sunlight,shine on girl's body,cinematic lighting,oiled,(artist:mika pikazo:0.5),(artist:ciloranko:0.5),(artist:kazutake hazano:0.5),(artist:kedama milk:0.5),(artist:ask_(askzy):0.5),(artist:wanke:0.5),(artist:fujiyama:0.5),year 2024,"
                 },
                 {
                     "name": "negative",
                     "description": "负面词条",
                     "type": "string",
                     "required": false,
-                    "default": "colored inner hair, gradient hair color, fluffy_hair, mature, hand, hands, high twintails, high ponytail, high twin buns, high pigtails, "
+                    "default": "colored inner hair, gradient hair color, fluffy_hair, mature, hand, hands, high twintails, high ponytail, high twin buns, high pigtails,"
                 }
             ]
         }

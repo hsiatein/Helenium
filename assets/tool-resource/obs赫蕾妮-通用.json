@@ -119,7 +119,7 @@
       "guide_size": 1024,
       "guide_size_for": true,
       "max_size": 1980,
-      "seed": 143683606722945,
+      "seed": "<seed_face>",
       "steps": 15,
       "cfg": 5,
       "sampler_name": "euler_ancestral",
@@ -193,7 +193,7 @@
   },
   "62": {
     "inputs": {
-      "text": "<外貌>\n\n<服装>\n\n<动作>\n\n<风格>",
+      "text": "<额外内容>\n\n<外貌>\n\n<服装>\n\n<动作>\n\n<风格>",
       "token_normalization": "none",
       "weight_interpretation": "compel",
       "clip": [
@@ -209,7 +209,7 @@
   "75": {
     "inputs": {
       "add_noise": true,
-      "noise_seed": 204595489525953,
+      "noise_seed": "<seed_sampler>",
       "cfg": 5,
       "model": [
         "108",
@@ -263,8 +263,8 @@
   },
   "80": {
     "inputs": {
-      "add_noise": false,
-      "noise_seed": 145485718859507,
+      "add_noise": true,
+      "noise_seed": "<seed_upsampler>",
       "cfg": 5,
       "model": [
         "108",
@@ -386,7 +386,7 @@
       "guide_size": 512,
       "guide_size_for": true,
       "max_size": 1024,
-      "seed": 462632456353256,
+      "seed": "<seed_nipples>",
       "steps": 20,
       "cfg": 8,
       "sampler_name": "euler",
@@ -523,7 +523,7 @@
       "guide_size": 512,
       "guide_size_for": true,
       "max_size": 1024,
-      "seed": 482166740918600,
+      "seed": "<seed_hands>",
       "steps": 20,
       "cfg": 8,
       "sampler_name": "euler",
@@ -624,7 +624,7 @@
       "guide_size": 512,
       "guide_size_for": true,
       "max_size": 1024,
-      "seed": 654120373542655,
+      "seed": "<seed_eyes>",
       "steps": 20,
       "cfg": 8,
       "sampler_name": "euler",

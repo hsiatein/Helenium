@@ -63,6 +63,13 @@
     "ToolkitService": {
         "tools_dir": "./assets/tools"
     },
+    "ToolsService": {
+        "comfyui": {
+            "base_url": "http://127.0.0.1:8188",
+            "api_key_env_var": "COMFYUI_API_KEY",
+            "base_prompt_path": "./assets/tool-resource/obs赫蕾妮-通用.json"
+        }
+    },
     "TaskService": {
         "max_running_tasks": 10,
         "max_working_loop": 100
