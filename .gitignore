@@ -45,3 +45,6 @@ storage/
 codex/
 .exchange/
 .temp/
+/assets/presets/persona.txt
+**.key
+todo.md

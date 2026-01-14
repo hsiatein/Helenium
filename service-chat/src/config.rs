@@ -9,6 +9,7 @@ pub struct RoleConfig {
     pub preset_path: PathBuf,
     #[serde(default)]
     pub preset: String,
+    pub persona_path: Option<PathBuf>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -62,6 +62,6 @@ todo:
 - [ ] 34.tools页面，安装配置tools
 - [x] 35.McpToolManual to ToolManual
 - [x] 35.重载tools
-- [ ] 36.热安装tools
-- [ ] 37.工具排序
+- [x] 36.热安装tools
+- [x] 37.工具排序
 - [ ] 38.设置用户名，安装tools

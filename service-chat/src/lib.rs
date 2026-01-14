@@ -53,6 +53,10 @@ impl Service for ChatService {
         if config.heleny.preset.is_empty() {
             config.heleny.preset =
                 read_via_fs_service(&endpoint, &config.heleny.preset_path).await?;
+            if let Some(persona_path) = config.heleny.persona_path.take() {
+                let persona=read_via_fs_service(&endpoint, persona_path).await?;
+                config.heleny.preset=config.heleny.preset.replace("<你可以创建assets/presets/persona.txt文件来进行人物设定，但是不要动这个标签。不创建新文件的话，也可以把这段标签替换成人物设定>", &persona);
+            }
         }
         if config.planner.preset.is_empty() {
             config.planner.preset =

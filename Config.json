@@ -43,7 +43,8 @@
         ],
         "heleny": {
             "api": 0,
-            "preset_path": "assets/presets/heleny.txt"
+            "preset_path": "assets/presets/heleny.txt",
+            "persona_path": "assets/presets/persona.txt"
         },
         "planner": {
             "api": 2,

@@ -66,6 +66,7 @@ GUI的实现基于 Slint(当前), WEBUI的实现基于 Vue/TS(暂时停更)
 3. 大部分 WebUI 代码, ( *.vue, heleny-webui/src/router.ts, heleny-webui/src/main.ts ).
 4. *.slint文件大量使用了AI.
 5. heleny-gui\src\lib.rs::generate_svg_path函数 (92-178行).
+6. schedule 中 chrono 的用法大量参考 AI. 
 
 <p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 
@@ -77,7 +78,7 @@ GUI的实现基于 Slint(当前), WEBUI的实现基于 Vue/TS(暂时停更)
 
 所需要的软件.
 * Rust
-* Docker
+* Docker ( 很多MCP工具基于Docker )
 
 ### 安装
 
@@ -93,10 +94,19 @@ GUI的实现基于 Slint(当前), WEBUI的实现基于 Vue/TS(暂时停更)
 3. 新建.env文件, 在里面设置HELENIUM_CONFIG环境变量
    ```
    touch ./.env
+   # HELENIUM_CONFIG=./Config.json
+   # LAUNCH_HELENIUM_BACKEND=true
    ```
-4. 运行
+   
+4. LAUNCH_HELENIUM_BACKEND=true时，只需要运行GUI，GUI会自动拉起服务端
+   ```sh
+   ./target/release/heleny_gui
+   ```
+
+5. LAUNCH_HELENIUM_BACKEND=false时，客户端和服务端分离，需要先拉起服务端再运行GUI
    ```sh
    ./target/release/heleny_server
+   ./target/release/heleny_gui
    ```
 
 <p align="right">(<a href="#readme-top">回到顶部</a>)</p>
@@ -105,6 +115,8 @@ GUI的实现基于 Slint(当前), WEBUI的实现基于 Vue/TS(暂时停更)
 
 <!-- USAGE EXAMPLES -->
 ## 用法
+
+暂时没有文档.
 
 更多例子请参考 [文档](https://example.com)
 
@@ -115,7 +127,7 @@ GUI的实现基于 Slint(当前), WEBUI的实现基于 Vue/TS(暂时停更)
 <!-- ROADMAP -->
 ## 路线
 
-- [x] 初步做出可以对话的原型
+- [x] 初步做出可以对话，可以使用工具完成任务的原型
 
 <p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 
@@ -123,7 +135,7 @@ GUI的实现基于 Slint(当前), WEBUI的实现基于 Vue/TS(暂时停更)
 <!-- LICENSE -->
 ## License
 
-Distributed under the Unlicense License. See `LICENSE.txt` for more information.
+基于 GPLv3 许可证发布. 更多信息见 `LICENSE` .
 
 <p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 
