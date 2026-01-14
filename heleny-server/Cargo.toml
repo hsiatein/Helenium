@@ -1,0 +1,13 @@
+[package]
+name = "heleny_server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { workspace = true }
+dotenvy = { workspace = true }
+heleny_kernel = { path = "../heleny-kernel" }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+heleny_utils = { path = "../heleny-utils" }
+heleny_proto = {path = "../heleny-proto"}

@@ -1,0 +1,34 @@
+[workspace]
+members = [ "heleny-bus", "heleny-gui", "heleny-kernel", "heleny-macros", "heleny-proto", "heleny-server", "heleny-service", "heleny-utils", "script", "service-auth", "service-chat", "service-config", "service-docker", "service-fs", "service-hub", "service-mcp", "service-memory", "service-process", "service-schedule", "service-stats", "service-task", "service-test", "service-toolkit", "service-user", "service-webui", "tests"]
+resolver = "3"
+
+[workspace.dependencies]
+serde = {version = "1.0.228", features = ["derive"]}
+serde_json = {version = "1.0.147"}
+tokio = {version = "1.48.0", features = ["macros", "time","rt-multi-thread","sync","fs","process"]}
+dotenvy = "0.15.7"
+inventory = "0.3.21"
+async-trait = "0.1.89"
+anyhow = "1.0.100"
+uuid = { version = "1.19.0", features = ["v4","serde"] }
+tracing ="0.1.44"
+tracing-subscriber = { version = "0.3.22", features = ["env-filter", "fmt"] }
+tracing-appender = "0.2.4"
+chrono = {version = "0.4.42",features = ["serde"]}
+ed25519-dalek = {version = "2.2.0",features = ["rand_core","pem"]}
+rand = "0.8.5"
+axum = {version = "0.8.8",features = ["ws"]}
+tower-http = { version = "0.6.8", features = ["fs"] }
+open = "5.3.3"
+async-openai = {version = "0.31.1",features = ["_api","responses","chat-completion"]}
+tokio-stream = "0.1.17"
+sqlx = {version = "0.8.6",features = ["sqlite","runtime-tokio","chrono"]}
+slint = {version = "1.14.1"}
+tokio-tungstenite = "0.28.0"
+futures = "0.3.31"
+tungstenite = "0.28.0"
+image = "0.25.9"
+base64 = "0.22.1"
+pathdiff = "0.2.3"
+itertools = "0.14.0"
+bollard = "0.20.0"

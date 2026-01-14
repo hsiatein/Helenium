@@ -1,0 +1,92 @@
+{
+  "name": "arxiv-mcp-server",
+  "description": "The ArXiv MCP Server provides a comprehensive bridge between AI assistants and arXiv's research repository through the Model Context Protocol (MCP).Features: • Search arXiv papers with advanced filtering • Download and store papers locally as markdown • Read and analyze paper content • Deep research analysis prompts • Local paper management and storage • Enhanced tool descriptions optimized for local AI models • Docker MCP Gateway compatible with detailed context. Perfect for researchers, academics, and AI assistants conducting literature reviews and research analysis.",
+  "commands": [
+    {
+      "name": "search_papers",
+      "description": "Search for papers on arXiv with advanced filtering and query optimization.\n\nQUERY CONSTRUCTION GUIDELINES:\n- Use QUOTED PHRASES for exact matches: \"multi-agent systems\", \"neural networks\", \"machine learning\"\n- Combine related concepts with OR: \"AI agents\" OR \"software agents\" OR \"intelligent agents\"  \n- Use field-specific searches for precision:\n  - ti:\"exact title phrase\" - search in titles only\n  - au:\"author name\" - search by author\n  - abs:\"keyword\" - search in abstracts only\n- Use ANDNOT to exclude unwanted results: \"machine learning\" ANDNOT \"survey\"\n- For best results, use 2-4 core concepts rather than long keyword lists\n\nADVANCED SEARCH PATTERNS:\n- Field + phrase: ti:\"transformer architecture\" for papers with exact title phrase\n- Multiple fields: au:\"Smith\" AND ti:\"quantum\" for author Smith's quantum papers  \n- Exclusions: \"deep learning\" ANDNOT (\"survey\" OR \"review\") to exclude survey papers\n- Broad + narrow: \"artificial intelligence\" AND (robotics OR \"computer vision\")\n\nCATEGORY FILTERING (highly recommended for relevance):\n- cs.AI: Artificial Intelligence\n- cs.MA: Multi-Agent Systems  \n- cs.LG: Machine Learning\n- cs.CL: Computation and Language (NLP)\n- cs.CV: Computer Vision\n- cs.RO: Robotics\n- cs.HC: Human-Computer Interaction\n- cs.CR: Cryptography and Security\n- cs.DB: Databases\n\nEXAMPLES OF EFFECTIVE QUERIES:\n- ti:\"reinforcement learning\" with categories: [\"cs.LG\", \"cs.AI\"] - for RL papers by title\n- au:\"Hinton\" AND \"deep learning\" with categories: [\"cs.LG\"] - for Hinton's deep learning work\n- \"multi-agent\" ANDNOT \"survey\" with categories: [\"cs.MA\"] - exclude survey papers\n- abs:\"transformer\" AND ti:\"attention\" with categories: [\"cs.CL\"] - attention papers with transformer abstracts\n\nDATE FILTERING: Use YYYY-MM-DD format for historical research:\n- date_to: \"2015-12-31\" - for foundational/classic work (pre-2016)\n- date_from: \"2020-01-01\" - for recent developments (post-2020)\n- Both together for specific time periods\n\nRESULT QUALITY: Results sorted by RELEVANCE (most relevant papers first), not just newest papers.\nThis ensures you get the most pertinent results regardless of publication date.\n\nTIPS FOR FOUNDATIONAL RESEARCH:\n- Use date_to: \"2010-12-31\" to find classic papers on BDI, SOAR, ACT-R\n- Combine with field searches: ti:\"BDI\" AND abs:\"belief desire intention\"  \n- Try author searches: au:\"Rao\" AND \"BDI\" for Anand Rao's foundational BDI work",
+      "args": [
+        {
+          "name": "date_from",
+          "description": "Start date for papers (YYYY-MM-DD format). Use to find recent work, e.g., '2023-01-01' for last 2 years.",
+          "type": "string",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "categories",
+          "description": "Strongly recommended: arXiv categories to focus search (e.g., ['cs.AI', 'cs.MA'] for agent research, ['cs.LG'] for ML, ['cs.CL'] for NLP, ['cs.CV'] for vision). Greatly improves relevance., 额外信息: items: {\"type\":\"string\"}",
+          "type": "array",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "date_to",
+          "description": "End date for papers (YYYY-MM-DD format). Use with date_from to find historical work, e.g., '2020-12-31' for older research.",
+          "type": "string",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "sort_by",
+          "description": "Sort results by 'relevance' (most relevant first, default) or 'date' (newest first). Use 'relevance' for focused searches, 'date' for recent developments., 额外信息: enum: [\"relevance\",\"date\"]",
+          "type": "string",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "max_results",
+          "description": "Maximum number of results to return (default: 10, max: 50). Use 15-20 for comprehensive searches.",
+          "type": "integer",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "query",
+          "description": "Search query using quoted phrases for exact matches (e.g., '\"machine learning\" OR \"deep learning\"') or specific technical terms. Avoid overly broad or generic terms.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "download_paper",
+      "description": "Download and convert an arXiv paper to readable markdown format for analysis and reading. This tool fetches the PDF from arXiv, converts it to markdown using advanced text extraction, and stores it locally for immediate access. Use this tool when you need to read, analyze, or work with the full text content of a specific paper. The conversion process extracts text, preserves formatting, and handles mathematical equations. Returns the full paper content directly upon successful completion.",
+      "args": [
+        {
+          "name": "check_status",
+          "description": "Set to true to only check the status of an ongoing or completed conversion without starting a new download. Use this to monitor long-running conversions or verify if a paper is already available.",
+          "type": "boolean",
+          "required": false,
+          "default": "false"
+        },
+        {
+          "name": "paper_id",
+          "description": "The arXiv identifier of the paper to download (e.g., '2301.07041', '1706.03762', 'cs.AI/0301001'). This can be found in search results or arXiv URLs. The paper must exist on arXiv., 额外信息: pattern: \"^(\\\\d{4}\\\\.\\\\d{4,5}(v\\\\d+)?|[a-z-]+(\\\\.[A-Z]{2})?/\\\\d{7}(v\\\\d+)?)$\"",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "list_papers",
+      "description": "List all previously downloaded and converted papers that are available in local storage for immediate reading and analysis. This tool shows you what papers you already have access to without needing to download them again. Each paper in the list includes metadata like title, authors, abstract, and direct links. Use this tool to see your paper library, check if a specific paper is already downloaded, or browse previously acquired research papers before downloading new ones.",
+      "args": []
+    },
+    {
+      "name": "read_paper",
+      "description": "Read the full text content of a previously downloaded and converted research paper in clean markdown format. This tool retrieves the complete paper content including abstract, introduction, methodology, results, conclusions, and references. The content is formatted for easy reading and analysis, with preserved mathematical equations and structured sections. Use this tool when you need to access the full text of a paper for detailed study, quotation, analysis, or research. The paper must have been previously downloaded using the download_paper tool.",
+      "args": [
+        {
+          "name": "paper_id",
+          "description": "The arXiv identifier of the paper to read (e.g., '2301.07041', '1706.03762'). This must be a paper that has been previously downloaded and converted to markdown format. Use list_papers to see available papers., 额外信息: pattern: \"^(\\\\d{4}\\\\.\\\\d{4,5}(v\\\\d+)?|[a-z-]+(\\\\.[A-Z]{2})?/\\\\d{7}(v\\\\d+)?)$\"",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    }
+  ]
+}

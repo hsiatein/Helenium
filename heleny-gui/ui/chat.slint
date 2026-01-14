@@ -1,0 +1,279 @@
+import {
+    VerticalBox,
+    HorizontalBox,
+    ScrollView,
+    TextEdit
+} from "std-widgets.slint";
+import { HelenyButton } from "utils.slint";
+
+export struct MessageItem {
+    id: int,
+    time: string,
+    is_me: bool,
+    kind: string,   // "text" | "image"
+    text: string,   // kind=="text" 时用
+    image: image,   // kind=="image" 时用
+}
+
+component HelenyMessage inherits HorizontalBox {
+    in property <string> kind;
+    in property <string> content;
+    in property <string> time;
+    in property <image> image;
+    alignment: LayoutAlignment.start;
+    Rectangle {
+        border-radius: 30px;
+        clip: true;
+        width: 60px;
+        height: 60px;
+        Image {
+            source: @image-url("icons/icon.png");
+            width: 60px;
+        }
+    }
+    VerticalBox {
+        padding: 5px;
+        spacing: 5px;
+        Text {
+            text: "Heleny  "+time;
+            font-size: 16px;
+            wrap: word-wrap;
+            color: black;
+        }
+        Rectangle {
+            background: #7fb5ff;
+            border-radius: 12px;
+
+            // ✅ 使用 Layout 包裹 Text，它会自动撑开 Rectangle 的高度
+            HorizontalLayout {
+                padding: 12px; // 统一设置内边距，文字就不会贴边
+                alignment: LayoutAlignment.start;
+                
+                // Overlay container
+                if(kind=="text"): Rectangle {
+                    // 1. Invisible Text triggers auto-sizing
+                    Text {
+                        text: root.content;
+                        font-size: 16px;
+                        wrap: word-wrap;
+                        max-width: 400px;
+                        color: transparent; 
+                    }
+
+                    // 2. TextInput (Primitive) fills the sized container for selection.
+                    TextInput {
+                        width: 100%;
+                        height: 100%;
+                        text: root.content;
+                        font-size: 16px;
+                        wrap: word-wrap;
+                        read-only: true;
+                        color: black;
+                        single-line: false; // Important for multi-line display
+                    }
+                }
+                if(kind=="image"): Rectangle {
+                    height: 400px;
+                    width: 400px;
+                    HorizontalLayout {
+                        Image {
+                            source: root.image;
+                            image-fit: ImageFit.contain;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+component UserMessage inherits HorizontalBox {
+    in property <string> kind;
+    in property <string> content;
+    in property <string> time;
+    in property <image> image;
+    alignment: LayoutAlignment.end;
+    VerticalBox {
+        padding: 5px;
+        spacing: 5px;
+        Text {
+            text: time+"  User";
+            font-size: 16px;
+            horizontal-alignment: TextHorizontalAlignment.right;
+            wrap: word-wrap;
+            color: black;
+        }
+        Rectangle {
+            background: #b2d4ff;
+            border-radius: 12px;
+            
+            // ✅ 使用 Layout 包裹 Text，它会自动撑开 Rectangle 的高度
+            HorizontalLayout {
+                padding: 12px; // 统一设置内边距，文字就不会贴边
+                alignment: LayoutAlignment.end;
+
+                // Overlay container
+                if(kind=="text"): Rectangle {
+                    // 1. Invisible Text triggers auto-sizing
+                    Text {
+                        text: root.content;
+                        font-size: 16px;
+                        wrap: word-wrap;
+                        max-width: 400px;
+                        color: transparent;
+                    }
+
+                    // 2. TextInput (Primitive) fills the sized container for selection.
+                    TextInput {
+                        width: 100%;
+                        height: 100%;
+                        text: root.content;
+                        font-size: 16px;
+                        wrap: word-wrap;
+                        read-only: true;
+                        color: black;
+                        single-line: false; // Important for multi-line display
+                    }
+                }
+                if(kind=="image"): HorizontalLayout {
+                    height: 400px;
+                    Image {
+                        source: root.image;
+                        image-fit: ImageFit.contain;
+                    }
+                }
+            }
+        }
+    }
+    Rectangle {
+        border-radius: 30px;
+        clip: true;
+        width: 60px;
+        height: 60px;
+        Image {
+            source: @image-url("icons/account_circle_60dp_1F1F1F_FILL0_wght400_GRAD0_opsz48.png");
+            width: 60px;
+        }
+    }
+}
+
+export component ChatView inherits Rectangle {
+    in property <[MessageItem]> chat_model: [];
+    callback send(string);
+    callback load_more_history();
+
+    property <length> current_viewport_y: chat_list.viewport-y;
+    property <length> previous_content_height;
+
+    changed current_viewport_y => {
+        // When viewport-y is close to 0 (top), trigger load_more
+        // viewport-y is typically negative. 0 is the very top.
+        if (root.current_viewport_y > -20px) { 
+             root.load_more_history();
+        }
+    }
+
+    public function prepare_history_scroll() {
+        root.previous_content_height = chat_list.viewport-height;
+        debug("Prepare history scroll. Old H:", root.previous_content_height);
+    }
+
+    public function finish_history_scroll() {
+        debug("Finish history scroll. New H:", chat_list.viewport-height);
+        if (chat_list.viewport-height > root.previous_content_height) {
+            let diff = chat_list.viewport-height - root.previous_content_height;
+            debug("Adjusting scroll by:", diff);
+            chat_list.viewport-y = chat_list.viewport-y - diff;
+        }
+    }
+
+    public function scroll_to_bottom() {
+        debug("Scroll: viewport-h", chat_list.viewport-height, "h", chat_list.height);
+        if (chat_list.viewport-height > chat_list.height) {
+            chat_list.viewport-y = -chat_list.viewport-height + chat_list.height;
+        }
+    }
+    
+    VerticalBox {
+        width: 100%;
+        alignment: LayoutAlignment.stretch;
+        padding: 0px;
+        spacing: 0px;
+        chat_list := ScrollView {
+            width: 90%;
+            viewport-height: content_layer.preferred-height;
+            
+            content_layer := VerticalLayout {
+                for data in root.chat_model : VerticalBox {
+                    padding: 0px;
+                    spacing: 0px;
+                    if (data.is_me) : UserMessage{
+                        content: data.text;
+                        time: data.time;
+                        kind: data.kind;
+                        image: data.image;
+                    }
+                    if (!data.is_me) : HelenyMessage{
+                        content: data.text;
+                        time: data.time;
+                        kind: data.kind;
+                        image: data.image;
+                    }
+
+                }
+            }
+        }
+        Rectangle {
+            background: #e2e2e2;
+            border-radius: 0px;
+            height: 18%;
+            HorizontalLayout {
+                padding: 12px;
+                spacing: 12px;
+                alignment: LayoutAlignment.stretch;
+                
+                // Wrap in Rectangle for styling
+                Rectangle {
+                    background: #ffffff;
+                    border-radius: 16px;
+                    horizontal-stretch: 1; // Rectangle stretches
+                    width: 80%;
+                    clip: true;
+                    // TextEdit fills the Rectangle
+                    input := TextEdit {
+                        width: 100%;
+                        height: 100%;
+                        font-size: 18px;
+                        text: "";
+                        wrap: word-wrap;
+                        
+                        key-pressed(event) => {
+                            if (event.text == "\n" && !event.modifiers.shift && !event.modifiers.control) {
+                                root.send(self.text);
+                                self.text = "";
+                                return accept;
+                            }
+                            return reject;
+                        }
+                    }
+                }
+        
+                VerticalLayout {
+                    width: 15%;
+                    alignment: LayoutAlignment.center;
+                    height: 100%;
+                    padding: 0px;
+                    Rectangle {
+                        width: 100%;
+                        height: 60%;
+                        HelenyButton {
+                            text: "发送";
+                            icon: @image-url("icons/send_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                            clicked => { root.send(input.text);input.text=""; }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

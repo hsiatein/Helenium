@@ -1,0 +1,30 @@
+{
+    "name": "julia",
+    "description": "通过 Julia 语言执行数学计算、数据处理、脚本运行和绘图。所有任务在 Docker 容器内运行，允许使用Pkg安装模块。",
+    "commands": [
+        {
+            "name": "eval",
+            "description": "执行一段 Julia 表达式，并返回结果。适合数学计算、变量操作、逻辑判断等。",
+            "args": [
+                {
+                    "name": "code",
+                    "description": "要执行的 Julia 表达式（不需要包含 println，系统会自动捕获最后一个表达式的返回值）。",
+                    "type": "string",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "name": "script",
+            "description": "执行一段 Julia 脚本。适合需要多行、函数、模块的复杂逻辑。",
+            "args": [
+                {
+                    "name": "code",
+                    "description": "完整 Julia 脚本，多行代码均可。",
+                    "type": "string",
+                    "required": true
+                }
+            ]
+        }
+    ]
+}

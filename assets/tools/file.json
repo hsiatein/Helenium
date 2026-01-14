@@ -1,0 +1,38 @@
+{
+    "name": "file",
+    "description": "可以操作本程序统一的文件系统FsService。可以负责工具之间的文件交换。可以操作交换目录的文件，交换目录可以被用户和你访问，可以在用户电脑和你的工具沙盒之间交换文件。可以用来把图片文件发送给用户。",
+    "commands": [
+        {
+            "name": "ls-exchange",
+            "description": "列出交换目录的文件",
+            "args": [
+            ]
+        },
+        {
+            "name": "load",
+            "description": "加载交换目录的文本文件或图像文件到文件系统",
+            "args": [
+                {
+                    "name": "path",
+                    "description": "文件路径，相对于交换目录",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "send",
+            "description": "发送图片",
+            "args": [
+                {
+                    "name": "path",
+                    "description": "图片路径，路径相对于交换目录",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,13 @@
+pub static KERNEL_NAME: &'static str = "Kernel";
+pub static KERNEL_SERVICE: &'static str = "KernelService";
+pub static CONFIG_SERVICE: &'static str = "ConfigService";
+pub static HUB_SERVICE: &'static str = "HubService";
+pub static USER_SERVICE: &'static str = "UserService";
+pub static FS_SERVICE: &'static str = "FsService";
+pub static MEMORY_SERVICE: &'static str = "MemoryService";
+pub static CHAT_SERVICE: &'static str = "ChatService";
+pub static TOOLKIT_SERVICE: &'static str = "ToolkitService";
+pub static TASK_SERVICE: &'static str = "TaskService";
+pub static WEBUI_SERVICE: &'static str = "WebuiService";
+pub static SCHEDULE_SERVICE: &'static str = "ScheduleService";
+pub static MCP_SERVICE: &'static str = "McpService";

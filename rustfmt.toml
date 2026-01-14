@@ -1,0 +1,5 @@
+# 将合并的导入拆分为多行
+imports_granularity = "Item"
+
+# 强制按字母顺序排序（可选，建议开启以保持整齐）
+reorder_imports = true

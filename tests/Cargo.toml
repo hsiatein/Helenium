@@ -1,0 +1,35 @@
+[package]
+name = "tests"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name="test_auth"
+path="src/test_auth.rs"
+
+[dependencies]
+tokio = { workspace = true }
+dotenvy = { workspace = true }
+heleny_kernel = { path = "../heleny-kernel" }
+heleny_proto = { path = "../heleny-proto" }
+service_auth = { path = "../service-auth" }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+heleny_utils = { path = "../heleny-utils" }
+ed25519-dalek = { workspace = true}
+rand = { workspace = true }
+heleny_service ={path ="../heleny-service"}
+
+[[bin]]
+name="test_stats"
+path="src/test_stats.rs"
+
+[[bin]]
+name="test_hub"
+path="src/test_hub.rs"
+
+[[bin]]
+name="test_fs"
+path="src/test_fs.rs"
+

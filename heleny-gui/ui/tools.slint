@@ -1,0 +1,262 @@
+import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
+
+export struct CommandItem {
+    name: string,
+    description: string,
+}
+
+export struct ToolAbstractItem {
+    name: string,
+    description: string,
+    commands: [CommandItem],
+    available: bool,
+    expanded: bool,
+    desc_expanded: bool,
+}
+
+component CommandCapsule inherits Rectangle {
+    in property <string> text: "";
+
+    height: 26px;
+    border-radius: 13px;
+    background: #dbe6ff;
+    border-width: 1px;
+    border-color: #b6ceff;
+    width: label.preferred-width + 16px;
+
+    HorizontalLayout {
+        alignment: LayoutAlignment.center;
+        VerticalLayout {
+            alignment: center;
+            label := Text {
+                text: root.text;
+                font-size: 12px;
+                color: #1c1c1c;
+            }
+        }
+    }
+}
+
+component NameCapsule inherits Rectangle {
+    in property <string> text: "";
+
+    height: 32px;
+    border-radius: 16px;
+    background: #cfe2ff;
+    border-width: 1px;
+    border-color: #9ec8ff;
+    width: label.preferred-width + 18px;
+
+    HorizontalLayout {
+        alignment: LayoutAlignment.center;
+        VerticalLayout {
+            alignment: center;
+            label := Text {
+                text: root.text;
+                font-size: 16px;
+                color: #1c1c1c;
+            }
+        }
+    }
+}
+
+component CommandsPanel inherits Rectangle {
+    in property <[CommandItem]> commands: [];
+
+    background: #f6f9ff;
+    border-radius: 20px;
+    border-width: 1px;
+    border-color: #dbe6ff;
+
+    VerticalBox {
+        padding: 12px;
+        spacing: 8px;
+        width: 100%;
+
+        Text {
+            text: "命令列表";
+            font-size: 14px;
+            color: #1c1c1c;
+        }
+
+        if (commands.length == 0): Text {
+            text: "暂无命令";
+            font-size: 13px;
+            color: #6b6b6b;
+        }
+
+        for cmd in commands: VerticalBox {
+            spacing: 8px;
+            CommandCapsule { text: cmd.name; }
+            Text {
+                text: cmd.description;
+                font-size: 13px;
+                color: #1c1c1c;
+                wrap: word-wrap;
+            }
+        }
+    }
+}
+
+export component ToolsView inherits Rectangle {
+    in property <[ToolAbstractItem]> tools: [];
+    callback refresh();
+
+    background: #f0f8ff;
+
+    VerticalBox {
+        padding: 18px;
+        spacing: 12px;
+        width: 100%;
+        height: 100%;
+
+        Text {
+            text: "工具中心";
+            font-size: 24px;
+            horizontal-alignment: center;
+            color: #1c1c1c;
+        }
+
+        ScrollView {
+            viewport-width: self.width;
+            viewport-height: content.preferred-height;
+            content := VerticalBox {
+                spacing: 14px;
+                width: 100%;
+
+                if (root.tools.length == 0): Rectangle {
+                    height: 120px;
+                    border-radius: 24px;
+                    background: #ffffff;
+                    border-width: 1px;
+                    border-color: #dbe6ff;
+                    Text {
+                        text: "暂无工具";
+                        font-size: 16px;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                        color: #6b6b6b;
+                    }
+                }
+
+                for tool in root.tools: Rectangle {
+                    background: #ffffff;
+                    border-radius: 28px;
+                    border-width: 1px;
+                    border-color: #dbe6ff;
+                    clip: true;
+                    drop-shadow-color: #d3e5ff;
+                    drop-shadow-offset-x: 0px;
+                    drop-shadow-offset-y: 2px;
+                    drop-shadow-blur: 8px;
+
+                    VerticalBox {
+                        width: 100%;
+
+                        TouchArea {
+                            width: parent.width;
+                            height: header.preferred-height;
+                            clicked => { tool.expanded = !tool.expanded; }
+
+                            header := VerticalBox {
+                                width: 100%;
+                                padding: 12px;
+                                spacing: 0px;
+                                VerticalLayout {
+                                    width: 100%;
+                                    spacing: 6px;
+                                    height: base.height+desc.height+button.height;
+                                    base:= HorizontalLayout {
+                                        alignment: start;
+                                        spacing: 16px;
+                                        height: name.height;
+                                        VerticalLayout {
+                                            alignment: center;
+                                            Rectangle {
+                                                width: 10px;
+                                                height: 10px;
+                                                border-radius: 5px;
+                                                background: tool.available ? #39d98a : #ff5b5b;
+                                            }
+                                        }
+                                        name:=NameCapsule { text: tool.name; }
+                                    }
+                                    desc:=Rectangle {
+                                        height: payload.height;
+                                        clip: true;
+                                        payload:=HorizontalLayout {
+                                            width: 100%;
+                                            height: tool.desc_expanded?text.preferred-height+20px:min(132px,text.preferred-height+20px);
+                                            text:=Text {
+                                                text: tool.description;
+                                                font-size: 16px;
+                                                color: #000000;
+                                                wrap: word-wrap;
+                                                overflow: elide;
+                                            }
+                                        }
+                                    }
+                                    
+                                }
+                                button:=HorizontalLayout {
+                                    width: 100%;
+                                    alignment: start;
+                                    height: 32px;
+                                    Rectangle {
+                                        height: 32px;
+                                        border-radius: 16px;
+                                        background: #eef4ff;
+                                        border-width: 1px;
+                                        border-color: #dbe6ff;
+                                        width: desc_label.preferred-width + 16px;
+                                        HorizontalLayout {
+                                            alignment: LayoutAlignment.center;
+                                            padding: 4px;
+                                            desc_label := Text {
+                                                text: tool.desc_expanded ? "收起" : "展开";
+                                                font-size: 16px;
+                                                color: #3f4c67;
+                                            }
+                                        }
+                                        TouchArea {
+                                            width: parent.width;
+                                            height: parent.height;
+                                            clicked => { tool.desc_expanded = !tool.desc_expanded; }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (tool.expanded): CommandsPanel { commands: tool.commands; }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        width: 52px;
+        height: 52px;
+        border-radius: 26px;
+        background: #e8f1ff;
+        border-width: 1px;
+        border-color: #c6dcff;
+        x: parent.width - self.width - 24px;
+        y: parent.height - self.height - 24px;
+
+        Image {
+            source: @image-url("icons/refresh_40dp_1F1F1F_FILL0_wght400_GRAD0_opsz40.png");
+            width: 28px;
+            height: 28px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+        }
+
+        TouchArea {
+            width: parent.width;
+            height: parent.height;
+            clicked => { root.refresh(); }
+        }
+    }
+}

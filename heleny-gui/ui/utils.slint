@@ -1,0 +1,78 @@
+import {
+    HorizontalBox,
+} from "std-widgets.slint";
+
+
+export component HelenyButton inherits Rectangle {
+    in property <string> text: "";
+    in property <image> icon: @image-url("");
+    in property <brush> btn-color: #9ec8ff;
+    
+    callback clicked();
+
+    // --- 2. 设置容器属性 ---
+    width: 90%;
+    vertical-stretch: 0;
+    background: btn-color;
+    border-radius: 12px;
+    animate background { duration: 150ms; }
+
+    // --- 3. 交互逻辑 ---
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+
+    // --- 4. 内部布局 ---
+    HorizontalLayout {
+        alignment: center;
+        spacing: 10px;
+        padding: 5px;
+        
+        Image {
+            source: root.icon;
+            height: 100%;
+            visible: root.icon.width > 0; 
+        }
+        if(root.text!=""): Text {
+            text: root.text;
+            font-size: 16px;
+            vertical-alignment: center;
+        }
+        
+    }
+
+    states [
+        pressed when touch.pressed: {
+            background: #7fb5ff;
+            opacity: 0.8;
+        }
+        hover when touch.has-hover: {
+            background: #b2d4ff;
+        }
+    ]
+}
+
+export component CircleId inherits Rectangle {
+    in property <string> text: "ID";
+
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    background: #dbe6ff;
+    border-color: #7fb5ff;
+    border-width: 1px;
+    clip: true;
+
+    HorizontalLayout {
+        alignment: LayoutAlignment.center;
+        padding: 6px;
+        Text {
+            text: root.text;
+            font-size: 13px;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+            wrap: word-wrap;
+            overflow: elide;
+        }
+    }
+}

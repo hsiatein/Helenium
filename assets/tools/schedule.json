@@ -1,0 +1,84 @@
+{
+    "name": "schedule",
+    "description": "用于添加、列出、删除未来日程任务计划，支持一次性任务、按间隔的周期任务、按每周每月为周期的任务。任务的描述一定要清晰明了，确保可以靠描述来开始以及完成。相同描述的任务会被自动合并，设定的触发时间叠加。统一使用 UTC 时间，时区为+08:00。",
+    "commands": [
+        {
+            "name": "once",
+            "description": "添加一次性触发任务，在指定时间执行一次。",
+            "args": [
+                {
+                    "name": "description",
+                    "description": "任务描述",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "time",
+                    "description": "执行时间（RFC3339 格式），多个之间使用逗号,分隔（如 2025-02-01T10:00:00+08:00,2026-01-01T10:00:00+08:00）",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "interval",
+            "description": "添加固定间隔执行的任务。",
+            "args": [
+                {
+                    "name": "description",
+                    "description": "任务描述",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "every",
+                    "description": "间隔分钟数（如 60 表示每 60 分钟执行一次）。",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "cron",
+            "description": "添加按Cron表达式触发的任务。",
+            "args": [
+                {
+                    "name": "description",
+                    "description": "任务描述",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "cron",
+                    "description": "Cron 表达式（Linux 风格 5 字段）：`min hour dom * dow`。\n- 第 4 字段（月）必须为 `*`（不支持按月调度）。\n- 第 3 字段（dom）与第 5 字段（dow）为 **或（OR）关系**：满足其一即触发。\n- 单个字段内仅允许 `*` 和 `,`（枚举），**不支持区间 `-` 或步进 `/`**。\n- 示例：`0 9,10 * * *` 表示每天 9:00 和 10:00 触发。",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "cancel",
+            "description": "取消已存在的任务。",
+            "args": [
+                {
+                    "name": "id",
+                    "description": "要取消的任务的ID",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "list",
+            "description": "列出当前所有任务。",
+            "args": []
+        }
+    ]
+}

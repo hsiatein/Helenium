@@ -1,0 +1,11 @@
+[package]
+name = "heleny_bus"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+heleny_proto ={ path = "../heleny-proto"}
+tokio = { workspace = true }
+anyhow = { workspace = true }
+uuid ={ workspace = true }
+tracing ={workspace = true}

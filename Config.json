@@ -1,0 +1,149 @@
+{
+    "Kernel": {
+        "user_name": "Mugi"
+    },
+    "ConfigService": {
+        "save_after": 10.0
+    },
+    "FsService": {
+        "exchange_dir": "./.exchange",
+        "temp_dir": "./.temp"
+    },
+    "AuthService": {
+        "pub_keys": [
+            "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAUEsqCIV2CVWAJ1ScPMhZUi+fYer0ivp6ziucUF2TfGY=\n-----END PUBLIC KEY-----",
+            "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAG17AlUB4Smih6Z9bk7/FL3IyTm9USZD2aMuAWXBLa64=\n-----END PUBLIC KEY-----",
+            "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAezkZozB1KXNmhUxch+lYqWnO3Bwrh1smaFogHa4PTr0=\n-----END PUBLIC KEY-----"
+        ]
+    },
+    "StatsService": {
+        "duration": 60
+    },
+    "WebuiService": {
+        "port": "4080",
+        "session_buffer": 32
+    },
+    "ChatService": {
+        "api": [
+            {
+                "base_url": "https://api.x.ai/v1",
+                "model": "grok-4-1-fast-non-reasoning",
+                "api_key_env_var": "GROK_API_KEY"
+            },
+            {
+                "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+                "model": "gemini-2.5-flash",
+                "api_key_env_var": "GEMINI_API_KEY"
+            },
+            {
+                "base_url": "https://api.x.ai/v1",
+                "model": "grok-4-1-fast-reasoning",
+                "api_key_env_var": "GROK_API_KEY"
+            }
+        ],
+        "heleny": {
+            "api": 0,
+            "preset_path": "assets/presets/heleny.txt",
+            "persona_path": "assets/presets/persona.txt"
+        },
+        "planner": {
+            "api": 2,
+            "preset_path": "assets/presets/planner.txt"
+        },
+        "executor": {
+            "api": 2,
+            "preset_path": "assets/presets/executor.txt"
+        }
+    },
+    "MemoryService": {
+        "short_term_length": 20,
+        "storage_dir": "./storage",
+        "display_length": 20
+    },
+    "ToolkitService": {
+        "tools_dir": "./assets/tools"
+    },
+    "TaskService": {
+        "max_running_tasks": 10,
+        "max_working_loop": 100
+    },
+    "ScheduleService": {
+        "schedule_dir": "./storage",
+        "offset": 28800
+    },
+    "McpService": {
+        "mcp_servers": {
+            "duckduckgo": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "mcp/duckduckgo"
+                ]
+            },
+            "arxiv-mcp-server": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-e",
+                    "ARXIV_STORAGE_PATH",
+                    "-v",
+                    "./.temp/arxiv:/local-directory",
+                    "mcp/arxiv-mcp-server"
+                ],
+                "env": {
+                    "ARXIV_STORAGE_PATH": "/Users/local-test/papers"
+                }
+            },
+            "mcp-code-interpreter": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-v",
+                    "./.temp/mcp-code-interpreter:/local-directory",
+                    "mcp/mcp-code-interpreter"
+                ]
+            },
+            "wikipedia-mcp": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "mcp/wikipedia-mcp"
+                ]
+            },
+            "puppeteer": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-e",
+                    "DOCKER_CONTAINER",
+                    "mcp/puppeteer"
+                ],
+                "env": {
+                    "DOCKER_CONTAINER": "true"
+                }
+            },
+            "filesystem": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-v",
+                    "./.temp/filesystem:/local-directory",
+                    "mcp/filesystem",
+                    "/local-directory"
+                ]
+            }
+        }
+    }
+}

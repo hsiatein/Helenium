@@ -1,0 +1,39 @@
+{
+  "name": "duckduckgo",
+  "description": "Search DuckDuckGo and return formatted results. Fetch and parse content from a webpage URL.",
+  "commands": [
+    {
+      "name": "search",
+      "description": "Search DuckDuckGo and return formatted results.",
+      "args": [
+        {
+          "name": "max_results",
+          "description": "Maximum number of results to return (default: 10)",
+          "type": "integer",
+          "required": false,
+          "default": 10
+        },
+        {
+          "name": "query",
+          "description": "The search query string",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "fetch_content",
+      "description": "Fetch and parse content from a webpage URL.",
+      "args": [
+        {
+          "name": "url",
+          "description": "The webpage URL to fetch content from",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    }
+  ]
+}

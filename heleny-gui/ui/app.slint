@@ -1,0 +1,289 @@
+import {
+    Button,
+    VerticalBox,
+    HorizontalBox,
+    ListView, ScrollView,
+} from "std-widgets.slint";
+import { HelenyButton } from "utils.slint";
+import { ChatView,MessageItem } from "chat.slint";
+import { TerminalView, ServiceHealthItem } from "terminal.slint";
+import { ApprovalsView, ConsentRequestionSlint } from "approvals.slint";
+import { TasksView, TaskItem } from "tasks.slint";
+import { ScheduleView, ScheduleItem } from "schedule.slint";
+import { ToolsView, ToolAbstractItem } from "tools.slint";
+
+
+export component AppWindow inherits Window {
+    background: #f0f8ff;
+    full-screen: false;
+    max-height: 1200px;
+    max-width: 1920px;
+    min-height: 600px;
+    min-width: 960px;
+    default-font-family: root.font-family[active-font];
+    default-font-weight: 500;
+    title: "Helenium";
+    in property <[string]> font-family: ["AR PL UMing CN","AR PL UKai CN", "STKaiti", "Noto Sans CJK SC", "Source Han Sans", "Source Han Sans Medium", "STZhongsong"];
+    in property <int> active-font: 6;
+    in-out property <int> active-tab: 0;
+    in-out property <[MessageItem]> chat_model: [
+    ];
+    in-out property <string> bus_stats_chart;
+    in-out property <string> bus_y_max;
+    in-out property <string> bus_y_mid;
+    in-out property <string> bus_x_start;
+    in-out property <string> bus_x_end;
+    in-out property <[ServiceHealthItem]> services_health: [];
+    in-out property <[ConsentRequestionSlint]> consent_requestions: [
+    ];
+    in-out property <[TaskItem]> tasks: [
+        // {
+        //     id: "7135f2ff-0571-45c8-a7ba-03748c3238a5",
+        //     task_description: "从交换目录中获取图片文件并发送给用户HT",
+        //     status: "Success",
+        //     logs: ["开始扫描交换目录", "找到3个图片文件，准备发送", "全部文件发送完成"],
+        //     expanded: true,
+        // },
+        // {
+        //     id: "b1d2c3d4-1111-2222-3333-abcdefabcdef",
+        //     task_description: "拉起服务并监控启动日志",
+        //     status: "Running",
+        //     logs: ["启动 service-auth", "等待健康检查通过"],
+        //     expanded: false,
+        // },
+        // {
+        //     id: "9988-7766-5544",
+        //     task_description: "批量同步配置文件",
+        //     status: "Pending",
+        //     logs: [],
+        //     expanded: false,
+        // },
+    ];
+    in-out property <[ScheduleItem]> schedules: [
+        // {
+        //     id: "f3c2b0e9-1a23-4f67-9f01-6a5b7c8d9012",
+        //     description: "Nightly backup for user documents",
+        //     next_trigger: "2026-01-12 02:00:00",
+        //     triggers: ["Daily 02:00", "Weekly Mon 02:00"],
+        // },
+        // {
+        //     id: "9b7d6c5a-4e32-1f09-8a76-5c4b3a2d1e0f",
+        //     description: "Monthly report aggregation and upload",
+        //     next_trigger: "2026-01-31 09:30:00",
+        //     triggers: ["Monthly 31 09:30", "Monthly 15 09:30"],
+        // },
+        // {
+        //     id: "2c1d0e9f-8a7b-6c5d-4e3f-2a1b0c9d8e7f",
+        //     description: "Security patch check for core services",
+        //     next_trigger: "2026-01-12 06:15:00",
+        //     triggers: ["Interval 120 min", "Weekly Fri 06:15"],
+        // },
+    ];
+    in-out property <[ToolAbstractItem]> tool_abstracts: [
+        // {
+        //     name: "网页抓取",
+        //     description: "Search for papers on arXiv with advanced filtering and query optimization.\n\nQUERY CONSTRUCTION GUIDELINES:\n- Use QUOTED PHRASES for exact matches: \"multi-agent systems\", \"neural networks\", \"machine learning\"\n- Combine related concepts with OR: \"AI agents\" OR \"software agents\" OR \"intelligent agents\"  \n- Use field-specific searches for precision:\n  - ti:\"exact title phrase\" - search in titles only\n  - au:\"author name\" - search by author\n  - abs:\"keyword\" - search in abstracts only\n- Use ANDNOT to exclude unwanted results: \"machine learning\" ANDNOT \"survey\"\n- For best results, use 2-4 core concepts rather than long keyword lists\n\nADVANCED SEARCH PATTERNS:\n- Field + phrase: ti:\"transformer architecture\" for papers with exact title phrase\n- Multiple fields: au:\"Smith\" AND ti:\"quantum\" for author Smith's quantum papers  \n- Exclusions: \"deep learning\" ANDNOT (\"survey\" OR \"review\") to exclude survey papers\n- Broad + narrow: \"artificial intelligence\" AND (robotics OR \"computer vision\")\n\nCATEGORY FILTERING (highly recommended for relevance):\n- cs.AI: Artificial Intelligence\n- cs.MA: Multi-Agent Systems  \n- cs.LG: Machine Learning\n- cs.CL: Computation and Language (NLP)\n- cs.CV: Computer Vision\n- cs.RO: Robotics\n- cs.HC: Human-Computer Interaction\n- cs.CR: Cryptography and Security\n- cs.DB: Databases\n\nEXAMPLES OF EFFECTIVE QUERIES:\n- ti:\"reinforcement learning\" with categories: [\"cs.LG\", \"cs.AI\"] - for RL papers by title\n- au:\"Hinton\" AND \"deep learning\" with categories: [\"cs.LG\"] - for Hinton's deep learning work\n- \"multi-agent\" ANDNOT \"survey\" with categories: [\"cs.MA\"] - exclude survey papers\n- abs:\"transformer\" AND ti:\"attention\" with categories: [\"cs.CL\"] - attention papers with transformer abstracts\n\nDATE FILTERING: Use YYYY-MM-DD format for historical research:\n- date_to: \"2015-12-31\" - for foundational/classic work (pre-2016)\n- date_from: \"2020-01-01\" - for recent developments (post-2020)\n- Both together for specific time periods\n\nRESULT QUALITY: Results sorted by RELEVANCE (most relevant papers first), not just newest papers.\nThis ensures you get the most pertinent results regardless of publication date.\n\nTIPS FOR FOUNDATIONAL RESEARCH:\n- Use date_to: \"2010-12-31\" to find classic papers on BDI, SOAR, ACT-R\n- Combine with field searches: ti:\"BDI\" AND abs:\"belief desire intention\"  \n- Try author searches: au:\"Rao\" AND \"BDI\" for Anand Rao's foundational BDI work Download and convert an arXiv paper to readable markdown format for analysis and reading. This tool fetches the PDF from arXiv, converts it to markdown using advanced text extraction, and stores it locally for immediate access. Use this tool when you need to read, analyze, or work with the full text content of a specific paper. The conversion process extracts text, preserves formatting, and handles mathematical equations. Returns the full paper content directly upon successful completion. List all previously downloaded and converted papers that are available in local storage for immediate reading and analysis. This tool shows you what papers you already have access to without needing to download them again. Each paper in the list includes metadata like title, authors, abstract, and direct links. Use this tool to see your paper library, check if a specific paper is already downloaded, or browse previously acquired research papers before downloading new ones. Read the full text content of a previously downloaded and converted research paper in clean markdown format. This tool retrieves the complete paper content including abstract, introduction, methodology, results, conclusions, and references. The content is formatted for easy reading and analysis, with preserved mathematical equations and structured sections. Use this tool when you need to access the full text of a paper for detailed study, quotation, analysis, or research. The paper must have been previously downloaded using the download_paper tool.",
+        //     available: true,
+        //     expanded: false,
+        //     commands: [
+        //         { name: "fetch_url", description: "抓取指定 URL 的页面" },
+        //         { name: "extract_text", description: "提取正文与标题" },
+        //         { name: "screenshot", description: "生成页面截图" },
+        //     ],
+        //     desc_expanded: false,
+        // },
+        // {
+        //     name: "文件处理",
+        //     description: "本地文件读取与批量处理",
+        //     available: false,
+        //     expanded: true,
+        //     commands: [
+        //         { name: "read_file", description: "读取文件内容" },
+        //         { name: "batch_rename", description: "批量重命名文件" },
+        //     ],
+        // },
+        // {
+        //     name: "终端执行",
+        //     description: "安全地执行终端命令并回传结果",
+        //     available: true,
+        //     expanded: false,
+        //     commands: [],
+        // },
+    ];
+    in property <image> default_image: @image-url("icons/image_40dp_1F1F1F_FILL0_wght400_GRAD0_opsz40.png");
+    in-out property <bool> kernel_shutdown:false;
+    callback send(string);
+    callback load_more_history([MessageItem]);
+    callback shutdown();
+    callback make_decision(string,bool);
+    callback cancel_task(string);
+    callback cancel_schedule(string);
+    callback tools_refresh();
+    callback toggle_task_logs(string,bool);
+    public function scroll_to_bottom() {
+        chat_view.scroll_to_bottom()
+    }
+    public function prepare_history_scroll() {
+        chat_view.prepare_history_scroll()
+    }
+    public function finish_history_scroll() {
+        chat_view.finish_history_scroll()
+    }
+    HorizontalLayout {
+        Rectangle {
+            background: #9ec6ff;
+            drop-shadow-color: #3688ff;
+            width: 20%;
+            height: 100%;
+            ScrollView {
+                viewport-height: menu.preferred-height+self.height;
+                menu := VerticalLayout {
+                    alignment: LayoutAlignment.start;
+                    padding: 8px;
+                    spacing: 8px;
+                    width: 100%;
+                    vertical-stretch: 1;
+                    HorizontalBox {
+                        alignment: LayoutAlignment.center;
+                        height: 140px;
+                        Rectangle {
+                            border-radius: 20px;
+                            clip: true;
+                            height: 120px;
+                            width: 120px;
+                            Image {
+                                source: @image-url("icons/icon.png");
+                                width: 120px;
+                            }
+                        }
+                    }
+                    HorizontalBox {
+                        height: 60px;
+                        Text {
+                            color: #f0f8ff;
+                            font-italic: false;
+                            font-size: 36px;
+                            horizontal-alignment: TextHorizontalAlignment.center;
+                            text: "Heleny";
+                            vertical-alignment: TextVerticalAlignment.center;
+                        }
+                    }
+                    
+                    HelenyButton {
+                        text: "聊天";
+                        height: 4%;
+                        icon: @image-url("icons/chat_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                        btn-color: root.active-tab == 0 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 0; }
+                    }
+
+                    HelenyButton {
+                        text: "日程";
+                        height: 4%;
+                        icon: @image-url("icons/schedule_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                        btn-color: root.active-tab == 1 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 1; }
+                    }
+                    
+
+                    HelenyButton {
+                        text: "终端";
+                        height: 4%;
+                        icon: @image-url("icons/terminal_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                        btn-color: root.active-tab == 2 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 2; }
+                    }
+
+                    HelenyButton {
+                        text: "任务";
+                        height: 4%;
+                        icon: @image-url("icons/task_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                        btn-color: root.active-tab == 3 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 3; }
+                    }
+
+                    HelenyButton {
+                        text: "审批";
+                        height: 4%;
+                        icon: @image-url("icons/approval_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                        btn-color: root.active-tab == 4 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 4; }
+                    }
+
+                    HelenyButton {
+                        text: "工具";
+                        height: 4%;
+                        icon: @image-url("icons/home_repair_service_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                        btn-color: root.active-tab == 5 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 5; }
+                    }
+
+                    HelenyButton {
+                        text: "设置";
+                        height: 4%;
+                        icon: @image-url("icons/settings_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png");
+                        btn-color: root.active-tab == 6 ? #7fb5ff : #9ec8ff;
+                        clicked => { root.active-tab = 6; }
+                    }
+
+                    HelenyButton {
+                        height: 6%;
+                        icon: @image-url("icons/power_settings_new_48dp_1F1F1F_FILL0_wght400_GRAD0_opsz48.png");
+                        btn-color: #9ec8ff;
+                        clicked => { shutdown();kernel_shutdown=true; }
+                    }
+                }
+            }
+        }
+        Rectangle {
+            chat_view := ChatView {
+                visible: root.active-tab==0;
+                chat_model: root.chat_model;
+                send(msg) => {root.send(msg)};
+                load_more_history => {root.load_more_history(root.chat_model)};
+            }
+            ScheduleView {
+                visible: root.active-tab==1;
+                width: 100%;
+                height: 100%;
+                schedules: root.schedules;
+                cancel(id) => { root.cancel_schedule(id); }
+            }
+            
+            
+            TerminalView {
+                visible: root.active-tab==2;
+                bus_stats_chart: root.bus_stats_chart;
+                y_max: root.bus_y_max;
+                y_mid: root.bus_y_mid;
+                x_start: root.bus_x_start;
+                x_end: root.bus_x_end;
+                services_health: root.services_health;
+            }
+            TasksView {
+                visible: root.active-tab==3;
+                width: 100%;
+                height: 100%;
+                tasks: root.tasks;
+                cancel(id) => { root.cancel_task(id); }
+                toggle_logs(id,expanded) => { root.toggle_task_logs(id,expanded); }
+            }
+            ApprovalsView {
+                visible: root.active-tab==4;
+                width: 100%;
+                height: 100%;
+                requests: root.consent_requestions;
+                approve(request_id) => { root.make_decision(request_id,true); }
+                reject(request_id) => { root.make_decision(request_id,false); }
+            }
+            ToolsView {
+                visible: root.active-tab==5;
+                width: 100%;
+                height: 100%;
+                tools: root.tool_abstracts;
+                refresh => { root.tools_refresh(); }
+            }
+        }
+        
+    }
+}

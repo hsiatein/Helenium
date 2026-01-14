@@ -1,0 +1,178 @@
+import { Button, VerticalBox, ScrollView } from "std-widgets.slint";
+
+export struct ServiceHealthItem {
+    name: string,
+    status: string, // "Starting", "Healthy", "Unhealthy", "Stopping", "Stopped"
+}
+
+export component TerminalView inherits Rectangle {
+    in property <string> bus_stats_chart;
+    in property <string> y_max: "100";
+    in property <string> y_mid: "50";
+    in property <string> x_start: "00:00:00";
+    in property <string> x_end: "00:00:00";
+    in property <[ServiceHealthItem]> services_health;
+
+    ScrollView {
+        viewport-width: self.width;
+        viewport-height: content.preferred-height;
+        content:=VerticalBox {
+            accessible-role: AccessibleRole.none;
+            alignment: LayoutAlignment.start;
+            Text {
+                text: "总线总流量";
+                font-size: 20px;
+                horizontal-alignment: center;
+            }
+
+            Rectangle {
+                border-radius: 16px;
+                background: #ffffff;
+                border-color: #dbe6ff;
+                border-width: 1px;
+                clip: true;
+
+                VerticalBox {
+                    padding: 16px;
+                    spacing: 10px;
+                    // Chart Row
+                    HorizontalLayout {
+                        spacing: 12px;
+                        height: Math.max(260px, root.height * 0.35);
+
+                        // Y-Axis Labels
+                        VerticalLayout {
+                            width: 56px;
+                            alignment: space-between;
+                            Text {
+                                text: root.y_max;
+                                font-size: 12px;
+                                horizontal-alignment: right;
+                                color: #3f4c67;
+                            }
+                            Text {
+                                text: root.y_mid;
+                                font-size: 12px;
+                                horizontal-alignment: right;
+                                color: #6b6b6b;
+                            }
+                            Text {
+                                text: "0";
+                                font-size: 12px;
+                                horizontal-alignment: right;
+                                color: #3f4c67;
+                            }
+                        }
+
+                        // Chart Area + X-Axis
+                        VerticalLayout {
+                            spacing: 8px;
+                            Rectangle {
+                                background: #f6f9ff;
+                                border-color: #dbe6ff;
+                                border-width: 1px;
+                                border-radius: 12px;
+                                clip: true;
+
+                                // Grid lines
+                                for i in 5: Rectangle {
+                                    width: parent.width;
+                                    height: 1px;
+                                    y: (parent.height * i) / 4;
+                                    background: #e6edf7;
+                                }
+
+                                Path {
+                                    width: parent.width;
+                                    height: parent.height;
+                                    stroke: #3688ff;
+                                    stroke-width: 2px;
+                                    commands: root.bus_stats_chart;
+                                }
+                            }
+
+                            // X-Axis Labels
+                            HorizontalLayout {
+                                alignment: space-between;
+                                Text {
+                                    text: root.x_start;
+                                    font-size: 12px;
+                                    color: #3f4c67;
+                                }
+                                Text {
+                                    text: root.x_end;
+                                    font-size: 12px;
+                                    color: #3f4c67;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                height: 100px;
+            }
+            // Service Health Visualization
+            Text {
+                text: "服务健康度";
+                font-size: 20px;
+                horizontal-alignment: center;
+            }
+
+            Rectangle {
+                
+                VerticalLayout {
+                    spacing: 10px;
+                    alignment: start;
+
+                    for row_index in Math.ceil(root.services_health.length / 3) : HorizontalLayout {
+                        spacing: 10px;
+                        alignment: start;
+                        for i in 3 : Rectangle {
+                            property <int> item_index: row_index * 3 + i;
+                            visible: item_index < root.services_health.length;
+                            width: (root.width - 60px) / 3;
+                            height: 40px;
+                            background: #ffffff;
+                            border-radius: 20px;
+                            border-width: 1px;
+                            border-color: #e0e0e0;
+
+                            HorizontalLayout {
+                                padding-left: 15px;
+                                padding-right: 15px;
+                                spacing: 10px;
+                                alignment: start;
+                                
+                                VerticalLayout {
+                                    alignment: center;
+                                    Rectangle {
+                                        width: 16px;
+                                        height: 16px;
+                                        border-radius: 8px;
+                                        background: root.services_health[item_index].status == "Healthy" ? #28a745 :
+                                                    root.services_health[item_index].status == "Unhealthy" ? #ffc107 :
+                                                    root.services_health[item_index].status == "Stopped" ? #dc3545 :
+                                                    root.services_health[item_index].status == "Stopping" ? #6f42c1 :
+                                                    root.services_health[item_index].status == "Starting" ? #007bff : #6c757d;
+                                    }
+                                }
+                                Rectangle {
+                                    width: 10px;
+                                }
+                                Text {
+                                    text: root.services_health[item_index].name;
+                                    font-size: 18px;
+                                    vertical-alignment: center;
+                                    overflow: elide;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+}

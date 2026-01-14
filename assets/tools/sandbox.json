@@ -1,0 +1,78 @@
+{
+    "name": "sandbox",
+    "description": "all in one 沙箱环境，支持 shell 相关操作，文件相关操作，通过jupyter执行python代码。/exchange目录为与user电脑的交换目录，/home/gem目录为用户目录。",
+    "commands": [
+        {
+            "name": "sandbox.info",
+            "description": "获取sandbox的具体系统信息以及部分安装的软件，如系统为Ubuntu22.04LTS等",
+            "args":[
+            ]
+        },
+        {
+            "name": "shell.exec",
+            "description": "在沙箱环境中执行shell命令，启动速度比较慢",
+            "args":[
+                {
+                    "name":"command",
+                    "description":"要执行的shell命令",
+                    "type":"string",
+                    "required":true
+                },
+                {
+                    "name":"workdir",
+                    "description":"执行命令时的工作目录，必须是以/开头的绝对路径",
+                    "type":"string",
+                    "required":true
+                }
+            ]
+        },
+        {
+            "name": "python.exec",
+            "description": "在沙箱环境中通过jupyter内核执行python代码",
+            "args":[
+                {
+                    "name":"code",
+                    "description":"要执行的python代码，也可以通过!来执行shell命令",
+                    "type":"string",
+                    "required":true
+                }
+            ]
+        },
+        {
+            "name": "file.read",
+            "description": "读取文件",
+            "args":[
+                {
+                    "name":"path",
+                    "description":"文件的绝对路径",
+                    "type":"string",
+                    "required":true
+                }
+            ]
+        },
+        {
+            "name": "file.write",
+            "description": "以utf-8模式写入文件",
+            "args":[
+                {
+                    "name":"path",
+                    "description":"文件的绝对路径",
+                    "type":"string",
+                    "required":true
+                },
+                {
+                    "name":"content",
+                    "description":"想要写入的内容",
+                    "type":"string",
+                    "required":true
+                },
+                {
+                    "name":"append",
+                    "description":"是否以追加模式写入",
+                    "type":"bool",
+                    "required":true
+                }
+            ]
+        }
+    ]
+}

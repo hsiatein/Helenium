@@ -1,0 +1,18 @@
+{
+    "name": "qq",
+    "description": "可以通过QQ给user发送消息。",
+    "commands": [
+        {
+            "name": "send",
+            "description": "给user发送一条消息",
+            "args": [
+                {
+                    "name": "content",
+                    "description": "消息内容",
+                    "type": "string",
+                    "required": true
+                }
+            ]
+        }
+    ]
+}
