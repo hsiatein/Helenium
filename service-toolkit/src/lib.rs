@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 use anyhow::Context;
 use anyhow::Result;
@@ -41,6 +42,7 @@ pub struct ToolkitService {
     tool_factories: HashMap<String, Box<dyn HelenyToolFactory>>,
     abstract_sender: watch::Sender<ResourcePayload>,
     config: ToolkitConfig,
+    disabled: HashSet<String>,
 }
 
 #[derive(Debug)]
@@ -74,6 +76,7 @@ impl Service for ToolkitService {
             tool_factories: HashMap::new(),
             abstract_sender,
             config,
+            disabled: HashSet::new(),
         };
         instance.read_manuals().await?;
         Ok(Box::new(instance))
@@ -89,7 +92,7 @@ impl Service for ToolkitService {
                 let tool_descriptions: Vec<&ToolDescription> = self
                     .tool_descriptions
                     .iter()
-                    .filter(|des| self.tool_factories.contains_key(&des.name))
+                    .filter(|des| self.tool_factories.contains_key(&des.name) && !self.disabled.contains(&des.name))
                     .collect();
                 let _ = feedback.send(serde_json::to_string(&tool_descriptions)?);
             }
@@ -134,6 +137,14 @@ impl Service for ToolkitService {
             ToolkitServiceMessage::Reload => {
                 self.read_manuals().await?;
                 info!("工具列表重载完成");
+            }
+            ToolkitServiceMessage::EnableTool { name, enable }=>{
+                if enable {
+                    self.disabled.remove(&name);
+                }else {
+                    self.disabled.insert(name);
+                }
+                self.send_tool_abstracts()?;
             }
         }
         Ok(())
@@ -183,6 +194,7 @@ impl ToolkitService {
         let mut abstracts = get_tool_abstracts(&self.tool_manuals);
         abstracts.iter_mut().for_each(|abs| {
             abs.available = self.tool_factories.contains_key(&abs.name);
+            abs.enable = !self.disabled.contains(&abs.name);
         });
         self.abstract_sender
             .send(ResourcePayload::ToolAbstracts { abstracts })

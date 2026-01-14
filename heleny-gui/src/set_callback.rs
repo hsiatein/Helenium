@@ -92,6 +92,10 @@ pub fn set_callback(ui: &AppWindow, write_tx: &mpsc::Sender<FrontendCommand>) {
         send(&write_tx_clone, FrontendCommand::ReloadTools);
     });
 
+    let write_tx_clone = write_tx.clone();
+    ui.on_enable_tool(move |name,enable|{
+        send(&write_tx_clone, FrontendCommand::EnableTool { name:name.to_string(), enable });
+    });
 
 }
 

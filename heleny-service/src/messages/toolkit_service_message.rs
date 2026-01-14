@@ -30,6 +30,10 @@ pub enum ToolkitServiceMessage {
         factory: Box<dyn HelenyToolFactory>,
     },
     Reload,
+    EnableTool {
+        name: String,
+        enable: bool,
+    }
 }
 
 #[derive(Debug)]

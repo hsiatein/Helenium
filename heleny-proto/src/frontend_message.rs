@@ -29,6 +29,10 @@ pub enum FrontendCommand {
     GetSchedules,
     GetToolAbstrats,
     ReloadTools,
+    EnableTool {
+        name:String,
+        enable:bool,
+    }
 }
 
 impl FrontendCommand {

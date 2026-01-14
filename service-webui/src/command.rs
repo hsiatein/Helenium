@@ -124,6 +124,9 @@ impl WebuiService {
                     .send(MCP_SERVICE, McpServiceMessage::Reload)
                     .await
             }
+            FrontendCommand::EnableTool { name, enable }=>{
+                self.endpoint.send(TOOLKIT_SERVICE, ToolkitServiceMessage::EnableTool { name, enable }).await
+            }
         }
     }
 }
