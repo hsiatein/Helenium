@@ -1,0 +1,54 @@
+{
+    "name": "comfyui",
+    "description": "使用comfyui进行图像生成并发送给用户。默认值为Heleny的默认外貌设定，当用户提出想看Heleny的图时应使用此工具。",
+    "commands": [
+        {
+            "name": "generate",
+            "description": "生成图片并自动发送给用户。只能输入来自 danbooru 的tags，只接受英文，不接受自然语言。",
+            "args": [
+                {
+                    "name": "extra",
+                    "description": "额外内容",
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                {
+                    "name": "appearance",
+                    "description": "外貌",
+                    "type": "string",
+                    "required": false,
+                    "default": "Simple eyes, blue eyes, silver hair, (hair between eyes:0.8), (messy hair:0.8), short sidelocks, detailed eyes, (short hair:0.8), (medium hair:1.2), straight_hair, small breasts, young girl, refreshing face, smile, white_skin, (low_twintails:1.2), (short_twintails:0.5),"
+                },
+                {
+                    "name": "clothes",
+                    "description": "服装",
+                    "type": "string",
+                    "required": false,
+                    "default": "black leotard, animal collar, fake animal ears, sleeveless, leotard, jewelry,rabbit ears, suit, sweat, suit, white background, tailcoat, upper body, collarbone,"
+                },
+                {
+                    "name": "action",
+                    "description": "动作",
+                    "type": "string",
+                    "required": false,
+                    "default": "looking_at_viewer,"
+                },
+                {
+                    "name": "style",
+                    "description": "风格",
+                    "type": "string",
+                    "required": false,
+                    "default": "from side, girl, solo, female focus,dynamic angle,depth of field,high contrast,colorful,detailed light,light leaks,beautiful detailed glow,best shadow,shiny skin,ray tracing,detailed light,sunlight,shine on girl's body,cinematic lighting,oiled,(artist:mika pikazo:0.5),(artist:ciloranko:0.5),(artist:kazutake hazano:0.5),(artist:kedama milk:0.5),(artist:ask_(askzy):0.5),(artist:wanke:0.5),(artist:fujiyama:0.5),year 2024,"
+                },
+                {
+                    "name": "negative",
+                    "description": "负面词条",
+                    "type": "string",
+                    "required": false,
+                    "default": "colored inner hair, gradient hair color, fluffy_hair, mature, hand, hands, high twintails, high ponytail, high twin buns, high pigtails,"
+                }
+            ]
+        }
+    ]
+}

@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
 use heleny_proto::{CanRequestConsent, ChatRole, FS_SERVICE, HelenyFile, HelenyTool, HelenyToolFactory, MEMORY_SERVICE, MemoryContent, MemoryEntry, get_tool_arg};
 use heleny_service::{FsServiceMessage, MemoryServiceMessage};
-use reqwest::Client;
+use reqwest::{Client, RequestBuilder};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use tokio::{sync::oneshot};
@@ -17,15 +17,40 @@ use rand::Rng;
 pub struct ComfyuiTool {
     endpoint:Endpoint,
     comfyui_url:String,
+    comfyui_auth:Option<(String,String)>,
     base_prompt:String,
     api_key:String,
 }
 
 impl ComfyuiTool {
-    pub async fn new(endpoint:Endpoint, comfyui_url:String, base_prompt:String, api_key:String)->Result<Self> {
+    pub async fn new(endpoint:Endpoint, comfyui_url:String, comfyui_auth:Option<String>, base_prompt:String, api_key:String)->Result<Self> {
+        let client=Client::new();
+        
         let comfyui_url=comfyui_url.trim_end_matches("/").to_string();
-        let _=reqwest::get(format!("{comfyui_url}/system_stats")).await?.text().await?;
-        Ok(Self { endpoint, comfyui_url, base_prompt, api_key })
+        let comfyui_auth = match comfyui_auth {
+            Some(auth)=>{
+                let split:Vec<&str>=auth.split(":").collect();
+                let user=split.get(0).context("获取用户名失败")?.to_string();
+                let password=split.get(1).context("获取密码失败")?.to_string();
+                let _=client.get(format!("{comfyui_url}/system_stats")).basic_auth(&user, Some(&password)).send().await?.error_for_status()?;
+                Some((user,password))
+            }
+            None=>{
+                let _=client.get(format!("{comfyui_url}/system_stats")).send().await?.error_for_status()?;
+                None
+            }
+        };
+        
+        Ok(Self { endpoint, comfyui_url, comfyui_auth, base_prompt, api_key })
+    }
+
+    fn auth(&self,rb:RequestBuilder)->RequestBuilder {
+        match &self.comfyui_auth {
+            Some((user,password))=>{
+                rb.basic_auth(user, Some(password))
+            }
+            None=> rb,
+        }
     }
 }
 
@@ -43,7 +68,7 @@ impl HelenyTool for ComfyuiTool {
         let input_prompt=ComfyuiPrompt::new(args);
         let prompt=input_prompt.replace(&self.base_prompt)?;
         let client=Client::new();
-        let resp=client.post(self.comfyui_url.clone()+"/prompt").json(&json!({
+        let resp=self.auth(client.post(self.comfyui_url.clone()+"/prompt")).json(&json!({
             "prompt": prompt,
             "extra_data": {
                 "api_key_comfy_org": self.api_key
@@ -53,7 +78,7 @@ impl HelenyTool for ComfyuiTool {
         let resp:HashMap<String,Value>=serde_json::from_str(&resp.text().await?).context("解析响应失败")?;
         let prompt_id=resp.get("prompt_id").context("获取 prompt_id 失败")?.as_str().context("获取 prompt_id str 失败")?;
         for _ in 0..3600 {
-            let body=reqwest::get(self.comfyui_url.clone()+"/history/"+prompt_id).await?.text().await?;
+            let body=self.auth(client.get(self.comfyui_url.clone()+"/history/"+prompt_id)).send().await?.error_for_status()?.text().await?;
             if body.len()>10 {
                 println!("{}",body);
                 break;
@@ -61,8 +86,7 @@ impl HelenyTool for ComfyuiTool {
             tokio::time::sleep(Duration::from_secs(1)).await;
         }
         let download_url =self.comfyui_url.clone()+"/view?filename="+&input_prompt.file_name+".png&type=output";
-        let bytes:Vec<u8> = client
-            .get(download_url)
+        let bytes:Vec<u8> = self.auth(client.get(download_url))
             .send()
             .await?
             .error_for_status()?
@@ -85,7 +109,7 @@ impl HelenyToolFactory for ComfyuiTool {
         "comfyui".into()
     }
     async fn create(&mut self) -> Result<Box<dyn HelenyTool>>{
-        let tool=ComfyuiTool { endpoint: self.endpoint.create_sender_endpoint(), comfyui_url: self.comfyui_url.clone(), base_prompt: self.base_prompt.clone(), api_key: self.api_key.clone() };
+        let tool=ComfyuiTool { endpoint: self.endpoint.create_sender_endpoint(), comfyui_url: self.comfyui_url.clone(), comfyui_auth: self.comfyui_auth.clone(), base_prompt: self.base_prompt.clone(), api_key: self.api_key.clone() };
         Ok(Box::new(tool))
     }
 }
@@ -123,21 +147,21 @@ impl ComfyuiPrompt {
 
     pub fn new(mut args:HashMap<String, Value>)->Self {
         let mut prompt=Self::default();
-        if let Ok(appearance)=get_tool_arg::<String>(&mut args, "appearance"){
-            prompt.appearance=appearance;
-        };
+        // if let Ok(appearance)=get_tool_arg::<String>(&mut args, "appearance"){
+        //     prompt.appearance=appearance;
+        // };
         if let Ok(clothes)=get_tool_arg::<String>(&mut args, "clothes"){
             prompt.clothes=clothes;
         };
         if let Ok(action)=get_tool_arg::<String>(&mut args, "action"){
             prompt.action=action;
         };
-        if let Ok(style)=get_tool_arg::<String>(&mut args, "style"){
-            prompt.style=style;
-        };
-        if let Ok(negative)=get_tool_arg::<String>(&mut args, "negative"){
-            prompt.negative=negative;
-        };
+        // if let Ok(style)=get_tool_arg::<String>(&mut args, "style"){
+        //     prompt.style=style;
+        // };
+        // if let Ok(negative)=get_tool_arg::<String>(&mut args, "negative"){
+        //     prompt.negative=negative;
+        // };
         if let Ok(extra)=get_tool_arg::<String>(&mut args, "extra"){
             prompt.extra=extra;
         };
@@ -167,11 +191,11 @@ fn default_action()->String {
 }
 
 fn default_style()->String {
-    "from side, girl, solo, female focus,dynamic angle,depth of field,high contrast,colorful,detailed light,light leaks,beautiful detailed glow,best shadow,shiny skin,ray tracing,detailed light,sunlight,shine on girl's body,cinematic lighting,oiled,(artist:mika pikazo:0.5),(artist:ciloranko:0.5),(artist:kazutake hazano:0.5),(artist:kedama milk:0.5),(artist:ask_(askzy):0.5),(artist:wanke:0.5),(artist:fujiyama:0.5),year 2024,".into()
+    "girl, solo, female focus,dynamic angle,depth of field,high contrast,colorful,detailed light,light leaks,beautiful detailed glow,best shadow,shiny skin,ray tracing,detailed light,sunlight,shine on girl's body,cinematic lighting,oiled,(artist:mika pikazo:0.5),(artist:ciloranko:0.5),(artist:kazutake hazano:0.5),(artist:kedama milk:0.5),(artist:ask_(askzy):0.5),(artist:wanke:0.5),(artist:fujiyama:0.5),year 2024,".into()
 }
 
 fn default_negative()->String {
-    "colored inner hair, gradient hair color, fluffy_hair, mature, hand, hands, high twintails, high ponytail, high twin buns, high pigtails,".into()
+    "colored inner hair, gradient hair color, fluffy_hair, mature, high twintails, high ponytail, high twin buns, high pigtails,".into()
 }
 
 
@@ -182,7 +206,8 @@ mod tests{
     use super::*;
     #[tokio::test]
     async fn test_comfyui()->Result<()>{
-        let body=reqwest::get("http://127.0.0.1:8188/system_stats").await?.text().await?;
+        // let body=reqwest::get("http://127.0.0.1:8188/system_stats").await?.text().await?;
+        let body=reqwest::get("http://comfyui.lovemugi.com/system_stats").await?.text().await?;
         println!("{body}");
         let mut prompt=fs::read_to_string("../assets/tool-resource/obs赫蕾妮-通用.json").await?;
         println!("{prompt}");
@@ -221,6 +246,12 @@ mod tests{
             .await?;
         let bytes:Vec<u8>=bytes.into();
         fs::write("../.temp/test.png", bytes).await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_auth()->Result<()>{
+        dotenvy::dotenv().ok();
         Ok(())
     }
 }

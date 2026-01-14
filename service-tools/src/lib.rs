@@ -1,3 +1,4 @@
+use anyhow::Context;
 use heleny_service::get_from_config_service;
 use heleny_service::read_via_fs_service;
 use heleny_service::register_tool_factory;
@@ -77,8 +78,11 @@ impl ToolsService {
 }
 
 async fn init_comfyui(endpoint:&Endpoint,config:ComfyuiConfig)->Result<ComfyuiTool>{
-    let ComfyuiConfig { api_key_env_var, base_url, base_prompt_path }=config;
+    let ComfyuiConfig { api_key_env_var, base_url_env_var,base_auth_env_var, base_prompt_path }=config;
     let base_prompt=read_via_fs_service(&endpoint, base_prompt_path).await?;
-    let tool=ComfyuiTool::new(endpoint.create_sender_endpoint(),base_url, base_prompt, api_key_env_var).await?;
+    let base_url=std::env::var(base_url_env_var).context("获取 base_url_env_var 对应环境变量失败")?;
+    let base_auth=std::env::var(base_auth_env_var).context("获取 base_auth_env_var 对应环境变量失败").ok();
+    let api_key=std::env::var(api_key_env_var).context("获取 api_key_env_var 对应环境变量失败")?;
+    let tool=ComfyuiTool::new(endpoint.create_sender_endpoint(),base_url,base_auth, base_prompt, api_key ).await?;
     Ok(tool)
 }
