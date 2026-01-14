@@ -116,6 +116,32 @@
                     "--rm",
                     "mcp/wikipedia-mcp"
                 ]
+            },
+            "puppeteer": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-e",
+                    "DOCKER_CONTAINER",
+                    "mcp/puppeteer"
+                ],
+                "env": {
+                    "DOCKER_CONTAINER": "true"
+                }
+            },
+            "filesystem": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-v",
+                    "./.temp/filesystem:/local-directory",
+                    "mcp/filesystem",
+                    "/local-directory"
+                ]
             }
         }
     }

@@ -86,6 +86,13 @@ pub fn set_callback(ui: &AppWindow, write_tx: &mpsc::Sender<FrontendCommand>) {
         };
         send(&write_tx_clone, FrontendCommand::CancelSchedule { id });
     });
+
+    let write_tx_clone = write_tx.clone();
+    ui.on_tools_refresh(move || {
+        send(&write_tx_clone, FrontendCommand::ReloadTools);
+    });
+
+
 }
 
 fn send(write_tx_clone: &mpsc::Sender<FrontendCommand>, cmd: FrontendCommand) {

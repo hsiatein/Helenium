@@ -26,11 +26,13 @@ component CommandCapsule inherits Rectangle {
 
     HorizontalLayout {
         alignment: LayoutAlignment.center;
-        padding: 6px;
-        label := Text {
-            text: root.text;
-            font-size: 12px;
-            color: #1c1c1c;
+        VerticalLayout {
+            alignment: center;
+            label := Text {
+                text: root.text;
+                font-size: 12px;
+                color: #1c1c1c;
+            }
         }
     }
 }
@@ -47,11 +49,13 @@ component NameCapsule inherits Rectangle {
 
     HorizontalLayout {
         alignment: LayoutAlignment.center;
-        padding: 6px;
-        label := Text {
-            text: root.text;
-            font-size: 16px;
-            color: #1c1c1c;
+        VerticalLayout {
+            alignment: center;
+            label := Text {
+                text: root.text;
+                font-size: 16px;
+                color: #1c1c1c;
+            }
         }
     }
 }
@@ -96,6 +100,7 @@ component CommandsPanel inherits Rectangle {
 
 export component ToolsView inherits Rectangle {
     in property <[ToolAbstractItem]> tools: [];
+    callback refresh();
 
     background: #f0f8ff;
 
@@ -227,6 +232,31 @@ export component ToolsView inherits Rectangle {
                     }
                 }
             }
+        }
+    }
+
+    Rectangle {
+        width: 52px;
+        height: 52px;
+        border-radius: 26px;
+        background: #e8f1ff;
+        border-width: 1px;
+        border-color: #c6dcff;
+        x: parent.width - self.width - 24px;
+        y: parent.height - self.height - 24px;
+
+        Image {
+            source: @image-url("icons/refresh_40dp_1F1F1F_FILL0_wght400_GRAD0_opsz40.png");
+            width: 28px;
+            height: 28px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+        }
+
+        TouchArea {
+            width: parent.width;
+            height: parent.height;
+            clicked => { root.refresh(); }
         }
     }
 }

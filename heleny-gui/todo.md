@@ -1,1 +1,0 @@
-在tools这个tab的右下放一个refresh按钮，这个按钮使用heleny-gui/ui/icons/refresh_40dp_1F1F1F_FILL0_wght400_GRAD0_opsz40.png作为图标，在tab的位置固定，不随页面内容滚动。对应callback为tools_refresh

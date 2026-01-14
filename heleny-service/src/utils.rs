@@ -27,12 +27,24 @@ pub async fn get_from_config_service<T: DeserializeOwned>(endpoint: &Endpoint) -
         .send(CONFIG_SERVICE, ConfigServiceMessage::Get { sender: tx })
         .await
         .context("获取 ConfigService 的资源发送失败")?;
-    let config = timeout(Duration::from_secs(5), rx)
+    let config = timeout(Duration::from_secs(10), rx)
         .await
         .context("获取 ConfigService 的资源超时")?
         .context("获取 ConfigService 的资源失败")?
         .context("获取 ConfigService 的资源为空")?;
     serde_json::from_value(config).context("获取到 ConfigService 的资源, 但是解析失败")
+}
+
+pub async fn update_config_service(endpoint: &Endpoint) -> Result<()> {
+    let (tx, rx) = oneshot::channel();
+    endpoint
+        .send(CONFIG_SERVICE, ConfigServiceMessage::Update { feedback: tx } )
+        .await
+        .context("发送 Update 失败")?;
+    timeout(Duration::from_secs(10), rx)
+        .await
+        .context("获取 ConfigService 的资源超时")?
+        .context("获取 Update 反馈失败")
 }
 
 pub async fn read_via_fs_service<T: Into<PathBuf>>(endpoint: &Endpoint, path: T) -> Result<String> {

@@ -1,3 +1,4 @@
+use anyhow::Context;
 use anyhow::Result;
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
@@ -9,6 +10,7 @@ use heleny_service::McpServiceMessage;
 use heleny_service::Service;
 use heleny_service::get_from_config_service;
 use heleny_service::register_tool_factory;
+use heleny_service::update_config_service;
 use tokio::time::Instant;
 use tracing::info;
 
@@ -21,7 +23,6 @@ mod tool;
 #[base_service(deps=["ConfigService"])]
 pub struct McpService {
     endpoint: Endpoint,
-    config: Config,
 }
 
 #[derive(Debug)]
@@ -31,11 +32,10 @@ enum _WorkerMessage {}
 impl Service for McpService {
     type MessageType = McpServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>> {
-        let config: Config = get_from_config_service(&endpoint).await?;
         // 实例化
-        let instance = Self { endpoint, config };
+        let instance = Self { endpoint };
         info!("载入 MCP 工具");
-        instance.load().await;
+        instance.load().await?;
         Ok(Box::new(instance))
     }
     async fn handle(
@@ -47,7 +47,7 @@ impl Service for McpService {
         match msg {
             McpServiceMessage::Reload => {
                 info!("重载 MCP 工具");
-                self.load().await;
+                self.load().await.context("重载 MCP 工具失败")?;
             }
         }
         Ok(())
@@ -65,16 +65,17 @@ impl Service for McpService {
 }
 
 impl McpService {
-    async fn load(&self) {
-        let factories: Vec<McpToolFactory> = self
-            .config
+    async fn load(&self)->Result<()> {
+        update_config_service(&self.endpoint).await.context("重载失败: 更新 config 失败")?;
+        let config: Config = get_from_config_service(&self.endpoint).await.context("重载失败: 获取 config 失败")?;
+        let factories: Vec<McpToolFactory> = config
             .mcp_servers
-            .clone()
             .into_iter()
             .map(|(name, command)| McpToolFactory::new(name, command))
             .collect();
         for factory in factories {
             register_tool_factory(&self.endpoint, factory).await;
         }
+        Ok(())
     }
 }

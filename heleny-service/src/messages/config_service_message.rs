@@ -9,7 +9,9 @@ pub enum ConfigServiceMessage {
     Set {
         value: Value,
     },
-    Update,
+    Update{
+        feedback: oneshot::Sender<()>,
+    },
     Persist,
     Export {
         key: String,

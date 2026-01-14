@@ -13,6 +13,7 @@ use heleny_service::ConfigServiceMessage;
 use heleny_service::Service;
 use serde_json::Map;
 use serde_json::Value;
+use tokio::sync::oneshot;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -33,6 +34,7 @@ pub struct ConfigService {
     is_writing: Option<JoinHandle<Result<PathBuf>>>,
     is_reading: Option<JoinHandle<Result<Map<String, Value>>>>,
     exported_vars: HashMap<String, Value>,
+    is_waiting_update: Vec<oneshot::Sender<()>>,
 }
 
 #[async_trait]
@@ -76,6 +78,7 @@ impl Service for ConfigService {
             is_writing: None,
             is_reading: None,
             exported_vars: HashMap::new(),
+            is_waiting_update:Vec::new(),
         }))
     }
     async fn handle(
@@ -94,7 +97,10 @@ impl Service for ConfigService {
                 self.last_edit = Some(Local::now());
                 Ok(())
             }
-            ConfigServiceMessage::Update => self.update().await,
+            ConfigServiceMessage::Update { feedback } => {
+                self.is_waiting_update.push(feedback);
+                self.update().await
+            },
             ConfigServiceMessage::Persist => self.persist().await,
             ConfigServiceMessage::Export { key, value } => {
                 info!("导出变量 {}", key);
@@ -197,6 +203,9 @@ impl ConfigService {
             .context("获取读取结果失败")?
             .context("读取配置文件失败")?;
         self.config_value = new_value;
+        while let Some(feedback) = self.is_waiting_update.pop() {
+            let _ =feedback.send(());
+        }
         Ok(())
     }
 
