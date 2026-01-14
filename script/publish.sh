@@ -1,0 +1,1 @@
+rsync -a --exclude='.git' --exclude='target' --exclude='logs' --exclude='service-test' --exclude='storage' --exclude='.exchange' --exclude='.temp' ./ ../public/Helenium

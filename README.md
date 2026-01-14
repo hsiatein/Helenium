@@ -116,6 +116,10 @@ GUI的实现基于 Slint(当前), WEBUI的实现基于 Vue/TS(暂时停更)
 <!-- USAGE EXAMPLES -->
 ## 用法
 
+可以创建assets/presets/persona.txt文件，写入人设。
+
+将mcp服务器的启动command放入script/mcp.json，并运行script/src/bin/mcp_tools.rs可以把mcp的工具列表转化为Helenium的工具说明书（放在script目录），然后把说明书放assets/tools，启动command放Config.json的McpService.mcp_servers里面，即可增加新的mcp工具。
+
 暂时没有文档.
 
 更多例子请参考 [文档](https://example.com)
