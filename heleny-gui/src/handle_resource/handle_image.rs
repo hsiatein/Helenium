@@ -1,7 +1,7 @@
-use anyhow::Result;
 use crate::FrontendHandler;
 use crate::MessageItem;
 use anyhow::Context;
+use anyhow::Result;
 use base64::prelude::*;
 use image::DynamicImage;
 use slint::Model;
@@ -10,7 +10,7 @@ use slint::Rgba8Pixel;
 use slint::SharedPixelBuffer;
 
 impl FrontendHandler {
-    pub async fn handle_image(&self, id: i64, base64: String)->Result<()>{
+    pub async fn handle_image(&self, id: i64, base64: String) -> Result<()> {
         let image_u8 = BASE64_STANDARD.decode(base64)?;
         let img: DynamicImage = image::load_from_memory(&image_u8)?;
         let rgba = img.to_rgba8();

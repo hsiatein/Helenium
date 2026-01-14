@@ -66,7 +66,9 @@ impl Service for ScheduleService {
             Ok(str) => serde_json::from_str(&str)?,
             Err(_) => HashMap::new(),
         };
-        schedule.values_mut().for_each(|task| task.update_next_trigger());
+        schedule
+            .values_mut()
+            .for_each(|task| task.update_next_trigger());
         // 向工具服务注册
         let factory = ScheduleToolFactory::new(endpoint.create_sender_endpoint(), config.offset);
         register_tool_factory(&endpoint, factory).await;
@@ -116,7 +118,7 @@ impl Service for ScheduleService {
         }
     }
     async fn stop(&mut self) {
-        if let Some(notifier)=self.notifier.take(){
+        if let Some(notifier) = self.notifier.take() {
             notifier.abort();
         }
         let _ = self.persist().await;
@@ -196,10 +198,13 @@ impl ScheduleService {
                 }
             });
         let Some(next) = next else {
-            return ;
+            return;
         };
         let offset = self.offset;
-        let endpoint = self.endpoint.create_sub_endpoint().expect("服务创建sub endpoint必须成功");
+        let endpoint = self
+            .endpoint
+            .create_sub_endpoint()
+            .expect("服务创建sub endpoint必须成功");
         let handle = tokio::spawn(async move {
             let millis = (next - Utc::now().with_timezone(&offset))
                 .num_milliseconds()

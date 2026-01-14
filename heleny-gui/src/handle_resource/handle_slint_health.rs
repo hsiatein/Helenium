@@ -1,12 +1,12 @@
-use anyhow::Result;
 use crate::FrontendHandler;
 use crate::ServiceHealthItem;
 use anyhow::Context;
-use slint::ModelRc;
+use anyhow::Result;
 use heleny_proto::KernelHealth;
+use slint::ModelRc;
 
 impl FrontendHandler {
-    pub async fn handle_health(&self,health: KernelHealth)->Result<()>{
+    pub async fn handle_health(&self, health: KernelHealth) -> Result<()> {
         let mut services: Vec<ServiceHealthItem> = health
             .services
             .into_iter()

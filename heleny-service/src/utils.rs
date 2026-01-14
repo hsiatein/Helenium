@@ -136,11 +136,14 @@ pub async fn get_resource<T: Into<String>>(
     endpoint: &Endpoint,
     resource_name: T,
 ) -> Result<ResourcePayload> {
-    let (tx,rx)=oneshot::channel();
+    let (tx, rx) = oneshot::channel();
     endpoint
         .send(
             HUB_SERVICE,
-            HubServiceMessage::Get { resource_name: resource_name.into(), feedback: tx },
+            HubServiceMessage::Get {
+                resource_name: resource_name.into(),
+                feedback: tx,
+            },
         )
         .await?;
     rx.await.context("获取资源失败")

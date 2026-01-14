@@ -80,11 +80,11 @@ pub fn set_callback(ui: &AppWindow, write_tx: &mpsc::Sender<FrontendCommand>) {
     });
 
     let write_tx_clone = write_tx.clone();
-    ui.on_cancel_schedule(move |id|{
-        let Ok(id)=Uuid::from_str(&id) else {
+    ui.on_cancel_schedule(move |id| {
+        let Ok(id) = Uuid::from_str(&id) else {
             return;
         };
-        send(&write_tx_clone,FrontendCommand::CancelSchedule { id } );
+        send(&write_tx_clone, FrontendCommand::CancelSchedule { id });
     });
 }
 

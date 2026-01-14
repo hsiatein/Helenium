@@ -1,7 +1,8 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use serde_json::Value;
-use std::{collections::HashMap, fmt::Debug};
+use std::collections::HashMap;
+use std::fmt::Debug;
 
 #[async_trait]
 pub trait HelenyToolFactory: Debug + Send + Sync + 'static {
@@ -14,7 +15,7 @@ pub trait HelenyTool: Debug + Send + 'static {
     async fn invoke(
         &mut self,
         command: String,
-        args: HashMap<String,Value>,
+        args: HashMap<String, Value>,
         request: Box<&dyn CanRequestConsent>,
     ) -> Result<String>;
 }

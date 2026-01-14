@@ -1,22 +1,24 @@
-use std::process::Stdio;
-use heleny_proto::{McpOutput, McpToolManual};
-use tokio::io::{AsyncBufReadExt, BufReader};
-use anyhow::{ Result};
-use tokio::process;
-use tokio::io::AsyncWriteExt;
+use anyhow::Result;
+use heleny_proto::McpOutput;
+use heleny_proto::McpToolManual;
 use serde_json::json;
+use std::process::Stdio;
+use tokio::io::AsyncBufReadExt;
+use tokio::io::AsyncWriteExt;
+use tokio::io::BufReader;
+use tokio::process;
 
 #[tokio::test]
-async fn test_process()->Result<()>{
-    let mut child=process::Command::new("docker")
-    .arg("run")
-    .arg("-i")
-    .arg("--rm")
-    .arg("mcp/duckduckgo")
-    .stdin(Stdio::piped())
-    .stdout(Stdio::piped())
-    .stderr(Stdio::piped())
-    .spawn()?;
+async fn test_process() -> Result<()> {
+    let mut child = process::Command::new("docker")
+        .arg("run")
+        .arg("-i")
+        .arg("--rm")
+        .arg("mcp/duckduckgo")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
     let mut child_stdin = child.stdin.take().unwrap();
     let child_stdout = child.stdout.take().unwrap();
     let child_stderr = child.stderr.take().unwrap();
@@ -46,7 +48,9 @@ async fn test_process()->Result<()>{
 
     while let Some(line) = out_lines.next_line().await? {
         let t = line.trim();
-        if t.is_empty() { continue; }
+        if t.is_empty() {
+            continue;
+        }
 
         // 日志可能混进来：先尝试 parse
         if let Ok(v) = serde_json::from_str::<serde_json::Value>(t) {
@@ -61,15 +65,15 @@ async fn test_process()->Result<()>{
 }
 
 #[tokio::test]
-async fn test_process2()->Result<()>{
-    let mut child=process::Command::new("docker")
-    .arg("run")
-    .arg("-i")
-    .arg("--rm")
-    .arg("mcp/duckduckgo")
-    .stdin(Stdio::piped())
-    .stdout(Stdio::piped())
-    .spawn()?;
+async fn test_process2() -> Result<()> {
+    let mut child = process::Command::new("docker")
+        .arg("run")
+        .arg("-i")
+        .arg("--rm")
+        .arg("mcp/duckduckgo")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()?;
     let mut child_stdin = child.stdin.take().unwrap();
     let child_stdout = child.stdout.take().unwrap();
 
@@ -97,17 +101,21 @@ async fn test_process2()->Result<()>{
     let Ok(v) = serde_json::from_str::<serde_json::Value>(t) else {
         return Err(anyhow::anyhow!("转化json失败"));
     };
-    let output:McpOutput=serde_json::from_value(v)?;
+    let output: McpOutput = serde_json::from_value(v)?;
     println!("JSON: {:?}", output.result);
 
     let initialized = json!({"jsonrpc":"2.0","method":"notifications/initialized"});
 
-    child_stdin.write_all(initialized.to_string().as_bytes()).await?;
+    child_stdin
+        .write_all(initialized.to_string().as_bytes())
+        .await?;
     child_stdin.write_all(b"\n").await?;
     child_stdin.flush().await?;
 
     let tools_list = json!({"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}});
-    child_stdin.write_all(tools_list.to_string().as_bytes()).await?;
+    child_stdin
+        .write_all(tools_list.to_string().as_bytes())
+        .await?;
     child_stdin.write_all(b"\n").await?;
     child_stdin.flush().await?;
 
@@ -118,8 +126,9 @@ async fn test_process2()->Result<()>{
     let Ok(v) = serde_json::from_str::<serde_json::Value>(t) else {
         return Err(anyhow::anyhow!("转化json失败"));
     };
-    let output:McpOutput=serde_json::from_value(v)?;
-    let tools:Vec<McpToolManual>=serde_json::from_value(output.result.get("tools").unwrap().clone())?;
+    let output: McpOutput = serde_json::from_value(v)?;
+    let tools: Vec<McpToolManual> =
+        serde_json::from_value(output.result.get("tools").unwrap().clone())?;
     println!("JSON: {:?}", tools);
     Ok(())
 }

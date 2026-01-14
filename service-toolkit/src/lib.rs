@@ -40,7 +40,7 @@ pub struct ToolkitService {
     tool_descriptions: Vec<ToolDescription>,
     tool_factories: HashMap<String, Box<dyn HelenyToolFactory>>,
     abstract_sender: watch::Sender<ResourcePayload>,
-    config:ToolkitConfig,
+    config: ToolkitConfig,
 }
 
 #[derive(Debug)]
@@ -51,16 +51,26 @@ impl Service for ToolkitService {
     type MessageType = ToolkitServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>> {
         let config: ToolkitConfig = get_from_config_service(&endpoint).await?;
-        endpoint.send(CONFIG_SERVICE, ConfigServiceMessage::Export { key: "tools_dir".into(), value: Value::String(config.tools_dir.clone()) }).await?;
+        endpoint
+            .send(
+                CONFIG_SERVICE,
+                ConfigServiceMessage::Export {
+                    key: "tools_dir".into(),
+                    value: Value::String(config.tools_dir.clone()),
+                },
+            )
+            .await?;
 
         // 发布
-        let (abstract_sender, abstract_receiver)=watch::channel(ResourcePayload::ToolAbstracts { abstracts: Vec::new() });
+        let (abstract_sender, abstract_receiver) = watch::channel(ResourcePayload::ToolAbstracts {
+            abstracts: Vec::new(),
+        });
         publish_resource(&endpoint, TOOL_ABSTRACTS, abstract_receiver).await?;
         // 实例化
         let mut instance = Self {
             endpoint,
-            tool_manuals:HashMap::new(),
-            tool_descriptions:Vec::new(),
+            tool_manuals: HashMap::new(),
+            tool_descriptions: Vec::new(),
             tool_factories: HashMap::new(),
             abstract_sender,
             config,
@@ -121,7 +131,7 @@ impl Service for ToolkitService {
                 self.tool_factories.insert(name, factory);
                 self.send_tool_abstracts()?;
             }
-            ToolkitServiceMessage::Reload=>{
+            ToolkitServiceMessage::Reload => {
                 self.read_manuals().await?;
                 info!("工具列表重载完成");
             }
@@ -141,7 +151,7 @@ impl Service for ToolkitService {
 }
 
 impl ToolkitService {
-    async fn read_manuals(&mut self)->Result<()>{
+    async fn read_manuals(&mut self) -> Result<()> {
         let tool_paths = list_via_fs_service(&self.endpoint, &self.config.tools_dir).await?;
         let mut tool_strings = Vec::new();
         for path in tool_paths {
@@ -169,17 +179,20 @@ impl ToolkitService {
             .collect();
         self.send_tool_abstracts()
     }
-    fn send_tool_abstracts(&self)->Result<()>{
-        let mut abstracts=get_tool_abstracts(&self.tool_manuals);
-        abstracts.iter_mut().for_each(|abs|{
-            abs.available=self.tool_factories.contains_key(&abs.name);
+    fn send_tool_abstracts(&self) -> Result<()> {
+        let mut abstracts = get_tool_abstracts(&self.tool_manuals);
+        abstracts.iter_mut().for_each(|abs| {
+            abs.available = self.tool_factories.contains_key(&abs.name);
         });
-        self.abstract_sender.send(ResourcePayload::ToolAbstracts { abstracts }).context("更新 ToolAbstracts 失败")
+        self.abstract_sender
+            .send(ResourcePayload::ToolAbstracts { abstracts })
+            .context("更新 ToolAbstracts 失败")
     }
 }
 
-fn get_tool_abstracts(tool_manuals:&HashMap<String,ToolManual>)->Vec<ToolAbstract>{
-    tool_manuals.values().map(|manual|{
-        manual.clone().into()
-    }).collect()
+fn get_tool_abstracts(tool_manuals: &HashMap<String, ToolManual>) -> Vec<ToolAbstract> {
+    tool_manuals
+        .values()
+        .map(|manual| manual.clone().into())
+        .collect()
 }

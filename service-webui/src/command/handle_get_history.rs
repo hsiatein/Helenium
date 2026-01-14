@@ -10,7 +10,7 @@ use tokio::sync::oneshot;
 use uuid::Uuid;
 
 impl WebuiService {
-    pub async fn handle_get_history(&mut self, session: Uuid, id_upper_bound:i64)->Result<()>{
+    pub async fn handle_get_history(&mut self, session: Uuid, id_upper_bound: i64) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         self.endpoint
             .send(

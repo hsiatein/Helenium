@@ -47,17 +47,33 @@ impl ToolManual {
 pub struct ToolAbstract {
     pub name: String,
     pub description: String,
-    pub commands: HashMap<String,String>,
+    pub commands: HashMap<String, String>,
     pub available: bool,
 }
 
 impl From<ToolManual> for ToolAbstract {
     fn from(value: ToolManual) -> Self {
-        let ToolManual { name, description, commands }=value;
-        let commands:HashMap<String,String>=commands.into_iter().map(|cmd|{
-            let ToolCommand { name, description, args:_ }=cmd;
-            (name,description)
-        }).collect();
-        Self { name, description, commands,available:false }
+        let ToolManual {
+            name,
+            description,
+            commands,
+        } = value;
+        let commands: HashMap<String, String> = commands
+            .into_iter()
+            .map(|cmd| {
+                let ToolCommand {
+                    name,
+                    description,
+                    args: _,
+                } = cmd;
+                (name, description)
+            })
+            .collect();
+        Self {
+            name,
+            description,
+            commands,
+            available: false,
+        }
     }
 }

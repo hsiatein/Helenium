@@ -12,11 +12,11 @@ pub enum ConfigServiceMessage {
     Update,
     Persist,
     Export {
-        key:String,
+        key: String,
         value: Value,
     },
     Import {
-        key:String,
+        key: String,
         feedback: oneshot::Sender<Value>,
-    }
+    },
 }

@@ -25,9 +25,9 @@ use heleny_service::get_resource;
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
-mod handle_toggle_task_logs;
-mod handle_get_image;
 mod handle_get_history;
+mod handle_get_image;
+mod handle_toggle_task_logs;
 
 impl WebuiService {
     pub async fn handle_command(&mut self, session: Uuid, command: FrontendCommand) -> Result<()> {
@@ -41,7 +41,7 @@ impl WebuiService {
                 self.handle_get_history(session, id_upper_bound).await
             }
             FrontendCommand::GetHealth => {
-                let health=get_resource(&self.endpoint, HEALTH).await?;
+                let health = get_resource(&self.endpoint, HEALTH).await?;
                 self.send_to_session(
                     session,
                     FrontendMessage::UpdateResource(Resource {
@@ -89,22 +89,40 @@ impl WebuiService {
             FrontendCommand::ToggleTaskLogs { id, expanded } => {
                 self.handle_toggle_task_logs(session, id, expanded).await
             }
-            FrontendCommand::GetSchedules=>{
-                let resource=get_resource(&self.endpoint, SCHEDULE).await?;
-                self.send_to_session(session, FrontendMessage::UpdateResource(Resource { name: "".into(), payload: resource })).await
+            FrontendCommand::GetSchedules => {
+                let resource = get_resource(&self.endpoint, SCHEDULE).await?;
+                self.send_to_session(
+                    session,
+                    FrontendMessage::UpdateResource(Resource {
+                        name: "".into(),
+                        payload: resource,
+                    }),
+                )
+                .await
             }
-            FrontendCommand::CancelSchedule { id }=>{
+            FrontendCommand::CancelSchedule { id } => {
                 self.endpoint
                     .send(SCHEDULE_SERVICE, ScheduleServiceMessage::CancelTask { id })
                     .await
             }
-            FrontendCommand::GetToolAbstrats=>{
-                let resource=get_resource(&self.endpoint, TOOL_ABSTRACTS).await?;
-                self.send_to_session(session, FrontendMessage::UpdateResource(Resource { name: "".into(), payload: resource })).await
+            FrontendCommand::GetToolAbstrats => {
+                let resource = get_resource(&self.endpoint, TOOL_ABSTRACTS).await?;
+                self.send_to_session(
+                    session,
+                    FrontendMessage::UpdateResource(Resource {
+                        name: "".into(),
+                        payload: resource,
+                    }),
+                )
+                .await
             }
-            FrontendCommand::ReloadTools=>{
-                self.endpoint.send(TOOLKIT_SERVICE, ToolkitServiceMessage::Reload).await?;
-                self.endpoint.send(MCP_SERVICE, McpServiceMessage::Reload).await
+            FrontendCommand::ReloadTools => {
+                self.endpoint
+                    .send(TOOLKIT_SERVICE, ToolkitServiceMessage::Reload)
+                    .await?;
+                self.endpoint
+                    .send(MCP_SERVICE, McpServiceMessage::Reload)
+                    .await
             }
         }
     }

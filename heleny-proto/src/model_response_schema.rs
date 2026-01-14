@@ -24,10 +24,13 @@ pub struct ToolIntent {
     pub tool: Option<String>,
     pub command: Option<String>,
     #[serde(default)]
-    pub args: HashMap<String,Value>,
+    pub args: HashMap<String, Value>,
 }
 
-pub fn get_tool_arg<T: DeserializeOwned>(args: &mut HashMap<String,Value>, name: &str) -> Result<T> {
+pub fn get_tool_arg<T: DeserializeOwned>(
+    args: &mut HashMap<String, Value>,
+    name: &str,
+) -> Result<T> {
     let Some(arg) = args.remove(name) else {
         return Err(anyhow::anyhow!("没有找到此参数名: {}", name));
     };

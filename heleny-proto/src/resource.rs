@@ -58,6 +58,6 @@ pub enum ResourcePayload {
         schedules: HashMap<Uuid, ScheduledTask>,
     },
     ToolAbstracts {
-        abstracts: Vec<ToolAbstract>
-    }
+        abstracts: Vec<ToolAbstract>,
+    },
 }

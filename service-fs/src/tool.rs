@@ -69,7 +69,7 @@ impl HelenyTool for FsTool {
     async fn invoke(
         &mut self,
         command: String,
-        mut args: HashMap<String,Value>,
+        mut args: HashMap<String, Value>,
         _request: Box<&dyn CanRequestConsent>,
     ) -> Result<String> {
         match command.as_str() {

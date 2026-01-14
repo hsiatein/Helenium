@@ -1,7 +1,7 @@
-use anyhow::Result;
 use crate::FrontendHandler;
 use crate::MessageItem;
 use anyhow::Context;
+use anyhow::Result;
 use heleny_proto::ChatRole;
 use heleny_proto::DisplayMessage;
 use heleny_proto::FrontendCommand;
@@ -11,7 +11,11 @@ use slint::Model;
 use slint::ModelRc;
 
 impl FrontendHandler {
-    pub async fn handle_display_messages(&self,new:bool, messages:Vec<DisplayMessage>)->Result<()>{
+    pub async fn handle_display_messages(
+        &self,
+        new: bool,
+        messages: Vec<DisplayMessage>,
+    ) -> Result<()> {
         for message in &messages {
             if let MemoryContent::Image(path) = &message.content {
                 let _ = self

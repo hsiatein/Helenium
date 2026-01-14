@@ -1,5 +1,5 @@
-use anyhow::Result;
 use crate::WebuiService;
+use anyhow::Result;
 use heleny_proto::FrontendMessage;
 use heleny_proto::Resource;
 use heleny_proto::ResourcePayload;
@@ -10,7 +10,12 @@ use heleny_service::WebuiServiceMessage;
 use uuid::Uuid;
 
 impl WebuiService {
-    pub async fn handle_toggle_task_logs(&mut self, session: Uuid, id: Uuid, expanded: bool )->Result<()>{
+    pub async fn handle_toggle_task_logs(
+        &mut self,
+        session: Uuid,
+        id: Uuid,
+        expanded: bool,
+    ) -> Result<()> {
         let session_task_logs = match self.session_task_logs.get_mut(&session) {
             Some(logs) => logs,
             None => return Ok(()),
@@ -33,10 +38,7 @@ impl WebuiService {
                                 session,
                                 message: FrontendMessage::UpdateResource(Resource {
                                     name: String::new(),
-                                    payload: ResourcePayload::TaskLogs {
-                                        id,
-                                        logs: log.log,
-                                    },
+                                    payload: ResourcePayload::TaskLogs { id, logs: log.log },
                                 }),
                             },
                         )

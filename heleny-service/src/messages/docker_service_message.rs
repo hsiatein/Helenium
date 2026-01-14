@@ -1,4 +1,2 @@
 #[derive(Debug)]
-pub enum DockerServiceMessage {
-
-}
+pub enum DockerServiceMessage {}

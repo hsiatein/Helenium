@@ -42,7 +42,7 @@ async fn main() -> Result<()> {
     // 设置 callback 函数, 初始化资源
     set_callback(&ui, &write_tx);
     init_resource(&write_tx).await?;
-    
+
     // 启动 UI
     ui.run()?;
     if let Some(handle) = handle {

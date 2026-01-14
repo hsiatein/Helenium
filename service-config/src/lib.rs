@@ -32,7 +32,7 @@ pub struct ConfigService {
     save_after: f64,
     is_writing: Option<JoinHandle<Result<PathBuf>>>,
     is_reading: Option<JoinHandle<Result<Map<String, Value>>>>,
-    exported_vars:HashMap<String,Value>,
+    exported_vars: HashMap<String, Value>,
 }
 
 #[async_trait]
@@ -75,7 +75,7 @@ impl Service for ConfigService {
             save_after,
             is_writing: None,
             is_reading: None,
-            exported_vars:HashMap::new()
+            exported_vars: HashMap::new(),
         }))
     }
     async fn handle(
@@ -96,14 +96,18 @@ impl Service for ConfigService {
             }
             ConfigServiceMessage::Update => self.update().await,
             ConfigServiceMessage::Persist => self.persist().await,
-            ConfigServiceMessage::Export { key, value }=>{
-                info!("导出变量 {}",key);
+            ConfigServiceMessage::Export { key, value } => {
+                info!("导出变量 {}", key);
                 self.exported_vars.insert(key, value);
                 Ok(())
             }
-            ConfigServiceMessage::Import { key, feedback }=>{
-                let value=self.exported_vars.get(&key).context("没有这个导出变量")?.clone();
-                let _=feedback.send(value);
+            ConfigServiceMessage::Import { key, feedback } => {
+                let value = self
+                    .exported_vars
+                    .get(&key)
+                    .context("没有这个导出变量")?
+                    .clone();
+                let _ = feedback.send(value);
                 Ok(())
             }
         }
