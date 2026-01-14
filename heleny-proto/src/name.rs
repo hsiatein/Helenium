@@ -10,3 +10,4 @@ pub static TOOLKIT_SERVICE: &'static str = "ToolkitService";
 pub static TASK_SERVICE: &'static str = "TaskService";
 pub static WEBUI_SERVICE: &'static str = "WebuiService";
 pub static SCHEDULE_SERVICE: &'static str = "ScheduleService";
+pub static MCP_SERVICE: &'static str = "McpService";

@@ -28,6 +28,7 @@ pub enum FrontendCommand {
     ToggleTaskLogs { id: Uuid, expanded: bool },
     GetSchedules,
     GetToolAbstrats,
+    ReloadTools,
 }
 
 impl FrontendCommand {

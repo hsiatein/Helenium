@@ -9,6 +9,7 @@ use heleny_proto::{AnyMessage, ServiceRole};
 use async_trait::async_trait;
 use anyhow::Result;
 use heleny_proto::Resource;
+use tracing::info;
 
 use crate::config::Config;
 use crate::tool::McpToolFactory;
@@ -19,6 +20,7 @@ mod config;
 #[base_service(deps=["ConfigService"])]
 pub struct McpService{
     endpoint:Endpoint,
+    config:Config,
 }
 
 #[derive(Debug)]
@@ -31,25 +33,27 @@ impl Service for McpService {
     type MessageType= McpServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>>{
         let config:Config=get_from_config_service(&endpoint).await?;
-        let Config { mcp_servers }=config;
-        let factories:Vec<McpToolFactory>=mcp_servers.into_iter().map(|(name,command)|{
-            McpToolFactory::new(name, command)
-        }).collect();
-        for factory in factories {
-            register_tool_factory(&endpoint, factory).await;
-        }
         // 实例化
         let instance=Self {
             endpoint,
+            config,
         };
+        info!("载入 MCP 工具");
+        instance.load().await;
         Ok(Box::new(instance))
     }
     async fn handle(
         &mut self,
         _name: String,
         _role: ServiceRole,
-        _msg: McpServiceMessage,
+        msg: McpServiceMessage,
     ) -> Result<()>{
+        match msg {
+            McpServiceMessage::Reload=>{
+                info!("重载 MCP 工具");
+                self.load().await;
+            }
+        }
         Ok(())
     }
     async fn stop(&mut self){
@@ -67,5 +71,12 @@ impl Service for McpService {
 }
 
 impl McpService {
-    
+    async fn load(&self){
+        let factories:Vec<McpToolFactory>=self.config.mcp_servers.clone().into_iter().map(|(name,command)|{
+            McpToolFactory::new(name, command)
+        }).collect();
+        for factory in factories {
+            register_tool_factory(&self.endpoint, factory).await;
+        }
+    }
 }
