@@ -1,13 +1,95 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use heleny_proto::{CanRequestConsent, HelenyTool, HelenyToolFactory, get_tool_arg};
+use heleny_bus::endpoint::Endpoint;
+use heleny_proto::{CanRequestConsent, ChatRole, FS_SERVICE, HelenyFile, HelenyTool, HelenyToolFactory, MEMORY_SERVICE, MemoryContent, MemoryEntry, get_tool_arg};
+use heleny_service::{FsServiceMessage, MemoryServiceMessage};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
+use tokio::{sync::oneshot};
 use uuid::Uuid;
 use rand::Rng;
+
+
+#[derive(Debug)]
+pub struct ComfyuiTool {
+    endpoint:Endpoint,
+    comfyui_url:String,
+    base_prompt:String,
+    api_key:String,
+}
+
+impl ComfyuiTool {
+    pub async fn new(endpoint:Endpoint, comfyui_url:String, base_prompt:String, api_key:String)->Result<Self> {
+        let comfyui_url=comfyui_url.trim_end_matches("/").to_string();
+        let _=reqwest::get(format!("{comfyui_url}/system_stats")).await?.text().await?;
+        Ok(Self { endpoint, comfyui_url, base_prompt, api_key })
+    }
+}
+
+#[async_trait]
+impl HelenyTool for ComfyuiTool {
+    async fn invoke(
+        &mut self,
+        command: String,
+        args: HashMap<String, Value>,
+        _request: Box<&dyn CanRequestConsent>,
+    ) -> Result<String>{
+        if command!="generate" {
+            return Err(anyhow::anyhow!("未知 Command"));
+        }
+        let input_prompt=ComfyuiPrompt::new(args);
+        let prompt=input_prompt.replace(&self.base_prompt)?;
+        let client=Client::new();
+        let resp=client.post(self.comfyui_url.clone()+"/prompt").json(&json!({
+            "prompt": prompt,
+            "extra_data": {
+                "api_key_comfy_org": self.api_key
+            }
+        })).send()
+        .await.context("发送请求失败")?;
+        let resp:HashMap<String,Value>=serde_json::from_str(&resp.text().await?).context("解析响应失败")?;
+        let prompt_id=resp.get("prompt_id").context("获取 prompt_id 失败")?.as_str().context("获取 prompt_id str 失败")?;
+        for _ in 0..3600 {
+            let body=reqwest::get(self.comfyui_url.clone()+"/history/"+prompt_id).await?.text().await?;
+            if body.len()>10 {
+                println!("{}",body);
+                break;
+            }
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        }
+        let download_url =self.comfyui_url.clone()+"/view?filename="+&input_prompt.file_name+".png&type=output";
+        let bytes:Vec<u8> = client
+            .get(download_url)
+            .send()
+            .await?
+            .error_for_status()?
+            .bytes()
+            .await?.into();
+        let (tx,rx)=oneshot::channel();
+        self.endpoint.send(FS_SERVICE, FsServiceMessage::TempFile { file: HelenyFile::Image(bytes), file_ext: "png".into(), feedback: tx }).await?;
+        let path=rx.await?;
+        let entry = MemoryEntry::new(ChatRole::Assistant, MemoryContent::Image(path));
+        self.endpoint
+            .send(MEMORY_SERVICE, MemoryServiceMessage::Post { entry })
+            .await?;
+        Ok("图片生成完成".into())
+    }
+}
+
+#[async_trait]
+impl HelenyToolFactory for ComfyuiTool {
+    fn name(&self) -> String{
+        "comfyui".into()
+    }
+    async fn create(&mut self) -> Result<Box<dyn HelenyTool>>{
+        let tool=ComfyuiTool { endpoint: self.endpoint.create_sender_endpoint(), comfyui_url: self.comfyui_url.clone(), base_prompt: self.base_prompt.clone(), api_key: self.api_key.clone() };
+        Ok(Box::new(tool))
+    }
+}
+
 
 #[derive(Debug,Serialize,Deserialize)]
 pub struct ComfyuiPrompt {
@@ -63,100 +145,6 @@ impl ComfyuiPrompt {
     }
 }
 
-#[derive(Debug,Clone)]
-pub struct ComfyuiTool {
-    comfyui_url:String,
-    base_prompt:String,
-    api_key:String,
-}
-
-impl ComfyuiTool {
-    pub async fn new(comfyui_url:String, base_prompt:String, api_key:String)->Result<Self> {
-        let comfyui_url=comfyui_url.trim_end_matches("/").to_string();
-        let _=reqwest::get(format!("{comfyui_url}/system_stats")).await?.text().await?;
-        Ok(Self { comfyui_url, base_prompt, api_key })
-    }
-}
-
-#[async_trait]
-impl HelenyTool for ComfyuiTool {
-    async fn invoke(
-        &mut self,
-        command: String,
-        args: HashMap<String, Value>,
-        _request: Box<&dyn CanRequestConsent>,
-    ) -> Result<String>{
-        if command!="generate" {
-            return Err(anyhow::anyhow!("未知 Command"));
-        }
-        let input_prompt=ComfyuiPrompt::new(args);
-        let prompt=input_prompt.replace(&self.base_prompt)?;
-        let client=Client::new();
-        let resp=client.post(self.comfyui_url.clone()+"/prompt").json(&json!({
-            "prompt": prompt,
-            "extra_data": {
-                "api_key_comfy_org": self.api_key
-            }
-        })).send()
-        .await?;
-        let status = resp.status();
-        let body = resp.text().await?;
-        println!("status: {}", status);
-        println!("body: {}", body);
-        Ok("绘图完成".into())
-    }
-}
-
-#[async_trait]
-impl HelenyToolFactory for ComfyuiTool {
-    fn name(&self) -> String{
-        "comfyui".into()
-    }
-    async fn create(&mut self) -> Result<Box<dyn HelenyTool>>{
-        let tool=ComfyuiTool { comfyui_url: self.comfyui_url.clone(), base_prompt: self.base_prompt.clone(), api_key: self.api_key.clone() };
-        Ok(Box::new(tool))
-    }
-}
-
-#[cfg(test)]
-mod tests{
-    use heleny_proto::TestCanRequestConsent;
-    use tokio::fs;
-
-    use super::*;
-    #[tokio::test]
-    async fn test_comfyui()->Result<()>{
-        let body=reqwest::get("http://127.0.0.1:8188/system_stats").await?.text().await?;
-        println!("{body}");
-        let mut prompt=fs::read_to_string("../assets/tool-resource/obs赫蕾妮-通用.json").await?;
-        println!("{prompt}");
-        let input=ComfyuiPrompt::default();
-        prompt=prompt.replace("<额外内容>", &input.extra);
-        prompt=prompt.replace("<外貌>", &input.appearance);
-        prompt=prompt.replace("<服装>", &input.clothes);
-        prompt=prompt.replace("<动作>", &input.action);
-        prompt=prompt.replace("<风格>", &input.style);
-        prompt=prompt.replace("<负面词条>", &input.negative);
-        fs::write("../.temp/test.json", prompt).await?;
-        Ok(())
-    }
-    #[tokio::test]
-    async fn test_comfyui2()->Result<()>{
-        dotenvy::dotenv().ok();
-        let base_prompt=fs::read_to_string("../assets/tool-resource/obs赫蕾妮-通用.json").await?;
-        let api_key= std::env::var("COMFYUI_API_KEY")?;
-        let mut comfyui=ComfyuiTool::new("http://127.0.0.1:8188".into(), base_prompt, api_key).await?;
-        // let input=ComfyuiPrompt::default();
-        comfyui.invoke("generate".into(), HashMap::new(), Box::new(& TestCanRequestConsent::new())).await?;
-        Ok(())
-    }
-    #[tokio::test]
-    async fn test_history()->Result<()>{
-        let body=reqwest::get("http://127.0.0.1:8188/history/700994f1-bfe5-47eb-8f6b-b3fff11dfcf7").await?.text().await?;
-        println!("{body}");
-        Ok(())
-    }
-}
 
 
 impl Default for ComfyuiPrompt {
@@ -184,4 +172,55 @@ fn default_style()->String {
 
 fn default_negative()->String {
     "colored inner hair, gradient hair color, fluffy_hair, mature, hand, hands, high twintails, high ponytail, high twin buns, high pigtails,".into()
+}
+
+
+#[cfg(test)]
+mod tests{
+    use tokio::fs;
+
+    use super::*;
+    #[tokio::test]
+    async fn test_comfyui()->Result<()>{
+        let body=reqwest::get("http://127.0.0.1:8188/system_stats").await?.text().await?;
+        println!("{body}");
+        let mut prompt=fs::read_to_string("../assets/tool-resource/obs赫蕾妮-通用.json").await?;
+        println!("{prompt}");
+        let input=ComfyuiPrompt::default();
+        prompt=prompt.replace("<额外内容>", &input.extra);
+        prompt=prompt.replace("<外貌>", &input.appearance);
+        prompt=prompt.replace("<服装>", &input.clothes);
+        prompt=prompt.replace("<动作>", &input.action);
+        prompt=prompt.replace("<风格>", &input.style);
+        prompt=prompt.replace("<负面词条>", &input.negative);
+        fs::write("../.temp/test.json", prompt).await?;
+        Ok(())
+    }
+    // #[tokio::test]
+    // async fn test_comfyui2()->Result<()>{
+    //     dotenvy::dotenv().ok();
+    //     let base_prompt=fs::read_to_string("../assets/tool-resource/obs赫蕾妮-通用.json").await?;
+    //     let api_key= std::env::var("COMFYUI_API_KEY")?;
+    //     let mut comfyui=ComfyuiTool::new("http://127.0.0.1:8188".into(), base_prompt, api_key).await?;
+    //     // let input=ComfyuiPrompt::default();
+    //     comfyui.invoke("generate".into(), HashMap::new(), Box::new(& TestCanRequestConsent::new())).await?;
+    //     Ok(())
+    // }
+    #[tokio::test]
+    async fn test_history()->Result<()>{
+        let body=reqwest::get("http://127.0.0.1:8188/history/700994f1-bfe5-47eb-8f6b-b3fff11dfcf71").await?.text().await?;
+        println!("{}, {}, {}",body,body.len(),body=="{}");
+        let url ="http://127.0.0.1:8188/view?filename=53cfa3b7-163a-48fc-9635-2a36f3977464.png&type=output";
+        let client=Client::new();
+        let bytes = client
+            .get(url)
+            .send()
+            .await?
+            .error_for_status()?   // 非 200 直接报错
+            .bytes()
+            .await?;
+        let bytes:Vec<u8>=bytes.into();
+        fs::write("../.temp/test.png", bytes).await?;
+        Ok(())
+    }
 }

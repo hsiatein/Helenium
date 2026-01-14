@@ -7,7 +7,7 @@ pub struct Config {
 
 #[derive(Deserialize, Debug)]
 pub struct ComfyuiConfig {
-    pub api_key:String,
+    pub api_key_env_var:String,
     pub base_url:String,
     pub base_prompt_path:String,
 }

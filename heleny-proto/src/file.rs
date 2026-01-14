@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub enum HelenyFile {
     Text(String),
     Image(Vec<u8>),

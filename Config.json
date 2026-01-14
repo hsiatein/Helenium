@@ -64,7 +64,7 @@
         "tools_dir": "./assets/tools"
     },
     "ToolsService": {
-        "comfyui": {
+        "comfyui_config": {
             "base_url": "http://127.0.0.1:8188",
             "api_key_env_var": "COMFYUI_API_KEY",
             "base_prompt_path": "./assets/tool-resource/obs赫蕾妮-通用.json"

@@ -77,8 +77,8 @@ impl ToolsService {
 }
 
 async fn init_comfyui(endpoint:&Endpoint,config:ComfyuiConfig)->Result<ComfyuiTool>{
-    let ComfyuiConfig { api_key, base_url, base_prompt_path }=config;
+    let ComfyuiConfig { api_key_env_var, base_url, base_prompt_path }=config;
     let base_prompt=read_via_fs_service(&endpoint, base_prompt_path).await?;
-    let tool=ComfyuiTool::new(base_url, base_prompt, api_key).await?;
+    let tool=ComfyuiTool::new(endpoint.create_sender_endpoint(),base_url, base_prompt, api_key_env_var).await?;
     Ok(tool)
 }
