@@ -49,6 +49,5 @@ codex/
 **.key
 todo.md
 .vscode
-service-test/**
 heleny-webui/**
 publish.sh
