@@ -56,6 +56,7 @@ pub struct McpToolManual {
 pub struct McpInputSchema {
     #[serde(default)]
     pub required: Vec<String>,
+    #[serde(default)]
     pub properties: HashMap<String, McpArg>,
     #[serde(flatten)]
     pub extra: HashMap<String, Value>,
@@ -63,7 +64,7 @@ pub struct McpInputSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McpArg {
-    #[serde(rename = "type")]
+    #[serde(rename = "type",default)]
     pub arg_type: String,
     #[serde(default)]
     pub description: String,

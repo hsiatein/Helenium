@@ -1,0 +1,33 @@
+{
+    "name": "comfyui",
+    "description": "使用comfyui进行图像生成并发送给用户。默认值为Heleny的默认外貌设定，当用户提出想看Heleny的图时应使用此工具。只允许控制衣服饰品，人物动作。",
+    "commands": [
+        {
+            "name": "generate",
+            "description": "生成图片并自动发送给用户。只能输入来自 danbooru 的tags，只接受英文，不接受自然语言。",
+            "args": [
+                {
+                    "name": "extra",
+                    "description": "额外内容",
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                {
+                    "name": "clothes",
+                    "description": "服装",
+                    "type": "string",
+                    "required": false,
+                    "default": "black leotard, animal collar, fake animal ears, sleeveless, leotard, jewelry,rabbit ears, suit, sweat, suit, white background, tailcoat, upper body, collarbone,"
+                },
+                {
+                    "name": "action",
+                    "description": "动作",
+                    "type": "string",
+                    "required": false,
+                    "default": "looking_at_viewer,"
+                }
+            ]
+        }
+    ]
+}

@@ -24,6 +24,7 @@
         "session_buffer": 32
     },
     "ChatService": {
+        "timeout_secs":20,
         "api": [
             {
                 "base_url": "https://api.x.ai/v1",
@@ -62,6 +63,14 @@
     },
     "ToolkitService": {
         "tools_dir": "./assets/tools"
+    },
+    "ToolsService": {
+        "comfyui_config": {
+            "base_url_env_var": "COMFYUI_BASE_URL",
+            "base_auth_env_var": "COMFYUI_BASE_AUTH",
+            "api_key_env_var": "COMFYUI_API_KEY",
+            "base_prompt_path": "./assets/tool-resource/obs赫蕾妮-通用.json"
+        }
     },
     "TaskService": {
         "max_running_tasks": 10,
@@ -142,6 +151,152 @@
                     "./.temp/filesystem:/local-directory",
                     "mcp/filesystem",
                     "/local-directory"
+                ]
+            },
+            "dockerhub": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-e",
+                    "HUB_PAT_TOKEN",
+                    "mcp/dockerhub",
+                    "--transport=stdio",
+                    "--username=heleny"
+                ],
+                "env": {
+                    "HUB_PAT_TOKEN": "your_docker_pat_token"
+                }
+            },
+            "semgrep": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "semgrep/semgrep",
+                    "semgrep",
+                    "mcp",
+                    "-t",
+                    "stdio"
+                ]
+            },
+            "markitdown": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-v",
+                    "./.temp/markitdown:/local-directory",
+                    "mcp/markitdown"
+                ]
+            },
+            "mcp-server-chart": {
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "@antv/mcp-server-chart"
+                ]
+            },
+            "excel": {
+                "command": "uvx",
+                "args": [
+                    "excel-mcp-server",
+                    "stdio"
+                ]
+            },
+            "opendia": {
+                "command": "npx",
+                "args": [
+                    "opendia"
+                ]
+            },
+            "ppt": {
+                "command": "uvx",
+                "args": [
+                    "--from",
+                    "office-powerpoint-mcp-server",
+                    "ppt_mcp_server"
+                ],
+                "env": {}
+            },
+            "word-document-server": {
+                "command": "uvx",
+                "args": [
+                    "--from",
+                    "office-word-mcp-server",
+                    "word_mcp_server"
+                ]
+            },
+            "node-code-sandbox": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "mcp/node-code-sandbox"
+                ]
+            },
+            "rust-mcp-filesystem": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-e",
+                    "ENABLE_ROOTS",
+                    "-e",
+                    "ALLOW_WRITE",
+                    "-v",
+                    "./.temp/rust-mcp-filesystem:/local-directory",
+                    "mcp/rust-mcp-filesystem",
+                    "/local-directory"
+                ],
+                "env": {
+                    "ENABLE_ROOTS": "false",
+                    "ALLOW_WRITE": "false"
+                }
+            },
+            "minecraft-wiki": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "mcp/minecraft-wiki"
+                ]
+            },
+            "paper-search": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "mcp/paper-search"
+                ]
+            },
+            "SQLite": {
+                "command": "docker",
+                "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-v",
+                    "./.temp/sqlite:/local-directory",
+                    "mcp/sqlite",
+                    "--db-path",
+                    "/mcp/db.sqlite"
+                ]
+            },
+            "danbooru-tags": {
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "@smithery/cli@latest",
+                    "run",
+                    "@gamzadongza/danbooru-tags-mcp"
                 ]
             }
         }

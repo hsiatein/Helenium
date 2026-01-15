@@ -41,3 +41,6 @@ mod docker_service_message;
 pub use docker_service_message::*;
 mod process_service_message;
 pub use process_service_message::*;
+
+mod tools_service_message;
+pub use tools_service_message::*;

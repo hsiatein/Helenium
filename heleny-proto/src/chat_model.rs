@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use anyhow::Context;
 use anyhow::Result;
 use async_openai::Client;
@@ -8,6 +10,7 @@ use async_openai::types::chat::CreateChatCompletionRequestArgs;
 use async_openai::types::chat::ResponseFormat;
 use async_openai::types::chat::ResponseFormatJsonSchema;
 use async_trait::async_trait;
+use tokio::time::timeout;
 
 use crate::ApiConfig;
 use crate::RequiredTools;
@@ -23,10 +26,11 @@ pub struct PlannerModel {
     model: String,
     client: Client<OpenAIConfig>,
     schema: &'static str,
+    timeout: u64,
 }
 
 impl PlannerModel {
-    pub fn new(preset: String, api_config: ApiConfig) -> Self {
+    pub fn new(preset: String, api_config: ApiConfig, timeout: u64) -> Self {
         let config = OpenAIConfig::new()
             .with_api_base(api_config.base_url)
             .with_api_key(api_config.api_key);
@@ -35,6 +39,7 @@ impl PlannerModel {
             model: api_config.model,
             client: Client::with_config(config),
             schema: PLANNER_SCHEMA,
+            timeout,
         }
     }
 
@@ -57,10 +62,11 @@ pub struct ExecutorModel {
     client: Client<OpenAIConfig>,
     schema: &'static str,
     memory: Vec<ChatCompletionRequestMessage>,
+    timeout: u64,
 }
 
 impl ExecutorModel {
-    pub fn new(preset: String, api_config: ApiConfig) -> Self {
+    pub fn new(preset: String, api_config: ApiConfig, timeout: u64) -> Self {
         let config = OpenAIConfig::new()
             .with_api_base(api_config.base_url)
             .with_api_key(api_config.api_key);
@@ -70,6 +76,7 @@ impl ExecutorModel {
             client: Client::with_config(config),
             schema: EXECUTOR_SCHEMA,
             memory: Vec::new(),
+            timeout,
         }
     }
 
@@ -114,6 +121,7 @@ pub trait ChatModel {
     fn client(&self) -> &Client<OpenAIConfig>;
     fn model(&self) -> String;
     fn preset(&self) -> String;
+    fn timeout_secs(&self) -> u64;
     async fn _chat(&self, messages: Vec<ChatCompletionRequestMessage>) -> Result<String> {
         let preset = ChatCompletionRequestSystemMessageArgs::default()
             .content(self.preset().clone())
@@ -135,11 +143,13 @@ pub trait ChatModel {
             })
             .build()
             .context("构造请求失败")?;
-        let response = self
+        
+        let response = timeout(Duration::from_secs(self.timeout_secs()), self
             .client()
             .chat()
-            .create(request)
+            .create(request))
             .await
+            .context("获取回复超时")?
             .context("获取回复失败")?;
         let content = response
             .choices

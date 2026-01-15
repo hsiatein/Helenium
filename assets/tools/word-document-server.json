@@ -1,0 +1,1870 @@
+{
+    "name": "word-document-server",
+    "description": "create_document, copy_document, get_document_info, get_document_text, get_document_outline, list_available_documents, get_document_xml, insert_header_near_text, insert_line_or_paragraph_near_text, insert_numbered_list_near_text, add_paragraph, add_heading, add_picture, add_table, add_page_break, delete_paragraph, search_and_replace, create_custom_style, format_text, format_table, set_table_cell_shading, apply_table_alternating_rows, highlight_table_header, merge_table_cells, merge_table_cells_horizontal, merge_table_cells_vertical, set_table_cell_alignment, set_table_alignment_all, protect_document, unprotect_document, add_footnote_to_document, add_footnote_after_text, add_footnote_before_text, add_footnote_enhanced, add_endnote_to_document, customize_footnote_style, delete_footnote_from_document, add_footnote_robust, validate_document_footnotes, delete_footnote_robust, get_paragraph_text_from_document, find_text_in_document, convert_to_pdf, replace_paragraph_block_below_header, replace_block_between_manual_anchors, get_all_comments, get_comments_by_author, get_comments_for_paragraph, set_table_column_width, set_table_column_widths, set_table_width, auto_fit_table_columns, format_table_cell_text, set_table_cell_padding.",
+    "commands": [
+        {
+            "name": "create_document",
+            "description": "Create a new Word document with optional metadata.",
+            "args": [
+                {
+                    "name": "title",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "author",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "copy_document",
+            "description": "Create a copy of a Word document.",
+            "args": [
+                {
+                    "name": "source_filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "destination_filename",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_document_info",
+            "description": "Get information about a Word document.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_document_text",
+            "description": "Extract all text from a Word document.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_document_outline",
+            "description": "Get the structure of a Word document.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "list_available_documents",
+            "description": "List all .docx files in the specified directory.",
+            "args": [
+                {
+                    "name": "directory",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "."
+                }
+            ]
+        },
+        {
+            "name": "get_document_xml",
+            "description": "Get the raw XML structure of a Word document.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "insert_header_near_text",
+            "description": "Insert a header (with specified style) before or after the target paragraph. Specify by text or paragraph index. Args: filename (str), target_text (str, optional), header_title (str), position ('before' or 'after'), header_style (str, default 'Heading 1'), target_paragraph_index (int, optional).",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "header_title",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "target_text",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "target_paragraph_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "header_style",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "Heading 1"
+                },
+                {
+                    "name": "position",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "after"
+                }
+            ]
+        },
+        {
+            "name": "insert_line_or_paragraph_near_text",
+            "description": "Insert a new line or paragraph (with specified or matched style) before or after the target paragraph. Specify by text or paragraph index. Args: filename (str), target_text (str, optional), line_text (str), position ('before' or 'after'), line_style (str, optional), target_paragraph_index (int, optional).",
+            "args": [
+                {
+                    "name": "target_paragraph_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "target_text",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "line_text",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "position",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "after"
+                },
+                {
+                    "name": "line_style",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "insert_numbered_list_near_text",
+            "description": "Insert a bulleted or numbered list before or after the target paragraph. Specify by text or paragraph index. Args: filename (str), target_text (str, optional), list_items (list of str), position ('before' or 'after'), target_paragraph_index (int, optional), bullet_type ('bullet' for bullets or 'number' for numbered lists, default: 'bullet').",
+            "args": [
+                {
+                    "name": "list_items",
+                    "description": ", 额外信息: items: {\"type\":\"string\"}",
+                    "type": "array",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "position",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "after"
+                },
+                {
+                    "name": "bullet_type",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "bullet"
+                },
+                {
+                    "name": "target_paragraph_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "target_text",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_paragraph",
+            "description": "Add a paragraph to a Word document with optional formatting.\n\nArgs:\n    filename: Path to Word document\n    text: Paragraph text content\n    style: Optional paragraph style name\n    font_name: Font family (e.g., 'Helvetica', 'Times New Roman')\n    font_size: Font size in points (e.g., 14, 36)\n    bold: Make text bold\n    italic: Make text italic\n    color: Text color as hex RGB (e.g., '000000')",
+            "args": [
+                {
+                    "name": "font_size",
+                    "description": "",
+                    "type": "integer",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "style",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "italic",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "bold",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "color",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "font_name",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "text",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_heading",
+            "description": "Add a heading to a Word document with optional formatting.\n\nArgs:\n    filename: Path to Word document\n    text: Heading text\n    level: Heading level (1-9)\n    font_name: Font family (e.g., 'Helvetica')\n    font_size: Font size in points (e.g., 14)\n    bold: Make heading bold\n    italic: Make heading italic\n    border_bottom: Add bottom border (for section headers)",
+            "args": [
+                {
+                    "name": "border_bottom",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": false
+                },
+                {
+                    "name": "italic",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "level",
+                    "description": "",
+                    "type": "integer",
+                    "required": false,
+                    "default": 1
+                },
+                {
+                    "name": "text",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "font_size",
+                    "description": "",
+                    "type": "integer",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "font_name",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "bold",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_picture",
+            "description": "Add an image to a Word document.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "image_path",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "width",
+                    "description": "",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_table",
+            "description": "Add a table to a Word document.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "data",
+                    "description": ", 额外信息: items: {\"items\":{\"type\":\"string\"},\"type\":\"array\"}",
+                    "type": "array",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "cols",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "rows",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_page_break",
+            "description": "Add a page break to the document.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "delete_paragraph",
+            "description": "Delete a paragraph from a document.",
+            "args": [
+                {
+                    "name": "paragraph_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "search_and_replace",
+            "description": "Search for text and replace all occurrences.",
+            "args": [
+                {
+                    "name": "find_text",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "replace_text",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "create_custom_style",
+            "description": "Create a custom style in the document.",
+            "args": [
+                {
+                    "name": "base_style",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "font_name",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "font_size",
+                    "description": "",
+                    "type": "integer",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "italic",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "style_name",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "bold",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "color",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "format_text",
+            "description": "Format a specific range of text within a paragraph.",
+            "args": [
+                {
+                    "name": "font_size",
+                    "description": "",
+                    "type": "integer",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "bold",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "italic",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "color",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "end_pos",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "paragraph_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "start_pos",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "font_name",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "underline",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "format_table",
+            "description": "Format a table with borders, shading, and structure.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "has_header_row",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "shading",
+                    "description": ", 额外信息: items: {\"type\":\"string\"}",
+                    "type": "array",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "border_style",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "set_table_cell_shading",
+            "description": "Apply shading/filling to a specific table cell.",
+            "args": [
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "row_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "col_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "fill_color",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "pattern",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "clear"
+                }
+            ]
+        },
+        {
+            "name": "apply_table_alternating_rows",
+            "description": "Apply alternating row colors to a table for better readability.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "color1",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "FFFFFF"
+                },
+                {
+                    "name": "color2",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "F2F2F2"
+                },
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "highlight_table_header",
+            "description": "Apply special highlighting to table header row.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "header_color",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "4472C4"
+                },
+                {
+                    "name": "text_color",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "FFFFFF"
+                },
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "merge_table_cells",
+            "description": "Merge cells in a rectangular area of a table.",
+            "args": [
+                {
+                    "name": "start_col",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "start_row",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "end_col",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "end_row",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "merge_table_cells_horizontal",
+            "description": "Merge cells horizontally in a single row.",
+            "args": [
+                {
+                    "name": "start_col",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "row_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "end_col",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "merge_table_cells_vertical",
+            "description": "Merge cells vertically in a single column.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "col_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "end_row",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "start_row",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "set_table_cell_alignment",
+            "description": "Set text alignment for a specific table cell.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "horizontal",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "left"
+                },
+                {
+                    "name": "row_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "vertical",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "top"
+                },
+                {
+                    "name": "col_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "set_table_alignment_all",
+            "description": "Set text alignment for all cells in a table.",
+            "args": [
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "vertical",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "top"
+                },
+                {
+                    "name": "horizontal",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "left"
+                }
+            ]
+        },
+        {
+            "name": "protect_document",
+            "description": "Add password protection to a Word document.",
+            "args": [
+                {
+                    "name": "password",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "unprotect_document",
+            "description": "Remove password protection from a Word document.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "password",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_footnote_to_document",
+            "description": "Add a footnote to a specific paragraph in a Word document.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "footnote_text",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "paragraph_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_footnote_after_text",
+            "description": "Add a footnote after specific text with proper superscript formatting.\nThis enhanced function ensures footnotes display correctly as superscript.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "footnote_text",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "output_filename",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "search_text",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_footnote_before_text",
+            "description": "Add a footnote before specific text with proper superscript formatting.\nThis enhanced function ensures footnotes display correctly as superscript.",
+            "args": [
+                {
+                    "name": "search_text",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "footnote_text",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "output_filename",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_footnote_enhanced",
+            "description": "Enhanced footnote addition with guaranteed superscript formatting.\nAdds footnote at the end of a specific paragraph with proper style handling.",
+            "args": [
+                {
+                    "name": "paragraph_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "footnote_text",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "output_filename",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_endnote_to_document",
+            "description": "Add an endnote to a specific paragraph in a Word document.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "endnote_text",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "paragraph_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "customize_footnote_style",
+            "description": "Customize footnote numbering and formatting in a Word document.",
+            "args": [
+                {
+                    "name": "start_number",
+                    "description": "",
+                    "type": "integer",
+                    "required": false,
+                    "default": 1
+                },
+                {
+                    "name": "numbering_format",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "1, 2, 3"
+                },
+                {
+                    "name": "font_size",
+                    "description": "",
+                    "type": "integer",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "font_name",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "delete_footnote_from_document",
+            "description": "Delete a footnote from a Word document.\nIdentify the footnote either by ID (1, 2, 3, etc.) or by searching for text near it.",
+            "args": [
+                {
+                    "name": "output_filename",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "footnote_id",
+                    "description": "",
+                    "type": "integer",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "search_text",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_footnote_robust",
+            "description": "Add footnote with robust validation and Word compliance.\nThis is the production-ready version with comprehensive error handling.",
+            "args": [
+                {
+                    "name": "footnote_text",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                {
+                    "name": "auto_repair",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": false
+                },
+                {
+                    "name": "validate_location",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "search_text",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "paragraph_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "validate_document_footnotes",
+            "description": "Validate all footnotes in document for coherence and compliance.\nReturns detailed report on ID conflicts, orphaned content, missing styles, etc.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "delete_footnote_robust",
+            "description": "Delete footnote with comprehensive cleanup and orphan removal.\nEnsures complete removal from document.xml, footnotes.xml, and relationships.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "footnote_id",
+                    "description": "",
+                    "type": "integer",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "search_text",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "clean_orphans",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                }
+            ]
+        },
+        {
+            "name": "get_paragraph_text_from_document",
+            "description": "Get text from a specific paragraph in a Word document.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "paragraph_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "find_text_in_document",
+            "description": "Find occurrences of specific text in a Word document.",
+            "args": [
+                {
+                    "name": "match_case",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "whole_word",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": false
+                },
+                {
+                    "name": "text_to_find",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "convert_to_pdf",
+            "description": "Convert a Word document to PDF format.",
+            "args": [
+                {
+                    "name": "output_filename",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "replace_paragraph_block_below_header",
+            "description": "Reemplaza el bloque de párrafos debajo de un encabezado, evitando modificar TOC.",
+            "args": [
+                {
+                    "name": "detect_block_end_fn",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "header_text",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "new_paragraphs",
+                    "description": ", 额外信息: items: {\"type\":\"string\"}",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "replace_block_between_manual_anchors",
+            "description": "Replace all content between start_anchor_text and end_anchor_text (or next logical header if not provided).",
+            "args": [
+                {
+                    "name": "new_paragraph_style",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "end_anchor_text",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "new_paragraphs",
+                    "description": ", 额外信息: items: {\"type\":\"string\"}",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "start_anchor_text",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "match_fn",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_all_comments",
+            "description": "Extract all comments from a Word document.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_comments_by_author",
+            "description": "Extract comments from a specific author in a Word document.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "author",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_comments_for_paragraph",
+            "description": "Extract comments for a specific paragraph in a Word document.",
+            "args": [
+                {
+                    "name": "paragraph_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "set_table_column_width",
+            "description": "Set the width of a specific table column.",
+            "args": [
+                {
+                    "name": "col_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "width",
+                    "description": "",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "width_type",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "points"
+                }
+            ]
+        },
+        {
+            "name": "set_table_column_widths",
+            "description": "Set the widths of multiple table columns.",
+            "args": [
+                {
+                    "name": "widths",
+                    "description": ", 额外信息: items: {\"type\":\"number\"}",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "width_type",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "points"
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "set_table_width",
+            "description": "Set the overall width of a table.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "width",
+                    "description": "",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "width_type",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "points"
+                }
+            ]
+        },
+        {
+            "name": "auto_fit_table_columns",
+            "description": "Set table columns to auto-fit based on content.",
+            "args": [
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "format_table_cell_text",
+            "description": "Format text within a specific table cell.",
+            "args": [
+                {
+                    "name": "text_content",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "row_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "underline",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "color",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "col_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "bold",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "italic",
+                    "description": "",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "font_name",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "font_size",
+                    "description": "",
+                    "type": "integer",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "set_table_cell_padding",
+            "description": "Set padding/margins for a specific table cell.",
+            "args": [
+                {
+                    "name": "table_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "bottom",
+                    "description": "",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filename",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "row_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "unit",
+                    "description": "",
+                    "type": "string",
+                    "required": false,
+                    "default": "points"
+                },
+                {
+                    "name": "col_index",
+                    "description": "",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "right",
+                    "description": "",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "top",
+                    "description": "",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "left",
+                    "description": "",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        }
+    ]
+}

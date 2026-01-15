@@ -119,6 +119,7 @@ export component AppWindow inherits Window {
     callback cancel_task(string);
     callback cancel_schedule(string);
     callback tools_refresh();
+    callback enable_tool(string, bool);
     callback toggle_task_logs(string,bool);
     public function scroll_to_bottom() {
         chat_view.scroll_to_bottom()
@@ -282,6 +283,7 @@ export component AppWindow inherits Window {
                 height: 100%;
                 tools: root.tool_abstracts;
                 refresh => { root.tools_refresh(); }
+                enable_tool(name, enable) => { root.enable_tool(name, enable); }
             }
         }
         

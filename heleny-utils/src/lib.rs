@@ -13,14 +13,16 @@ pub fn init_tracing(log_dir: PathBuf) -> tracing_appender::non_blocking::WorkerG
     // 2. 配置控制台打印 (stdout)
     let formatting_layer = fmt::layer()
         .with_ansi(true) // 开启彩色输出
-        .with_thread_ids(true); // 打印线程 ID，方便排查死锁
+        .with_thread_ids(true) // 打印线程 ID，方便排查死锁
+        .with_line_number(true);
 
     // 3. 配置滚动文件记录 (每日生成新文件)
     let file_appender = tracing_appender::rolling::daily(log_dir, "helenium.log");
     let (non_blocking_appender, guard) = tracing_appender::non_blocking(file_appender);
     let file_layer = fmt::layer()
         .with_writer(non_blocking_appender)
-        .with_ansi(false); // 文件日志不需要彩色字符
+        .with_ansi(false) // 文件日志不需要彩色字符
+        .with_line_number(true);
 
     // 4. 将所有层组合并注册到全局
     tracing_subscriber::registry()

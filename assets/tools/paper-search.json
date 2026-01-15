@@ -1,0 +1,480 @@
+{
+    "name": "paper-search",
+    "description": "Searching and downloading academic papers from multiple sources like arXiv, PubMed, bioRxiv, etc.",
+    "commands": [
+        {
+            "name": "search_arxiv",
+            "description": "Search academic papers from arXiv.\n\n    Args:\n        query: Search query string (e.g., 'machine learning').\n        max_results: Maximum number of papers to return (default: 10).\n    Returns:\n        List of paper metadata in dictionary format.\n    ",
+            "args": [
+                {
+                    "name": "query",
+                    "description": ", 额外信息: title: \"Query\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "max_results",
+                    "description": ", 额外信息: title: \"Max Results\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 10
+                }
+            ]
+        },
+        {
+            "name": "search_pubmed",
+            "description": "Search academic papers from PubMed.\n\n    Args:\n        query: Search query string (e.g., 'machine learning').\n        max_results: Maximum number of papers to return (default: 10).\n    Returns:\n        List of paper metadata in dictionary format.\n    ",
+            "args": [
+                {
+                    "name": "query",
+                    "description": ", 额外信息: title: \"Query\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "max_results",
+                    "description": ", 额外信息: title: \"Max Results\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 10
+                }
+            ]
+        },
+        {
+            "name": "search_biorxiv",
+            "description": "Search academic papers from bioRxiv.\n\n    Args:\n        query: Search query string (e.g., 'machine learning').\n        max_results: Maximum number of papers to return (default: 10).\n    Returns:\n        List of paper metadata in dictionary format.\n    ",
+            "args": [
+                {
+                    "name": "max_results",
+                    "description": ", 额外信息: title: \"Max Results\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 10
+                },
+                {
+                    "name": "query",
+                    "description": ", 额外信息: title: \"Query\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "search_medrxiv",
+            "description": "Search academic papers from medRxiv.\n\n    Args:\n        query: Search query string (e.g., 'machine learning').\n        max_results: Maximum number of papers to return (default: 10).\n    Returns:\n        List of paper metadata in dictionary format.\n    ",
+            "args": [
+                {
+                    "name": "max_results",
+                    "description": ", 额外信息: title: \"Max Results\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 10
+                },
+                {
+                    "name": "query",
+                    "description": ", 额外信息: title: \"Query\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "search_google_scholar",
+            "description": "Search academic papers from Google Scholar.\n\n    Args:\n        query: Search query string (e.g., 'machine learning').\n        max_results: Maximum number of papers to return (default: 10).\n    Returns:\n        List of paper metadata in dictionary format.\n    ",
+            "args": [
+                {
+                    "name": "query",
+                    "description": ", 额外信息: title: \"Query\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "max_results",
+                    "description": ", 额外信息: title: \"Max Results\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 10
+                }
+            ]
+        },
+        {
+            "name": "search_iacr",
+            "description": "Search academic papers from IACR ePrint Archive.\n\n    Args:\n        query: Search query string (e.g., 'cryptography', 'secret sharing').\n        max_results: Maximum number of papers to return (default: 10).\n        fetch_details: Whether to fetch detailed information for each paper (default: True).\n    Returns:\n        List of paper metadata in dictionary format.\n    ",
+            "args": [
+                {
+                    "name": "max_results",
+                    "description": ", 额外信息: title: \"Max Results\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 10
+                },
+                {
+                    "name": "query",
+                    "description": ", 额外信息: title: \"Query\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "fetch_details",
+                    "description": ", 额外信息: title: \"Fetch Details\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                }
+            ]
+        },
+        {
+            "name": "download_arxiv",
+            "description": "Download PDF of an arXiv paper.\n\n    Args:\n        paper_id: arXiv paper ID (e.g., '2106.12345').\n        save_path: Directory to save the PDF (default: './downloads').\n    Returns:\n        Path to the downloaded PDF file.\n    ",
+            "args": [
+                {
+                    "name": "save_path",
+                    "description": ", 额外信息: title: \"Save Path\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "./downloads"
+                },
+                {
+                    "name": "paper_id",
+                    "description": ", 额外信息: title: \"Paper Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "download_pubmed",
+            "description": "Attempt to download PDF of a PubMed paper.\n\n    Args:\n        paper_id: PubMed ID (PMID).\n        save_path: Directory to save the PDF (default: './downloads').\n    Returns:\n        str: Message indicating that direct PDF download is not supported.\n    ",
+            "args": [
+                {
+                    "name": "paper_id",
+                    "description": ", 额外信息: title: \"Paper Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "save_path",
+                    "description": ", 额外信息: title: \"Save Path\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "./downloads"
+                }
+            ]
+        },
+        {
+            "name": "download_biorxiv",
+            "description": "Download PDF of a bioRxiv paper.\n\n    Args:\n        paper_id: bioRxiv DOI.\n        save_path: Directory to save the PDF (default: './downloads').\n    Returns:\n        Path to the downloaded PDF file.\n    ",
+            "args": [
+                {
+                    "name": "save_path",
+                    "description": ", 额外信息: title: \"Save Path\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "./downloads"
+                },
+                {
+                    "name": "paper_id",
+                    "description": ", 额外信息: title: \"Paper Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "download_medrxiv",
+            "description": "Download PDF of a medRxiv paper.\n\n    Args:\n        paper_id: medRxiv DOI.\n        save_path: Directory to save the PDF (default: './downloads').\n    Returns:\n        Path to the downloaded PDF file.\n    ",
+            "args": [
+                {
+                    "name": "paper_id",
+                    "description": ", 额外信息: title: \"Paper Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "save_path",
+                    "description": ", 额外信息: title: \"Save Path\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "./downloads"
+                }
+            ]
+        },
+        {
+            "name": "download_iacr",
+            "description": "Download PDF of an IACR ePrint paper.\n\n    Args:\n        paper_id: IACR paper ID (e.g., '2009/101').\n        save_path: Directory to save the PDF (default: './downloads').\n    Returns:\n        Path to the downloaded PDF file.\n    ",
+            "args": [
+                {
+                    "name": "save_path",
+                    "description": ", 额外信息: title: \"Save Path\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "./downloads"
+                },
+                {
+                    "name": "paper_id",
+                    "description": ", 额外信息: title: \"Paper Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "read_arxiv_paper",
+            "description": "Read and extract text content from an arXiv paper PDF.\n\n    Args:\n        paper_id: arXiv paper ID (e.g., '2106.12345').\n        save_path: Directory where the PDF is/will be saved (default: './downloads').\n    Returns:\n        str: The extracted text content of the paper.\n    ",
+            "args": [
+                {
+                    "name": "save_path",
+                    "description": ", 额外信息: title: \"Save Path\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "./downloads"
+                },
+                {
+                    "name": "paper_id",
+                    "description": ", 额外信息: title: \"Paper Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "read_pubmed_paper",
+            "description": "Read and extract text content from a PubMed paper.\n\n    Args:\n        paper_id: PubMed ID (PMID).\n        save_path: Directory where the PDF would be saved (unused).\n    Returns:\n        str: Message indicating that direct paper reading is not supported.\n    ",
+            "args": [
+                {
+                    "name": "paper_id",
+                    "description": ", 额外信息: title: \"Paper Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "save_path",
+                    "description": ", 额外信息: title: \"Save Path\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "./downloads"
+                }
+            ]
+        },
+        {
+            "name": "read_biorxiv_paper",
+            "description": "Read and extract text content from a bioRxiv paper PDF.\n\n    Args:\n        paper_id: bioRxiv DOI.\n        save_path: Directory where the PDF is/will be saved (default: './downloads').\n    Returns:\n        str: The extracted text content of the paper.\n    ",
+            "args": [
+                {
+                    "name": "save_path",
+                    "description": ", 额外信息: title: \"Save Path\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "./downloads"
+                },
+                {
+                    "name": "paper_id",
+                    "description": ", 额外信息: title: \"Paper Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "read_medrxiv_paper",
+            "description": "Read and extract text content from a medRxiv paper PDF.\n\n    Args:\n        paper_id: medRxiv DOI.\n        save_path: Directory where the PDF is/will be saved (default: './downloads').\n    Returns:\n        str: The extracted text content of the paper.\n    ",
+            "args": [
+                {
+                    "name": "save_path",
+                    "description": ", 额外信息: title: \"Save Path\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "./downloads"
+                },
+                {
+                    "name": "paper_id",
+                    "description": ", 额外信息: title: \"Paper Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "read_iacr_paper",
+            "description": "Read and extract text content from an IACR ePrint paper PDF.\n\n    Args:\n        paper_id: IACR paper ID (e.g., '2009/101').\n        save_path: Directory where the PDF is/will be saved (default: './downloads').\n    Returns:\n        str: The extracted text content of the paper.\n    ",
+            "args": [
+                {
+                    "name": "paper_id",
+                    "description": ", 额外信息: title: \"Paper Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "save_path",
+                    "description": ", 额外信息: title: \"Save Path\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "./downloads"
+                }
+            ]
+        },
+        {
+            "name": "search_semantic",
+            "description": "Search academic papers from Semantic Scholar.\n\n    Args:\n        query: Search query string (e.g., 'machine learning').\n        year: Optional year filter (e.g., '2019', '2016-2020', '2010-', '-2015').\n        max_results: Maximum number of papers to return (default: 10).\n    Returns:\n        List of paper metadata in dictionary format.\n    ",
+            "args": [
+                {
+                    "name": "year",
+                    "description": ", 额外信息: title: \"Year\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "max_results",
+                    "description": ", 额外信息: title: \"Max Results\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 10
+                },
+                {
+                    "name": "query",
+                    "description": ", 额外信息: title: \"Query\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "download_semantic",
+            "description": "Download PDF of a Semantic Scholar paper.    \n\n    Args:\n        paper_id: Semantic Scholar paper ID, Paper identifier in one of the following formats:\n            - Semantic Scholar ID (e.g., \"649def34f8be52c8b66281af98ae884c09aef38b\")\n            - DOI:<doi> (e.g., \"DOI:10.18653/v1/N18-3011\")\n            - ARXIV:<id> (e.g., \"ARXIV:2106.15928\")\n            - MAG:<id> (e.g., \"MAG:112218234\")\n            - ACL:<id> (e.g., \"ACL:W12-3903\")\n            - PMID:<id> (e.g., \"PMID:19872477\")\n            - PMCID:<id> (e.g., \"PMCID:2323736\")\n            - URL:<url> (e.g., \"URL:https://arxiv.org/abs/2106.15928v1\")\n        save_path: Directory to save the PDF (default: './downloads').\n    Returns:\n        Path to the downloaded PDF file.\n    ",
+            "args": [
+                {
+                    "name": "paper_id",
+                    "description": ", 额外信息: title: \"Paper Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "save_path",
+                    "description": ", 额外信息: title: \"Save Path\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "./downloads"
+                }
+            ]
+        },
+        {
+            "name": "read_semantic_paper",
+            "description": "Read and extract text content from a Semantic Scholar paper. \n\n    Args:\n        paper_id: Semantic Scholar paper ID, Paper identifier in one of the following formats:\n            - Semantic Scholar ID (e.g., \"649def34f8be52c8b66281af98ae884c09aef38b\")\n            - DOI:<doi> (e.g., \"DOI:10.18653/v1/N18-3011\")\n            - ARXIV:<id> (e.g., \"ARXIV:2106.15928\")\n            - MAG:<id> (e.g., \"MAG:112218234\")\n            - ACL:<id> (e.g., \"ACL:W12-3903\")\n            - PMID:<id> (e.g., \"PMID:19872477\")\n            - PMCID:<id> (e.g., \"PMCID:2323736\")\n            - URL:<url> (e.g., \"URL:https://arxiv.org/abs/2106.15928v1\")\n        save_path: Directory where the PDF is/will be saved (default: './downloads').\n    Returns:\n        str: The extracted text content of the paper.\n    ",
+            "args": [
+                {
+                    "name": "save_path",
+                    "description": ", 额外信息: title: \"Save Path\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "./downloads"
+                },
+                {
+                    "name": "paper_id",
+                    "description": ", 额外信息: title: \"Paper Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "search_crossref",
+            "description": "Search academic papers from CrossRef database.\n    \n    CrossRef is a scholarly infrastructure organization that provides \n    persistent identifiers (DOIs) for scholarly content and metadata.\n    It's one of the largest citation databases covering millions of \n    academic papers, journals, books, and other scholarly content.\n\n    Args:\n        query: Search query string (e.g., 'machine learning', 'climate change').\n        max_results: Maximum number of papers to return (default: 10, max: 1000).\n        **kwargs: Additional search parameters:\n            - filter: CrossRef filter string (e.g., 'has-full-text:true,from-pub-date:2020')\n            - sort: Sort field ('relevance', 'published', 'updated', 'deposited', etc.)\n            - order: Sort order ('asc' or 'desc')\n    Returns:\n        List of paper metadata in dictionary format.\n        \n    Examples:\n        # Basic search\n        search_crossref(\"deep learning\", 20)\n        \n        # Search with filters\n        search_crossref(\"climate change\", 10, filter=\"from-pub-date:2020,has-full-text:true\")\n        \n        # Search sorted by publication date\n        search_crossref(\"neural networks\", 15, sort=\"published\", order=\"desc\")\n    ",
+            "args": [
+                {
+                    "name": "kwargs",
+                    "description": ", 额外信息: title: \"kwargs\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "max_results",
+                    "description": ", 额外信息: title: \"Max Results\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 10
+                },
+                {
+                    "name": "query",
+                    "description": ", 额外信息: title: \"Query\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_crossref_paper_by_doi",
+            "description": "Get a specific paper from CrossRef by its DOI.\n\n    Args:\n        doi: Digital Object Identifier (e.g., '10.1038/nature12373').\n    Returns:\n        Paper metadata in dictionary format, or empty dict if not found.\n        \n    Example:\n        get_crossref_paper_by_doi(\"10.1038/nature12373\")\n    ",
+            "args": [
+                {
+                    "name": "doi",
+                    "description": ", 额外信息: title: \"Doi\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "download_crossref",
+            "description": "Attempt to download PDF of a CrossRef paper.\n\n    Args:\n        paper_id: CrossRef DOI (e.g., '10.1038/nature12373').\n        save_path: Directory to save the PDF (default: './downloads').\n    Returns:\n        str: Message indicating that direct PDF download is not supported.\n        \n    Note:\n        CrossRef is a citation database and doesn't provide direct PDF downloads.\n        Use the DOI to access the paper through the publisher's website.\n    ",
+            "args": [
+                {
+                    "name": "paper_id",
+                    "description": ", 额外信息: title: \"Paper Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "save_path",
+                    "description": ", 额外信息: title: \"Save Path\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "./downloads"
+                }
+            ]
+        },
+        {
+            "name": "read_crossref_paper",
+            "description": "Attempt to read and extract text content from a CrossRef paper.\n\n    Args:\n        paper_id: CrossRef DOI (e.g., '10.1038/nature12373').\n        save_path: Directory where the PDF is/will be saved (default: './downloads').\n    Returns:\n        str: Message indicating that direct paper reading is not supported.\n        \n    Note:\n        CrossRef is a citation database and doesn't provide direct paper content.\n        Use the DOI to access the paper through the publisher's website.\n    ",
+            "args": [
+                {
+                    "name": "save_path",
+                    "description": ", 额外信息: title: \"Save Path\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "./downloads"
+                },
+                {
+                    "name": "paper_id",
+                    "description": ", 额外信息: title: \"Paper Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        }
+    ]
+}

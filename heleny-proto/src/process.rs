@@ -25,8 +25,18 @@ pub struct HelenyProcessCommand {
 
 impl HelenyProcessCommand {
     pub async fn spawn(&self) -> Result<HelenyProcess> {
-        let mut _cmd = process::Command::new(&self.command);
-        let mut cmd = &mut _cmd;
+        let mut _cmd;
+        let mut cmd;
+        if ["npx"].contains(&self.command.as_str()) && cfg!(target_os = "windows") {
+            _cmd = process::Command::new("cmd");
+            cmd = &mut _cmd;
+            cmd = cmd.arg("/c");
+            cmd = cmd.arg(&self.command);
+        }
+        else {
+            _cmd = process::Command::new(&self.command);
+            cmd = &mut _cmd;
+        }
         for arg in &self.args {
             cmd = cmd.arg(arg);
         }

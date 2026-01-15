@@ -25,6 +25,7 @@ impl FrontendHandler {
                         description,
                         commands,
                         available,
+                        enable,
                     } = abs;
                     let commands: Vec<CommandItem> = commands
                         .into_iter()
@@ -38,6 +39,7 @@ impl FrontendHandler {
                             abs.available = available;
                             abs.commands = ModelRc::new(VecModel::from(commands));
                             abs.description = SharedString::from(description);
+                            abs.enable = enable;
                         }
                         None => {
                             let item = ToolAbstractItem {
@@ -47,6 +49,7 @@ impl FrontendHandler {
                                 expanded: false,
                                 name: SharedString::from(name.clone()),
                                 desc_expanded: false,
+                                enable: enable,
                             };
                             new_abstracts.insert(name, item);
                         }

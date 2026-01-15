@@ -87,6 +87,9 @@ pub fn chat_model(_args: TokenStream, input: TokenStream) -> TokenStream {
             fn preset(&self) -> String {
                 self.preset.clone()
             }
+            fn timeout_secs(&self) -> u64 {
+                self.timeout
+            }
         }
     };
 

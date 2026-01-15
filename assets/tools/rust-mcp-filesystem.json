@@ -1,0 +1,541 @@
+{
+  "name": "rust-mcp-filesystem",
+  "description": "read_text_file, create_directory, directory_tree, edit_file, get_file_info, list_allowed_directories, list_directory, move_file, read_multiple_text_files, search_files, write_file, zip_files, unzip_file, zip_directory, search_files_content, list_directory_with_sizes, read_media_file, read_multiple_media_files, head_file, tail_file, read_file_lines, find_empty_directories, calculate_directory_size, find_duplicate_files.",
+  "commands": [
+    {
+      "name": "read_text_file",
+      "description": "Read the complete contents of a text file from the file system as text. Handles various text encodings and provides detailed error messages if the file cannot be read. Use this tool when you need to examine the contents of a single file. Only works within allowed directories.",
+      "args": [
+        {
+          "name": "path",
+          "description": "The path of the file to read.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "create_directory",
+      "description": "Create a new directory or ensure a directory exists. Can create multiple nested directories in one operation. If the directory already exists, this operation will succeed silently. Perfect for setting up directory structures for projects or ensuring required paths exist. Only works within allowed directories.",
+      "args": [
+        {
+          "name": "path",
+          "description": "The path where the directory will be created.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "directory_tree",
+      "description": "Get a recursive tree view of files and directories as a JSON structure. Each entry includes 'name', 'type' (file/directory), and 'children' for directories. Files have no children array, while directories always have a children array (which may be empty). If the 'max_depth' parameter is provided, the traversal will be limited to the specified depth. As a result, the returned directory structure may be incomplete or provide a skewed representation of the full directory tree, since deeper-level files and subdirectories beyond the specified depth will be excluded. The output is formatted with 2-space indentation for readability. Only works within allowed directories.",
+      "args": [
+        {
+          "name": "path",
+          "description": "The root path of the directory tree to generate.",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "max_depth",
+          "description": "Limits the depth of directory traversal, 额外信息: nullable: true",
+          "type": "integer",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "edit_file",
+      "description": "Make line-based edits to a text file. Each edit replaces exact line sequences with new content. Returns a git-style diff showing the changes made. Only works within allowed directories.",
+      "args": [
+        {
+          "name": "path",
+          "description": "The path of the file to edit.",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "dryRun",
+          "description": "Preview changes using git-style diff format without applying them., 额外信息: nullable: true",
+          "type": "boolean",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "edits",
+          "description": "The list of edit operations to apply., 额外信息: items: {\"properties\":{\"newText\":{\"description\":\"Text to replace the matched text with.\",\"type\":\"string\"},\"oldText\":{\"description\":\"Text to search for - must match exactly.\",\"type\":\"string\"}},\"required\":[\"oldText\",\"newText\"],\"type\":\"object\"}",
+          "type": "array",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "get_file_info",
+      "description": "Retrieve detailed metadata about a file or directory. Returns comprehensive information including size, creation time, last modified time, permissions, and type. This tool is perfect for understanding file characteristics without reading the actual content. Only works within allowed directories.",
+      "args": [
+        {
+          "name": "path",
+          "description": "The path of the file to get information for.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "list_allowed_directories",
+      "description": "Returns a list of directories that the server has permission to access Subdirectories within these allowed directories are also accessible. Use this to identify which directories and their nested paths are available before attempting to access files.",
+      "args": []
+    },
+    {
+      "name": "list_directory",
+      "description": "Get a detailed listing of all files and directories in a specified path. Results clearly distinguish between files and directories with [FILE] and [DIR] prefixes. This tool is essential for understanding directory structure and finding specific files within a directory. Only works within allowed directories.",
+      "args": [
+        {
+          "name": "path",
+          "description": "The path of the directory to list.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "move_file",
+      "description": "Move or rename files and directories. Can move files between directories and rename them in a single operation. If the destination exists, the operation will fail. Works across different directories and can be used for simple renaming within the same directory. Both source and destination must be within allowed directories.",
+      "args": [
+        {
+          "name": "destination",
+          "description": "The destination path to move the file to.",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "source",
+          "description": "The source path of the file to move.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "read_multiple_text_files",
+      "description": "Read the contents of multiple text files simultaneously as text. This is more efficient than reading files one by one when you need to analyze or compare multiple files. Each file's content is returned with its path as a reference. Failed reads for individual files won't stop the entire operation. Only works within allowed directories.",
+      "args": [
+        {
+          "name": "paths",
+          "description": "The list of file paths to read., 额外信息: items: {\"type\":\"string\"}",
+          "type": "array",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "search_files",
+      "description": "Recursively search for files and directories matching a pattern. Searches through all subdirectories from the starting path. The search is case-insensitive and matches partial names. Returns full paths to all matching items.Optional 'min_bytes' and 'max_bytes' arguments can be used to filter files by size, ensuring that only files within the specified byte range are included in the search. This tool is great for finding files when you don't know their exact location or find files by their size.Only searches within allowed directories.",
+      "args": [
+        {
+          "name": "path",
+          "description": "The directory path to search in.",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "max_bytes",
+          "description": "Maximum file size (in bytes) to include in the search (optional)., 额外信息: nullable: true",
+          "type": "integer",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "excludePatterns",
+          "description": "Optional list of patterns to exclude from the search., 额外信息: items: {\"type\":\"string\"}, nullable: true",
+          "type": "array",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "min_bytes",
+          "description": "Minimum file size (in bytes) to include in the search (optional)., 额外信息: nullable: true",
+          "type": "integer",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "pattern",
+          "description": "Glob pattern used to match target files (e.g., \"*.rs\").",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "write_file",
+      "description": "Create a new file or completely overwrite an existing file with new content. Use with caution as it will overwrite existing files without warning. Handles text content with proper encoding. Only works within allowed directories.",
+      "args": [
+        {
+          "name": "path",
+          "description": "The path of the file to write to.",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "content",
+          "description": "The content to write to the file.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "zip_files",
+      "description": "Creates a ZIP archive by compressing files. It takes a list of files to compress and a target path for the resulting ZIP file. Both the source files and the target ZIP file should reside within allowed directories.",
+      "args": [
+        {
+          "name": "input_files",
+          "description": "The list of files to include in the ZIP archive., 额外信息: items: {\"type\":\"string\"}",
+          "type": "array",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "target_zip_file",
+          "description": "Path to save the resulting ZIP file, including filename and .zip extension",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "unzip_file",
+      "description": "Extracts the contents of a ZIP archive to a specified target directory.\nIt takes a source ZIP file path and a target extraction directory.\nThe tool decompresses all files and directories stored in the ZIP, recreating their structure in the target location.\nBoth the source ZIP file and the target directory should reside within allowed directories.",
+      "args": [
+        {
+          "name": "target_path",
+          "description": "Path to the target directory where the contents of the ZIP file will be extracted.",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "zip_file",
+          "description": "A filesystem path to an existing ZIP file to be extracted.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "zip_directory",
+      "description": "Creates a ZIP archive by compressing a directory , including files and subdirectories matching a specified glob pattern.\nIt takes a path to the folder and a glob pattern to identify files to compress and a target path for the resulting ZIP file.\nBoth the source directory and the target ZIP file should reside within allowed directories.",
+      "args": [
+        {
+          "name": "pattern",
+          "description": "A optional glob pattern to match files and subdirectories to zip, defaults to **/*\", 额外信息: nullable: true",
+          "type": "string",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "target_zip_file",
+          "description": "Path to save the resulting ZIP file, including filename and .zip extension",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "input_directory",
+          "description": "Path to the directory to zip",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "search_files_content",
+      "description": "Searches for text or regex patterns in the content of files matching matching a GLOB pattern.Returns detailed matches with file path, line number, column number and a preview of matched text.By default, it performs a literal text search; if the 'is_regex' parameter is set to true, it performs a regular expression (regex) search instead.Optional 'min_bytes' and 'max_bytes' arguments can be used to filter files by size, ensuring that only files within the specified byte range are included in the search. Ideal for finding specific code, comments, or text when you don’t know their exact location.",
+      "args": [
+        {
+          "name": "min_bytes",
+          "description": "Minimum file size (in bytes) to include in the search (optional)., 额外信息: nullable: true",
+          "type": "integer",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "is_regex",
+          "description": "Whether the query is a regular expression. If false, the query as plain text. (Default : false), 额外信息: nullable: true",
+          "type": "boolean",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "path",
+          "description": "The file or directory path to search in.",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "excludePatterns",
+          "description": "Optional list of patterns to exclude from the search., 额外信息: items: {\"type\":\"string\"}, nullable: true",
+          "type": "array",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "max_bytes",
+          "description": "Maximum file size (in bytes) to include in the search (optional)., 额外信息: nullable: true",
+          "type": "integer",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "query",
+          "description": "Text or regex pattern to find in file contents (e.g., 'TODO' or '^function\\\\s+').",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "pattern",
+          "description": "The file glob pattern to match (e.g., \"*.rs\").",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "list_directory_with_sizes",
+      "description": "Get a detailed listing of all files and directories in a specified path, including sizes. Results clearly distinguish between files and directories with [FILE] and [DIR] prefixes. This tool is useful for understanding directory structure and finding specific files within a directory. Only works within allowed directories.",
+      "args": [
+        {
+          "name": "path",
+          "description": "The path of the directory to list.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "read_media_file",
+      "description": "Reads an image or audio file and returns its Base64-encoded content along with the corresponding MIME type. The max_bytes argument could be used to enforce an upper limit on the size of a file to read if the media file exceeds this limit, the operation will return an error instead of reading the media file. Access is restricted to files within allowed directories only.",
+      "args": [
+        {
+          "name": "max_bytes",
+          "description": "Maximum allowed file size (in bytes) to be read., 额外信息: nullable: true",
+          "type": "integer",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "path",
+          "description": "The path of the file to read.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "read_multiple_media_files",
+      "description": "Reads multiple image or audio files and returns their Base64-encoded contents along with corresponding MIME types. This method is more efficient than reading files individually. The max_bytes argument could be used to enforce an upper limit on the size of a file to read Failed reads for specific files are skipped without interrupting the entire operation. Only works within allowed directories.",
+      "args": [
+        {
+          "name": "paths",
+          "description": "The list of media file paths to read., 额外信息: items: {\"type\":\"string\"}",
+          "type": "array",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "max_bytes",
+          "description": "Maximum allowed file size (in bytes) to be read., 额外信息: nullable: true",
+          "type": "integer",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "head_file",
+      "description": "Reads and returns the first N lines of a text file.This is useful for quickly previewing file contents without loading the entire file into memory.If the file has fewer than N lines, the entire file will be returned.Only works within allowed directories.",
+      "args": [
+        {
+          "name": "lines",
+          "description": "The number of lines to read from the beginning of the file.",
+          "type": "integer",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "path",
+          "description": "The path of the file to get information for.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "tail_file",
+      "description": "Reads and returns the last N lines of a text file.This is useful for quickly previewing file contents without loading the entire file into memory.If the file has fewer than N lines, the entire file will be returned.Only works within allowed directories.",
+      "args": [
+        {
+          "name": "lines",
+          "description": "The number of lines to read from the beginning of the file.",
+          "type": "integer",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "path",
+          "description": "The path of the file to get information for.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "read_file_lines",
+      "description": "Reads lines from a text file starting at a specified line offset (0-based) and continues for the specified number of lines if a limit is provided.This function skips the first 'offset' lines and then reads up to 'limit' lines if specified, or reads until the end of the file otherwise.It's useful for partial reads, pagination, or previewing sections of large text files.Only works within allowed directories.",
+      "args": [
+        {
+          "name": "offset",
+          "description": "Number of lines to skip from the start (0-based).",
+          "type": "integer",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "path",
+          "description": "The path of the file to get information for.",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "limit",
+          "description": "Optional maximum number of lines to read after the offset., 额外信息: nullable: true",
+          "type": "integer",
+          "required": false,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "find_empty_directories",
+      "description": "Recursively finds all empty directories within the given root path.A directory is considered empty if it contains no files in itself or any of its subdirectories.Operating system metadata files `.DS_Store` (macOS) and `Thumbs.db` (Windows) will be ignored.The optional exclude_patterns argument accepts glob-style patterns to exclude specific paths from the search.Only works within allowed directories.",
+      "args": [
+        {
+          "name": "exclude_patterns",
+          "description": "Optional list of glob patterns to exclude from the search. Directories matching these patterns will be ignored., 额外信息: items: {\"type\":\"string\"}, nullable: true",
+          "type": "array",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "output_format",
+          "description": "Specify the output format, accepts either `text` or `json` (default: text)., 额外信息: nullable: true, oneOf: [{\"enum\":[\"text\"]},{\"enum\":[\"json\"]}]",
+          "type": "",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "path",
+          "description": "The path of the file to get information for.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "calculate_directory_size",
+      "description": "Calculates the total size of a directory specified by `root_path`.It recursively searches for files and sums their sizes. The result can be returned in either a `human-readable` format or as `bytes`, depending on the specified `output_format` argument.Only works within allowed directories.",
+      "args": [
+        {
+          "name": "output_format",
+          "description": "Defines the output format, which can be either `human-readable` or `bytes`., 额外信息: nullable: true, oneOf: [{\"enum\":[\"human-readable\"]},{\"enum\":[\"bytes\"]}]",
+          "type": "",
+          "required": false,
+          "default": "human-readable"
+        },
+        {
+          "name": "root_path",
+          "description": "The root directory path to start the size calculation.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "find_duplicate_files",
+      "description": "Find duplicate files within a directory and return list of duplicated files as text or json formatOptional `pattern` argument can be used to narrow down the file search to specific glob pattern.Optional `exclude_patterns` can be used to exclude certain files matching a glob.`min_bytes` and `max_bytes` are optional arguments that can be used to restrict the search to files with sizes within a specified range.The output_format argument specifies the format of the output and accepts either `text` or `json` (default: text).Only works within allowed directories.",
+      "args": [
+        {
+          "name": "output_format",
+          "description": "Specify the output format, accepts either `text` or `json` (default: text)., 额外信息: nullable: true, oneOf: [{\"enum\":[\"text\"]},{\"enum\":[\"json\"]}]",
+          "type": "",
+          "required": false,
+          "default": "text"
+        },
+        {
+          "name": "min_bytes",
+          "description": "Minimum file size (in bytes) to include in the search (default to 1)., 额外信息: nullable: true",
+          "type": "integer",
+          "required": false,
+          "default": "1"
+        },
+        {
+          "name": "exclude_patterns",
+          "description": "Optional list of glob patterns to exclude from the search. File matching these patterns will be ignored., 额外信息: items: {\"type\":\"string\"}, nullable: true",
+          "type": "array",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "max_bytes",
+          "description": "Maximum file size (in bytes) to include in the search (optional)., 额外信息: nullable: true",
+          "type": "integer",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "pattern",
+          "description": "Optional glob pattern can be used to match target files., 额外信息: nullable: true",
+          "type": "string",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "root_path",
+          "description": "The root directory path to start the search.",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    }
+  ]
+}

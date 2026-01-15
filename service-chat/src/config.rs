@@ -14,6 +14,7 @@ pub struct RoleConfig {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ChatConfig {
+    pub timeout_secs:u64,
     pub api: Vec<ApiConfig>,
     pub heleny: RoleConfig,
     pub planner: RoleConfig,

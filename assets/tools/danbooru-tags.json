@@ -1,0 +1,100 @@
+{
+  "name": "danbooru-tags",
+  "description": "在danbooru进行搜索。get_post_tags, get_character_tags, get_wiki_info, get_post_count.",
+  "commands": [
+    {
+      "name": "get_post_tags",
+      "description": "**[REAL-TIME API]** Extract all tags from a specific Danbooru post by ID or URL by querying Danbooru API directly.\n\nUse this when:\n- You want to get ALL tags from a single post in real-time\n- You need tag categories and counts for a specific post\n\nFor analyzing tag statistics across multiple posts, use 'get_character_tags'.",
+      "args": [
+        {
+          "name": "post_id_or_url",
+          "description": "Danbooru post ID (number) or URL (e.g., https://danbooru.donmai.us/posts/2973340)",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "get_character_tags",
+      "description": "**[REAL-TIME API]** Analyze frequently used tags for a character by querying Danbooru API directly in real-time with advanced filtering options.\n\nUse this when:\n- You need the LATEST, most up-to-date tag statistics\n- The character data is NOT yet saved in the database\n- You want quick exploration without saving data\n- You need filtered analysis (clothing only, specific categories, include/exclude tags)\n\nFor analyzing SAVED data, use Turso SQL tools instead.\nFor bulk data collection to save, use 'collect_and_save' from Danbooru Turso Sync.",
+      "args": [
+        {
+          "name": "exclude_tags",
+          "description": "Tags to exclude (e.g., [\"game_cg\", \"comic\"]), 额外信息: items: {\"type\":\"string\"}",
+          "type": "array",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "character_tag",
+          "description": "Character tag to search (e.g., hatsune_miku, crimson_avenger_(elsword))",
+          "type": "string",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "include_tags",
+          "description": "Tags that must be included (e.g., [\"tachi-e\", \"official_art\"]), 额外信息: items: {\"type\":\"string\"}",
+          "type": "array",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "num_posts",
+          "description": "Number of posts to analyze (default: 100, no limit)",
+          "type": "number",
+          "required": false,
+          "default": 100
+        },
+        {
+          "name": "category",
+          "description": "Filter by tag category, 额外信息: enum: [\"general\",\"artist\",\"copyright\",\"character\",\"meta\"]",
+          "type": "string",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "top_n",
+          "description": "Number of top tags to return (default: 50)",
+          "type": "number",
+          "required": false,
+          "default": 50
+        },
+        {
+          "name": "clothing_only",
+          "description": "Return only clothing-related tags",
+          "type": "boolean",
+          "required": false,
+          "default": false
+        }
+      ]
+    },
+    {
+      "name": "get_wiki_info",
+      "description": "**[REAL-TIME API]** Search Danbooru Wiki for tag/character information in real-time.\n\nUse this when:\n- You need information about what a tag means\n- You want to understand tag relationships or aliases\n- You need character background or copyright info",
+      "args": [
+        {
+          "name": "tag_name",
+          "description": "Tag name to search (e.g., hatsune_miku, tachi-e)",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "get_post_count",
+      "description": "**[REAL-TIME API]** Get the total number of posts for a specific tag.\n\nUse this when:\n- You want to know how many posts exist for a character/tag BEFORE collecting data\n- You need to estimate collection time and resources\n- You want to verify data completeness after collection\n\nReturns only the post count. Use danbooru-turso-mcp.collect_and_save for actual data collection.",
+      "args": [
+        {
+          "name": "tag",
+          "description": "Tag to check post count (e.g., scathach_(fate), hatsune_miku)",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    }
+  ]
+}

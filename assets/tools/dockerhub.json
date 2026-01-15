@@ -1,0 +1,418 @@
+{
+    "name": "dockerhub",
+    "description": "操作dockerhub。listRepositoriesByNamespace, createRepository, getRepositoryInfo, updateRepositoryInfo, checkRepository, listRepositoryTags, getRepositoryTag, checkRepositoryTag, listNamespaces, getPersonalNamespace, listAllNamespacesMemberOf, search, dockerHardenedImages.",
+    "commands": [
+        {
+            "name": "listRepositoriesByNamespace",
+            "description": "List paginated repositories by namespace",
+            "args": [
+                {
+                    "name": "page",
+                    "description": "The page number to list repositories from",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "media_types",
+                    "description": "Comma-delimited list of media types. Only repositories containing one or more artifacts with one of these media types will be returned. Default is empty to get all repositories.",
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                {
+                    "name": "namespace",
+                    "description": "The namespace to list repositories from",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "page_size",
+                    "description": "The page size to list repositories from",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "ordering",
+                    "description": "The ordering of the repositories. Use \"-\" to reverse the ordering. For example, \"last_updated\" will order the repositories by last updated in descending order while \"-last_updated\" will order the repositories by last updated in ascending order., 额外信息: enum: [\"last_updated\",\"-last_updated\",\"name\",\"-name\",\"pull_count\",\"-pull_count\"]",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "content_types",
+                    "description": "Comma-delimited list of content types. Only repositories containing one or more artifacts with one of these content types will be returned. Default is empty to get all repositories.",
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            ]
+        },
+        {
+            "name": "createRepository",
+            "description": "Create a new repository in the given namespace. You MUST ask the user for the repository name and if the repository has to be public or private. Can optionally pass a description.\nIMPORTANT: Before calling this tool, you must ensure you have:\n The repository name (name).",
+            "args": [
+                {
+                    "name": "description",
+                    "description": "The description of the repository",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "full_description",
+                    "description": "A detailed description of the repository, 额外信息: maxLength: 25000",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "namespace",
+                    "description": "The namespace of the repository. Required.",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "registry",
+                    "description": "The registry to create the repository in",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "name",
+                    "description": "The name of the repository (required). Must contain a combination of alphanumeric characters and may contain the special characters ., _, or -. Letters must be lowercase.",
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                {
+                    "name": "is_private",
+                    "description": "Whether the repository is private",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "getRepositoryInfo",
+            "description": "Get the details of a repository in the given namespace.",
+            "args": [
+                {
+                    "name": "repository",
+                    "description": "The repository name (required)",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "namespace",
+                    "description": "The namespace of the repository (required). If not provided the `library` namespace will be used for official images.",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "updateRepositoryInfo",
+            "description": "Update the details of a repository in the given namespace. Description, overview and status are the only fields that can be updated. While description and overview changes are fine, a status change is a dangerous operation so the user must explicitly ask for it.",
+            "args": [
+                {
+                    "name": "namespace",
+                    "description": "The namespace of the repository (required)",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "status",
+                    "description": "The status of the repository. If user asks for updating the status of the repository, this is the field that should be updated. This is a dangerous operation and should be done with caution so user must be prompted to confirm the operation. Valid status are `active` (1) and `inactive` (0). Normally do not update the status if it is not strictly required by the user. It is not possible to change an `inactive` repository to `active` if it has no images., 额外信息: anyOf: [{\"anyOf\":[{\"not\":{}},{\"enum\":[\"active\",\"inactive\"],\"type\":\"string\"}]},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "full_description",
+                    "description": "The full description (overview)of the repository. If user asks for updating the full description or the overview of the repository, this is the field that should be updated. , 额外信息: maxLength: 25000",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "repository",
+                    "description": "The repository name (required)",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "description",
+                    "description": "The description of the repository. If user asks for updating the description of the repository, this is the field that should be updated.",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "checkRepository",
+            "description": "Check if a repository exists in the given namespace.",
+            "args": [
+                {
+                    "name": "repository",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "namespace",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "listRepositoryTags",
+            "description": "List paginated tags by repository",
+            "args": [
+                {
+                    "name": "os",
+                    "description": "The operating system to list tags from. If not provided, all operating systems will be listed.",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "page_size",
+                    "description": "The page size to list tags from",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "repository",
+                    "description": "The repository to list tags from",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "namespace",
+                    "description": "The namespace of the repository. If not provided the 'library' namespace will be used for official images.",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "architecture",
+                    "description": "The architecture to list tags from. If not provided, all architectures will be listed.",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "page",
+                    "description": "The page number to list tags from",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "getRepositoryTag",
+            "description": "Get the details of a tag in a repository. It can be use to show the latest tag details for example.",
+            "args": [
+                {
+                    "name": "repository",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "tag",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "namespace",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "checkRepositoryTag",
+            "description": "Check if a tag exists in a repository",
+            "args": [
+                {
+                    "name": "repository",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "namespace",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "tag",
+                    "description": "",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "listNamespaces",
+            "description": "List paginated namespaces",
+            "args": [
+                {
+                    "name": "page_size",
+                    "description": "The page size to list repositories from",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "page",
+                    "description": "The page number to list repositories from",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "getPersonalNamespace",
+            "description": "Get the personal namespace name",
+            "args": []
+        },
+        {
+            "name": "listAllNamespacesMemberOf",
+            "description": "List all namespaces the user is a member of",
+            "args": []
+        },
+        {
+            "name": "search",
+            "description": "Search for repositories in Docker Hub. It sorts results by best match if no sort criteria is provided. If user asks for secure, production-ready images the \"dockerHardenedImages\" tool should be called first to get the list of DHI images available in the user organisations (if any) and fallback to search tool if no DHI images are available or user is not authenticated.",
+            "args": [
+                {
+                    "name": "type",
+                    "description": "The type of the repository to search for",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "from",
+                    "description": "The number of repositories to skip",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "categories",
+                    "description": "The categories names to filter search results, 额外信息: items: {\"type\":\"string\"}",
+                    "type": "array",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "images",
+                    "description": "The images to filter search results, 额外信息: items: {\"type\":\"string\"}",
+                    "type": "array",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "order",
+                    "description": "The order to sort the search results by, 额外信息: anyOf: [{\"anyOf\":[{\"not\":{}},{\"enum\":[\"asc\",\"desc\"],\"type\":\"string\"}]},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "size",
+                    "description": "The number of repositories to return",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "extension_reviewed",
+                    "description": "Whether to filter search results to only include reviewed extensions",
+                    "type": "boolean",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "sort",
+                    "description": "The criteria to sort the search results by. If the `sort` field is not set, the best match is used by default. When search extensions, documents are sort alphabetically if none is provided. Do not use it unless user explicitly asks for it., 额外信息: anyOf: [{\"anyOf\":[{\"not\":{}},{\"enum\":[\"pull_count\",\"updated_at\"],\"type\":\"string\"}]},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "architectures",
+                    "description": "The architectures to filter search results, 额外信息: items: {\"type\":\"string\"}",
+                    "type": "array",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "query",
+                    "description": "The query to search for",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "operating_systems",
+                    "description": "The operating systems to filter search results, 额外信息: items: {\"type\":\"string\"}",
+                    "type": "array",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "badges",
+                    "description": "The trusted content to search for, 额外信息: items: {\"enum\":[\"official\",\"verified_publisher\",\"open_source\"],\"type\":\"string\"}",
+                    "type": "array",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "dockerHardenedImages",
+            "description": "This API is used to list Docker Hardened Images (DHIs) available in the user organisations. The tool takes the organisation name as input and returns the list of DHI images available in the organisation. It depends on the \"listNamespaces\" tool to be called first to get the list of organisations the user has access to.",
+            "args": [
+                {
+                    "name": "organisation",
+                    "description": "The organisation for which the DHIs are listed for. If user does not explicitly ask for a specific organisation, the \"listNamespaces\" tool should be called first to get the list of organisations the user has access to.",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        }
+    ]
+}

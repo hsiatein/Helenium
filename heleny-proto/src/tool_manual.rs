@@ -49,6 +49,7 @@ pub struct ToolAbstract {
     pub description: String,
     pub commands: HashMap<String, String>,
     pub available: bool,
+    pub enable: bool,
 }
 
 impl From<ToolManual> for ToolAbstract {
@@ -74,6 +75,7 @@ impl From<ToolManual> for ToolAbstract {
             description,
             commands,
             available: false,
+            enable: true,
         }
     }
 }

@@ -1,0 +1,1744 @@
+{
+    "name": "ppt",
+    "description": "create_presentation, create_presentation_from_template, open_presentation, save_presentation, get_presentation_info, get_template_file_info, set_core_properties, add_slide, get_slide_info, extract_slide_text, extract_presentation_text, populate_placeholder, add_bullet_points, manage_text, manage_image, add_table, format_table_cell, add_shape, add_chart, apply_professional_design, apply_picture_effects, manage_fonts, list_slide_templates, apply_slide_template, create_slide_from_template, create_presentation_from_templates, get_template_info, auto_generate_presentation, optimize_slide_text, manage_hyperlinks, update_chart_data, add_connector, manage_slide_masters, manage_slide_transitions, list_presentations, switch_presentation, get_server_info.",
+    "commands": [
+        {
+            "name": "create_presentation",
+            "description": "Create a new PowerPoint presentation.",
+            "args": [
+                {
+                    "name": "id",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Id\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "create_presentation_from_template",
+            "description": "Create a new PowerPoint presentation from a template file.",
+            "args": [
+                {
+                    "name": "template_path",
+                    "description": ", 额外信息: title: \"Template Path\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "id",
+                    "description": ", 额外信息: title: \"Id\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "open_presentation",
+            "description": "Open an existing PowerPoint presentation from a file.",
+            "args": [
+                {
+                    "name": "id",
+                    "description": ", 额外信息: title: \"Id\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "file_path",
+                    "description": ", 额外信息: title: \"File Path\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "save_presentation",
+            "description": "Save a presentation to a file.",
+            "args": [
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Presentation Id\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "file_path",
+                    "description": ", 额外信息: title: \"File Path\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_presentation_info",
+            "description": "Get information about a presentation.",
+            "args": [
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_template_file_info",
+            "description": "Get information about a template file including layouts and properties.",
+            "args": [
+                {
+                    "name": "template_path",
+                    "description": ", 额外信息: title: \"Template Path\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "set_core_properties",
+            "description": "Set core document properties.",
+            "args": [
+                {
+                    "name": "keywords",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Keywords\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "author",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Author\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "title",
+                    "description": ", 额外信息: title: \"Title\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "comments",
+                    "description": ", 额外信息: title: \"Comments\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "subject",
+                    "description": ", 额外信息: title: \"Subject\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_slide",
+            "description": "Add a new slide to the presentation with optional background styling.",
+            "args": [
+                {
+                    "name": "title",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Title\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Presentation Id\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "background_type",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Background Type\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "background_colors",
+                    "description": ", 额外信息: anyOf: [{\"items\":{\"items\":{\"type\":\"integer\"},\"type\":\"array\"},\"type\":\"array\"},{\"type\":\"null\"}], title: \"Background Colors\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "color_scheme",
+                    "description": ", 额外信息: title: \"Color Scheme\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "modern_blue"
+                },
+                {
+                    "name": "gradient_direction",
+                    "description": ", 额外信息: title: \"Gradient Direction\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "horizontal"
+                },
+                {
+                    "name": "layout_index",
+                    "description": ", 额外信息: title: \"Layout Index\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 1
+                }
+            ]
+        },
+        {
+            "name": "get_slide_info",
+            "description": "Get information about a specific slide.",
+            "args": [
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "extract_slide_text",
+            "description": "Extract all text content from a specific slide.",
+            "args": [
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "extract_presentation_text",
+            "description": "Extract all text content from all slides in the presentation.",
+            "args": [
+                {
+                    "name": "include_slide_info",
+                    "description": ", 额外信息: title: \"Include Slide Info\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Presentation Id\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "populate_placeholder",
+            "description": "Populate a placeholder with text.",
+            "args": [
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Presentation Id\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "text",
+                    "description": ", 额外信息: title: \"Text\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "placeholder_idx",
+                    "description": ", 额外信息: title: \"Placeholder Idx\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_bullet_points",
+            "description": "Add bullet points to a placeholder.",
+            "args": [
+                {
+                    "name": "bullet_points",
+                    "description": ", 额外信息: title: \"Bullet Points\", items: {\"type\":\"string\"}",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "placeholder_idx",
+                    "description": ", 额外信息: title: \"Placeholder Idx\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "manage_text",
+            "description": "Unified text management tool for adding, formatting, validating text, and formatting multiple text runs.",
+            "args": [
+                {
+                    "name": "auto_fit",
+                    "description": ", 额外信息: title: \"Auto Fit\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "operation",
+                    "description": ", 额外信息: title: \"Operation\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "text",
+                    "description": ", 额外信息: title: \"Text\"",
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                {
+                    "name": "vertical_alignment",
+                    "description": ", 额外信息: title: \"Vertical Alignment\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "width",
+                    "description": ", 额外信息: title: \"Width\"",
+                    "type": "number",
+                    "required": false,
+                    "default": 4.0
+                },
+                {
+                    "name": "bg_color",
+                    "description": ", 额外信息: title: \"Bg Color\", anyOf: [{\"items\":{\"type\":\"integer\"},\"type\":\"array\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "color",
+                    "description": ", 额外信息: anyOf: [{\"items\":{\"type\":\"integer\"},\"type\":\"array\"},{\"type\":\"null\"}], title: \"Color\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "left",
+                    "description": ", 额外信息: title: \"Left\"",
+                    "type": "number",
+                    "required": false,
+                    "default": 1.0
+                },
+                {
+                    "name": "max_font_size",
+                    "description": ", 额外信息: title: \"Max Font Size\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 72
+                },
+                {
+                    "name": "min_font_size",
+                    "description": ", 额外信息: title: \"Min Font Size\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 8
+                },
+                {
+                    "name": "underline",
+                    "description": ", 额外信息: title: \"Underline\", anyOf: [{\"type\":\"boolean\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "text_runs",
+                    "description": ", 额外信息: anyOf: [{\"items\":{\"additionalProperties\":true,\"type\":\"object\"},\"type\":\"array\"},{\"type\":\"null\"}], title: \"Text Runs\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "alignment",
+                    "description": ", 额外信息: title: \"Alignment\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "top",
+                    "description": ", 额外信息: title: \"Top\"",
+                    "type": "number",
+                    "required": false,
+                    "default": 1.0
+                },
+                {
+                    "name": "validation_only",
+                    "description": ", 额外信息: title: \"Validation Only\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": false
+                },
+                {
+                    "name": "bold",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"boolean\"},{\"type\":\"null\"}], title: \"Bold\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "italic",
+                    "description": ", 额外信息: title: \"Italic\", anyOf: [{\"type\":\"boolean\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "height",
+                    "description": ", 额外信息: title: \"Height\"",
+                    "type": "number",
+                    "required": false,
+                    "default": 2.0
+                },
+                {
+                    "name": "font_size",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"integer\"},{\"type\":\"null\"}], title: \"Font Size\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Presentation Id\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "font_name",
+                    "description": ", 额外信息: title: \"Font Name\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "shape_index",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"integer\"},{\"type\":\"null\"}], title: \"Shape Index\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "manage_image",
+            "description": "Unified image management tool for adding and enhancing images.",
+            "args": [
+                {
+                    "name": "height",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"number\"},{\"type\":\"null\"}], title: \"Height\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "output_path",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Output Path\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "width",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"number\"},{\"type\":\"null\"}], title: \"Width\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "operation",
+                    "description": ", 额外信息: title: \"Operation\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "sharpness",
+                    "description": ", 额外信息: title: \"Sharpness\"",
+                    "type": "number",
+                    "required": false,
+                    "default": 1.0
+                },
+                {
+                    "name": "filter_type",
+                    "description": ", 额外信息: title: \"Filter Type\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "saturation",
+                    "description": ", 额外信息: title: \"Saturation\"",
+                    "type": "number",
+                    "required": false,
+                    "default": 1.0
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "brightness",
+                    "description": ", 额外信息: title: \"Brightness\"",
+                    "type": "number",
+                    "required": false,
+                    "default": 1.0
+                },
+                {
+                    "name": "left",
+                    "description": ", 额外信息: title: \"Left\"",
+                    "type": "number",
+                    "required": false,
+                    "default": 1.0
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "contrast",
+                    "description": ", 额外信息: title: \"Contrast\"",
+                    "type": "number",
+                    "required": false,
+                    "default": 1.0
+                },
+                {
+                    "name": "blur_radius",
+                    "description": ", 额外信息: title: \"Blur Radius\"",
+                    "type": "number",
+                    "required": false,
+                    "default": 0
+                },
+                {
+                    "name": "image_source",
+                    "description": ", 额外信息: title: \"Image Source\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "source_type",
+                    "description": ", 额外信息: title: \"Source Type\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "file"
+                },
+                {
+                    "name": "top",
+                    "description": ", 额外信息: title: \"Top\"",
+                    "type": "number",
+                    "required": false,
+                    "default": 1.0
+                },
+                {
+                    "name": "enhancement_style",
+                    "description": ", 额外信息: title: \"Enhancement Style\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_table",
+            "description": "Add a table to a slide with enhanced formatting options.",
+            "args": [
+                {
+                    "name": "data",
+                    "description": ", 额外信息: title: \"Data\", anyOf: [{\"items\":{\"items\":{\"type\":\"string\"},\"type\":\"array\"},\"type\":\"array\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "body_font_size",
+                    "description": ", 额外信息: title: \"Body Font Size\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 10
+                },
+                {
+                    "name": "top",
+                    "description": ", 额外信息: title: \"Top\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "rows",
+                    "description": ", 额外信息: title: \"Rows\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "header_font_size",
+                    "description": ", 额外信息: title: \"Header Font Size\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 12
+                },
+                {
+                    "name": "body_bg_color",
+                    "description": ", 额外信息: anyOf: [{\"items\":{\"type\":\"integer\"},\"type\":\"array\"},{\"type\":\"null\"}], title: \"Body Bg Color\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Presentation Id\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "height",
+                    "description": ", 额外信息: title: \"Height\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "header_row",
+                    "description": ", 额外信息: title: \"Header Row\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "header_bg_color",
+                    "description": ", 额外信息: anyOf: [{\"items\":{\"type\":\"integer\"},\"type\":\"array\"},{\"type\":\"null\"}], title: \"Header Bg Color\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "cols",
+                    "description": ", 额外信息: title: \"Cols\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "width",
+                    "description": ", 额外信息: title: \"Width\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "border_color",
+                    "description": ", 额外信息: anyOf: [{\"items\":{\"type\":\"integer\"},\"type\":\"array\"},{\"type\":\"null\"}], title: \"Border Color\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "left",
+                    "description": ", 额外信息: title: \"Left\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "format_table_cell",
+            "description": "Format a specific table cell.",
+            "args": [
+                {
+                    "name": "font_size",
+                    "description": ", 额外信息: title: \"Font Size\", anyOf: [{\"type\":\"integer\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "shape_index",
+                    "description": ", 额外信息: title: \"Shape Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "vertical_alignment",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Vertical Alignment\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "italic",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"boolean\"},{\"type\":\"null\"}], title: \"Italic\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "bg_color",
+                    "description": ", 额外信息: anyOf: [{\"items\":{\"type\":\"integer\"},\"type\":\"array\"},{\"type\":\"null\"}], title: \"Bg Color\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "color",
+                    "description": ", 额外信息: title: \"Color\", anyOf: [{\"items\":{\"type\":\"integer\"},\"type\":\"array\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "bold",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"boolean\"},{\"type\":\"null\"}], title: \"Bold\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "alignment",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Alignment\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "col",
+                    "description": ", 额外信息: title: \"Col\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "row",
+                    "description": ", 额外信息: title: \"Row\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "font_name",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Font Name\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_shape",
+            "description": "Add an auto shape to a slide with enhanced options.",
+            "args": [
+                {
+                    "name": "line_color",
+                    "description": ", 额外信息: title: \"Line Color\", anyOf: [{\"items\":{\"type\":\"integer\"},\"type\":\"array\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "shape_type",
+                    "description": ", 额外信息: title: \"Shape Type\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "text",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Text\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "line_width",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"number\"},{\"type\":\"null\"}], title: \"Line Width\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "top",
+                    "description": ", 额外信息: title: \"Top\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "width",
+                    "description": ", 额外信息: title: \"Width\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "height",
+                    "description": ", 额外信息: title: \"Height\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "fill_color",
+                    "description": ", 额外信息: anyOf: [{\"items\":{\"type\":\"integer\"},\"type\":\"array\"},{\"type\":\"null\"}], title: \"Fill Color\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "font_color",
+                    "description": ", 额外信息: title: \"Font Color\", anyOf: [{\"items\":{\"type\":\"integer\"},\"type\":\"array\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "font_size",
+                    "description": ", 额外信息: title: \"Font Size\", anyOf: [{\"type\":\"integer\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "left",
+                    "description": ", 额外信息: title: \"Left\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_chart",
+            "description": "Add a chart to a slide with comprehensive formatting options.",
+            "args": [
+                {
+                    "name": "height",
+                    "description": ", 额外信息: title: \"Height\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "series_values",
+                    "description": ", 额外信息: items: {\"items\":{\"type\":\"number\"},\"type\":\"array\"}, title: \"Series Values\"",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "chart_type",
+                    "description": ", 额外信息: title: \"Chart Type\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "y_axis_title",
+                    "description": ", 额外信息: title: \"Y Axis Title\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "has_data_labels",
+                    "description": ", 额外信息: title: \"Has Data Labels\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": false
+                },
+                {
+                    "name": "has_legend",
+                    "description": ", 额外信息: title: \"Has Legend\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "left",
+                    "description": ", 额外信息: title: \"Left\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "top",
+                    "description": ", 额外信息: title: \"Top\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "width",
+                    "description": ", 额外信息: title: \"Width\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "color_scheme",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Color Scheme\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "x_axis_title",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"X Axis Title\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "categories",
+                    "description": ", 额外信息: items: {\"type\":\"string\"}, title: \"Categories\"",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "series_names",
+                    "description": ", 额外信息: items: {\"type\":\"string\"}, title: \"Series Names\"",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "legend_position",
+                    "description": ", 额外信息: title: \"Legend Position\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "right"
+                },
+                {
+                    "name": "title",
+                    "description": ", 额外信息: title: \"Title\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "apply_professional_design",
+            "description": "Unified professional design tool for themes, slides, and visual enhancements.\nThis applies professional styling and themes rather than structural layout changes.",
+            "args": [
+                {
+                    "name": "operation",
+                    "description": ", 额外信息: title: \"Operation\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "apply_to_existing",
+                    "description": ", 额外信息: title: \"Apply To Existing\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "color_scheme",
+                    "description": ", 额外信息: title: \"Color Scheme\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "modern_blue"
+                },
+                {
+                    "name": "enhance_shapes",
+                    "description": ", 额外信息: title: \"Enhance Shapes\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "title",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Title\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "enhance_title",
+                    "description": ", 额外信息: title: \"Enhance Title\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "content",
+                    "description": ", 额外信息: title: \"Content\", anyOf: [{\"items\":{\"type\":\"string\"},\"type\":\"array\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "slide_type",
+                    "description": ", 额外信息: title: \"Slide Type\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "title_content"
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Presentation Id\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"integer\"},{\"type\":\"null\"}], title: \"Slide Index\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "enhance_content",
+                    "description": ", 额外信息: title: \"Enhance Content\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "enhance_charts",
+                    "description": ", 额外信息: title: \"Enhance Charts\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                }
+            ]
+        },
+        {
+            "name": "apply_picture_effects",
+            "description": "Apply multiple picture effects in combination.",
+            "args": [
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Presentation Id\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "effects",
+                    "description": ", 额外信息: title: \"Effects\", additionalProperties: {\"additionalProperties\":true,\"type\":\"object\"}",
+                    "type": "object",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "shape_index",
+                    "description": ", 额外信息: title: \"Shape Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "manage_fonts",
+            "description": "Unified font management tool for analysis, optimization, and recommendations.",
+            "args": [
+                {
+                    "name": "operation",
+                    "description": ", 额外信息: title: \"Operation\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "output_path",
+                    "description": ", 额外信息: title: \"Output Path\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "text_content",
+                    "description": ", 额外信息: title: \"Text Content\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "font_path",
+                    "description": ", 额外信息: title: \"Font Path\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "presentation_type",
+                    "description": ", 额外信息: title: \"Presentation Type\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "business"
+                }
+            ]
+        },
+        {
+            "name": "list_slide_templates",
+            "description": "List all available slide layout templates.",
+            "args": []
+        },
+        {
+            "name": "apply_slide_template",
+            "description": "\nApply a structured layout template to an existing slide.\nThis modifies slide layout and content structure using predefined templates.\n\nArgs:\n    slide_index: Index of the slide to apply template to\n    template_id: ID of the template to apply (e.g., 'title_slide', 'text_with_image')\n    color_scheme: Color scheme to use ('modern_blue', 'corporate_gray', 'elegant_green', 'warm_red')\n    content_mapping: Dictionary mapping element roles to custom content\n    image_paths: Dictionary mapping image element roles to file paths\n    presentation_id: Presentation ID (uses current if None)\n",
+            "args": [
+                {
+                    "name": "image_paths",
+                    "description": ", 额外信息: title: \"Image Paths\", anyOf: [{\"additionalProperties\":{\"type\":\"string\"},\"type\":\"object\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "template_id",
+                    "description": ", 额外信息: title: \"Template Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "content_mapping",
+                    "description": ", 额外信息: title: \"Content Mapping\", anyOf: [{\"additionalProperties\":{\"type\":\"string\"},\"type\":\"object\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "color_scheme",
+                    "description": ", 额外信息: title: \"Color Scheme\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "modern_blue"
+                }
+            ]
+        },
+        {
+            "name": "create_slide_from_template",
+            "description": "\nCreate a new slide using a layout template.\n\nArgs:\n    template_id: ID of the template to use (e.g., 'title_slide', 'text_with_image')\n    color_scheme: Color scheme to use ('modern_blue', 'corporate_gray', 'elegant_green', 'warm_red')\n    content_mapping: Dictionary mapping element roles to custom content\n    image_paths: Dictionary mapping image element roles to file paths\n    layout_index: PowerPoint layout index to use as base (default: 1)\n    presentation_id: Presentation ID (uses current if None)\n",
+            "args": [
+                {
+                    "name": "content_mapping",
+                    "description": ", 额外信息: title: \"Content Mapping\", anyOf: [{\"additionalProperties\":{\"type\":\"string\"},\"type\":\"object\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "layout_index",
+                    "description": ", 额外信息: title: \"Layout Index\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 1
+                },
+                {
+                    "name": "template_id",
+                    "description": ", 额外信息: title: \"Template Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "image_paths",
+                    "description": ", 额外信息: anyOf: [{\"additionalProperties\":{\"type\":\"string\"},\"type\":\"object\"},{\"type\":\"null\"}], title: \"Image Paths\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "color_scheme",
+                    "description": ", 额外信息: title: \"Color Scheme\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "modern_blue"
+                }
+            ]
+        },
+        {
+            "name": "create_presentation_from_templates",
+            "description": "\nCreate a complete presentation from a sequence of templates.\n\nArgs:\n    template_sequence: List of template configurations, each containing:\n        - template_id: Template to use\n        - content: Content mapping for the template\n        - images: Image path mapping for the template\n    color_scheme: Color scheme to apply to all slides\n    presentation_title: Optional title for the presentation\n    presentation_id: Presentation ID (uses current if None)\n\nExample template_sequence:\n[\n    {\n        \"template_id\": \"title_slide\",\n        \"content\": {\n            \"title\": \"My Presentation\",\n            \"subtitle\": \"Annual Report 2024\",\n            \"author\": \"John Doe\"\n        }\n    },\n    {\n        \"template_id\": \"text_with_image\",\n        \"content\": {\n            \"title\": \"Key Results\",\n            \"content\": \"• Achievement 1\\n• Achievement 2\"\n        },\n        \"images\": {\n            \"supporting\": \"/path/to/image.jpg\"\n        }\n    }\n]\n",
+            "args": [
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Presentation Id\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "template_sequence",
+                    "description": ", 额外信息: title: \"Template Sequence\", items: {\"additionalProperties\":true,\"type\":\"object\"}",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "color_scheme",
+                    "description": ", 额外信息: title: \"Color Scheme\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "modern_blue"
+                },
+                {
+                    "name": "presentation_title",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Presentation Title\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_template_info",
+            "description": "\nGet detailed information about a specific template.\n\nArgs:\n    template_id: ID of the template to get information about\n",
+            "args": [
+                {
+                    "name": "template_id",
+                    "description": ", 额外信息: title: \"Template Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "auto_generate_presentation",
+            "description": "\nAutomatically generate a presentation based on topic and preferences.\n\nArgs:\n    topic: Main topic/theme for the presentation\n    slide_count: Number of slides to generate (3-20)\n    presentation_type: Type of presentation ('business', 'academic', 'creative')\n    color_scheme: Color scheme to use\n    include_charts: Whether to include chart slides\n    include_images: Whether to include image placeholders\n    presentation_id: Presentation ID (uses current if None)\n",
+            "args": [
+                {
+                    "name": "presentation_type",
+                    "description": ", 额外信息: title: \"Presentation Type\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "business"
+                },
+                {
+                    "name": "include_charts",
+                    "description": ", 额外信息: title: \"Include Charts\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "color_scheme",
+                    "description": ", 额外信息: title: \"Color Scheme\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "modern_blue"
+                },
+                {
+                    "name": "topic",
+                    "description": ", 额外信息: title: \"Topic\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Presentation Id\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "slide_count",
+                    "description": ", 额外信息: title: \"Slide Count\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 5
+                },
+                {
+                    "name": "include_images",
+                    "description": ", 额外信息: title: \"Include Images\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": false
+                }
+            ]
+        },
+        {
+            "name": "optimize_slide_text",
+            "description": "\nOptimize text elements on a slide for better readability and fit.\n\nArgs:\n    slide_index: Index of the slide to optimize\n    auto_resize: Whether to automatically resize fonts to fit containers\n    auto_wrap: Whether to apply intelligent text wrapping\n    optimize_spacing: Whether to optimize line spacing\n    min_font_size: Minimum allowed font size\n    max_font_size: Maximum allowed font size\n    presentation_id: Presentation ID (uses current if None)\n",
+            "args": [
+                {
+                    "name": "auto_resize",
+                    "description": ", 额外信息: title: \"Auto Resize\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "min_font_size",
+                    "description": ", 额外信息: title: \"Min Font Size\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 8
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Presentation Id\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "max_font_size",
+                    "description": ", 额外信息: title: \"Max Font Size\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 36
+                },
+                {
+                    "name": "auto_wrap",
+                    "description": ", 额外信息: title: \"Auto Wrap\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "optimize_spacing",
+                    "description": ", 额外信息: title: \"Optimize Spacing\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                }
+            ]
+        },
+        {
+            "name": "manage_hyperlinks",
+            "description": "\nManage hyperlinks in text shapes and runs.\n\nArgs:\n    operation: Operation type (\"add\", \"remove\", \"list\", \"update\")\n    slide_index: Index of the slide (0-based)\n    shape_index: Index of the shape on the slide (0-based)\n    text: Text to make into hyperlink (for \"add\" operation)\n    url: URL for the hyperlink\n    run_index: Index of text run within the shape (0-based)\n    presentation_id: Optional presentation ID (uses current if not provided)\n    \nReturns:\n    Dictionary with operation results\n",
+            "args": [
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\"",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "text",
+                    "description": ", 额外信息: title: \"Text\"",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "run_index",
+                    "description": ", 额外信息: title: \"Run Index\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 0
+                },
+                {
+                    "name": "url",
+                    "description": ", 额外信息: title: \"Url\"",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "shape_index",
+                    "description": ", 额外信息: title: \"Shape Index\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "operation",
+                    "description": ", 额外信息: title: \"Operation\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "update_chart_data",
+            "description": "\nReplace existing chart data with new categories and series.\n\nArgs:\n    slide_index: Index of the slide (0-based)\n    shape_index: Index of the chart shape (0-based)\n    categories: List of category names\n    series_data: List of dictionaries with 'name' and 'values' keys\n    presentation_id: Optional presentation ID (uses current if not provided)\n    \nReturns:\n    Dictionary with operation results\n",
+            "args": [
+                {
+                    "name": "categories",
+                    "description": ", 额外信息: title: \"Categories\", items: {\"type\":\"string\"}",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "shape_index",
+                    "description": ", 额外信息: title: \"Shape Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\"",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "series_data",
+                    "description": ", 额外信息: items: {\"additionalProperties\":true,\"type\":\"object\"}, title: \"Series Data\"",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_connector",
+            "description": "\nAdd connector lines/arrows between points on a slide.\n\nArgs:\n    slide_index: Index of the slide (0-based)\n    connector_type: Type of connector (\"straight\", \"elbow\", \"curved\")\n    start_x: Starting X coordinate in inches\n    start_y: Starting Y coordinate in inches\n    end_x: Ending X coordinate in inches  \n    end_y: Ending Y coordinate in inches\n    line_width: Width of the connector line in points\n    color: RGB color as [r, g, b] list\n    presentation_id: Optional presentation ID (uses current if not provided)\n    \nReturns:\n    Dictionary with operation results\n",
+            "args": [
+                {
+                    "name": "end_x",
+                    "description": ", 额外信息: title: \"End X\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\"",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "start_y",
+                    "description": ", 额外信息: title: \"Start Y\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "color",
+                    "description": ", 额外信息: title: \"Color\", items: {\"type\":\"integer\"}",
+                    "type": "array",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "start_x",
+                    "description": ", 额外信息: title: \"Start X\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "line_width",
+                    "description": ", 额外信息: title: \"Line Width\"",
+                    "type": "number",
+                    "required": false,
+                    "default": 1.0
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "end_y",
+                    "description": ", 额外信息: title: \"End Y\"",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "connector_type",
+                    "description": ", 额外信息: title: \"Connector Type\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "manage_slide_masters",
+            "description": "\nAccess and manage slide master properties and layouts.\n\nArgs:\n    operation: Operation type (\"list\", \"get_layouts\", \"get_info\")\n    master_index: Index of the slide master (0-based)\n    layout_index: Index of specific layout within master (0-based)\n    presentation_id: Optional presentation ID (uses current if not provided)\n    \nReturns:\n    Dictionary with slide master information\n",
+            "args": [
+                {
+                    "name": "operation",
+                    "description": ", 额外信息: title: \"Operation\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "layout_index",
+                    "description": ", 额外信息: title: \"Layout Index\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\"",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "master_index",
+                    "description": ", 额外信息: title: \"Master Index\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 0
+                }
+            ]
+        },
+        {
+            "name": "manage_slide_transitions",
+            "description": "\nManage slide transitions and timing.\n\nArgs:\n    slide_index: Index of the slide (0-based)\n    operation: Operation type (\"set\", \"remove\", \"get\")\n    transition_type: Type of transition (basic support)\n    duration: Duration of transition in seconds\n    presentation_id: Optional presentation ID (uses current if not provided)\n    \nReturns:\n    Dictionary with transition information\n",
+            "args": [
+                {
+                    "name": "operation",
+                    "description": ", 额外信息: title: \"Operation\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "slide_index",
+                    "description": ", 额外信息: title: \"Slide Index\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "duration",
+                    "description": ", 额外信息: title: \"Duration\"",
+                    "type": "number",
+                    "required": false,
+                    "default": 1.0
+                },
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\"",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "transition_type",
+                    "description": ", 额外信息: title: \"Transition Type\"",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "list_presentations",
+            "description": "List all loaded presentations.",
+            "args": []
+        },
+        {
+            "name": "switch_presentation",
+            "description": "Switch to a different loaded presentation.",
+            "args": [
+                {
+                    "name": "presentation_id",
+                    "description": ", 额外信息: title: \"Presentation Id\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_server_info",
+            "description": "Get information about the MCP server.",
+            "args": []
+        }
+    ]
+}

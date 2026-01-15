@@ -12,6 +12,7 @@ use heleny_service::FsServiceMessage;
 use heleny_service::Service;
 use heleny_service::get_from_config_service;
 use heleny_service::register_tool_factory;
+use uuid::Uuid;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::path::Path;
@@ -32,7 +33,7 @@ mod tool;
 #[base_service(deps=["ConfigService"])]
 pub struct FsService {
     endpoint: Endpoint,
-    _temp_dir: PathBuf,
+    temp_dir: PathBuf,
     cache: HashMap<PathBuf, CacheEntry>,
 }
 
@@ -44,12 +45,12 @@ impl Service for FsService {
         tokio::fs::create_dir_all(&config.exchange_dir).await?;
         let exchange_dir = tokio::fs::canonicalize(&config.exchange_dir).await?;
         tokio::fs::create_dir_all(&config.temp_dir).await?;
-        let _temp_dir = tokio::fs::canonicalize(&config.temp_dir).await?;
+        let temp_dir = tokio::fs::canonicalize(&config.temp_dir).await?;
         let factory = FsToolFactory::new(endpoint.create_sender_endpoint(), exchange_dir);
         register_tool_factory(&endpoint, factory).await;
         let instance = Self {
             endpoint,
-            _temp_dir,
+            temp_dir,
             cache: HashMap::new(),
         };
         Ok(Box::new(instance))
@@ -138,6 +139,20 @@ impl Service for FsService {
                 if let HelenyFile::Image(data) = &data.content {
                     let _ = feedback.send(data.clone());
                 };
+                Ok(())
+            }
+            FsServiceMessage::TempFile { file, file_ext, feedback }=>{
+                let name=Uuid::new_v4().to_string()+"."+file_ext.trim_start_matches(".");
+                let path=self.temp_dir.join(name);
+                match file {
+                    HelenyFile::Image(image)=>{
+                        fs::write(&path, image).await?;
+                    }
+                    HelenyFile::Text(text)=>{
+                        fs::write(&path, text).await?;
+                    }
+                }
+                let _=feedback.send(path);
                 Ok(())
             }
         }

@@ -1,0 +1,76 @@
+{
+  "name": "SQLite",
+  "description": "read_query, write_query, create_table, list_tables, describe_table, append_insight.",
+  "commands": [
+    {
+      "name": "read_query",
+      "description": "Execute a SELECT query on the SQLite database",
+      "args": [
+        {
+          "name": "query",
+          "description": "SELECT SQL query to execute",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "write_query",
+      "description": "Execute an INSERT, UPDATE, or DELETE query on the SQLite database",
+      "args": [
+        {
+          "name": "query",
+          "description": "SQL query to execute",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "create_table",
+      "description": "Create a new table in the SQLite database",
+      "args": [
+        {
+          "name": "query",
+          "description": "CREATE TABLE SQL statement",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "list_tables",
+      "description": "List all tables in the SQLite database",
+      "args": []
+    },
+    {
+      "name": "describe_table",
+      "description": "Get the schema information for a specific table",
+      "args": [
+        {
+          "name": "table_name",
+          "description": "Name of the table to describe",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "append_insight",
+      "description": "Add a business insight to the memo",
+      "args": [
+        {
+          "name": "insight",
+          "description": "Business insight discovered from data analysis",
+          "type": "string",
+          "required": true,
+          "default": null
+        }
+      ]
+    }
+  ]
+}

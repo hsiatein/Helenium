@@ -1,0 +1,136 @@
+{
+    "name": "semgrep",
+    "description": "Semgrep 是一款快速、开源的静态代码分析工具，用于在代码中搜索模式、发现缺陷，并执行安全与编码规范。它支持 30+ 种编程语言。semgrep_rule_schema, get_supported_languages, semgrep_findings, semgrep_scan_with_custom_rule, semgrep_scan, get_abstract_syntax_tree, semgrep_scan_supply_chain.",
+    "commands": [
+        {
+            "name": "semgrep_rule_schema",
+            "description": "\n    Get the schema for a Semgrep rule\n\n    Use this tool when you need to:\n      - get the schema required to write a Semgrep rule\n      - need to see what fields are available for a Semgrep rule\n      - verify what fields are available for a Semgrep rule\n      - verify the syntax for a Semgrep rule is correct\n    ",
+            "args": []
+        },
+        {
+            "name": "get_supported_languages",
+            "description": "\n    Returns a list of supported languages by Semgrep\n\n    Only use this tool if you are not sure what languages Semgrep supports.\n    ",
+            "args": []
+        },
+        {
+            "name": "semgrep_findings",
+            "description": "Fetches findings from the Semgrep AppSec Platform Findings API. This function retrieves security, code quality, and supply chain findings that have already been identified by previous Semgrep scans and uploaded to the Semgrep AppSec platform. It does NOT perform a new scan or analyze code directly. Instead, it queries the Semgrep API to access historical scan results for a given repository or set of repositories. DEFAULT BEHAVIOR: By default, this tool should filter by the current repository. The model should determine the current repository name and pass it in the 'repos' parameter to ensure findings are scoped to the relevant codebase. However, users may explicitly request findings from other repositories, in which case the model should respect that request. Use this function when a prompt requests a summary, list, or analysis of existing findings, such as: - \"Please list the top 10 security findings and propose solutions for them.\" - \"Show all open critical vulnerabilities in this repository.\" - \"Summarize the most recent Semgrep scan results.\" - \"Get findings from repository X\" (explicitly requesting different repo) This function is ideal for: - Reviewing, listing, or summarizing findings from past scans. - Providing actionable insights or remediation advice based on existing scan data. Do NOT use this function to perform a new scan or check code that has not yet been analyzed by Semgrep. For new scans, use the appropriate scanning function. Returns: List[Finding]: A list of findings matching the specified filters, where each finding contains details such as rule ID, description, severity, file location, and remediation guidance if available.",
+            "args": [
+                {
+                    "name": "issue_type",
+                    "description": "issue_type (str): Filter findings by type. Use 'sast' for code analysis findings and 'sca' for supply chain analysis findings (e.g., 'sast', 'sca')., 额外信息: title: \"Issue Type\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "sast"
+                },
+                {
+                    "name": "repos",
+                    "description": "repos (Optional[List[str]]): List of repository names to filter results. By default, should include the current repository name to scope findings appropriately. Can be overridden when users explicitly request findings from other repositories., 额外信息: anyOf: [{\"items\":{\"type\":\"string\"},\"type\":\"array\"},{\"type\":\"null\"}], title: \"Repos\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "page_size",
+                    "description": "page_size (int): Number of findings per page (default: 100, min: 100, max: 3000)., 额外信息: title: \"Page Size\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 100
+                },
+                {
+                    "name": "severities",
+                    "description": "severities (Optional[List[str]]): Filter findings by severity (e.g., ['critical', 'high'])., 额外信息: title: \"Severities\", anyOf: [{\"items\":{\"type\":\"string\"},\"type\":\"array\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "status",
+                    "description": "status (Optional[str]): Filter findings by status (default: 'open')., 额外信息: title: \"Status\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "open"
+                },
+                {
+                    "name": "confidence",
+                    "description": "confidence (Optional[List[str]]): Filter findings by confidence level (e.g., ['high'])., 额外信息: anyOf: [{\"items\":{\"type\":\"string\"},\"type\":\"array\"},{\"type\":\"null\"}], title: \"Confidence\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "page",
+                    "description": "page (Optional[int]): Page number for paginated results. (default: 0), 额外信息: title: \"Page\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 0
+                },
+                {
+                    "name": "autotriage_verdict",
+                    "description": "autotriage_verdict (Optional[str]): Filter findings by auto-triage verdict (default: 'true_positive')., 额外信息: title: \"Autotriage Verdict\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "true_positive"
+                }
+            ]
+        },
+        {
+            "name": "semgrep_scan_with_custom_rule",
+            "description": " Runs a Semgrep scan with a custom rule on provided code content and returns the findings in JSON format\n Use this tool when you need to:   - scan code files for specific security vulnerability not covered by the default Semgrep rules   - scan code files for specific issue not covered by the default Semgrep rules ",
+            "args": [
+                {
+                    "name": "rule",
+                    "description": "Semgrep YAML rule string, 额外信息: title: \"Rule\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "code_files",
+                    "description": "List of dictionaries with 'path' and 'content' keys, 额外信息: items: {\"$ref\":\"#/$defs/CodeFile\"}, title: \"Code Files\"",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "semgrep_scan",
+            "description": "Runs a Semgrep scan locally on provided code files returns the findings in JSON format.\nFiles are expected to be absolute paths to the code files.\nUse this tool when you need to:  - scan code files for security vulnerabilities  - scan code files for other issues",
+            "args": [
+                {
+                    "name": "code_files",
+                    "description": "List of dictionaries with 'path' pointing to the absolute path of the code file, 额外信息: items: {\"$ref\":\"#/$defs/CodePath\"}, title: \"Code Files\"",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_abstract_syntax_tree",
+            "description": "Returns the Abstract Syntax Tree (AST) for the provided code file in JSON format\nUse this tool when you need to:  - get the Abstract Syntax Tree (AST) for the provided code file      - get the AST of a file  - understand the structure of the code in a more granular way  - see what a parser sees in the code",
+            "args": [
+                {
+                    "name": "code",
+                    "description": "The code to get the AST for, 额外信息: title: \"Code\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "language",
+                    "description": "The programming language of the code, 额外信息: title: \"Language\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "semgrep_scan_supply_chain",
+            "description": "Runs a Semgrep supply chain scan on the provided workspace directory,to identify potential third-party security vulnerabilities.\nUse this tool when you:  - change the version of a dependency in a project  - add a new dependency to a project  - update the lockfiles of a project",
+            "args": []
+        }
+    ]
+}

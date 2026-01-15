@@ -63,9 +63,9 @@ GUI的实现基于 Slint(当前), WEBUI的实现基于 Vue/TS(暂时停更)
 本项目测试大多数使用AI生成, 在测试以外使用AI生成的还有:
 1. heleny-utils\src\lib.rs::init_tracing函数 (6-31行).
 2. heleny-macros\src\lib.rs::base_service宏 (1-63行).
-3. 大部分 WebUI 代码, ( *.vue, heleny-webui/src/router.ts, heleny-webui/src/main.ts ).
+3. 大部分 WebUI 代码, ( *.vue, *.ts ).
 4. *.slint文件大量使用了AI.
-5. heleny-gui\src\lib.rs::generate_svg_path函数 (92-178行).
+5. heleny-gui/src/terminal.rs的svg生成 (7-123行).
 6. schedule 中 chrono 的用法大量参考 AI. 
 
 <p align="right">(<a href="#readme-top">回到顶部</a>)</p>
@@ -77,8 +77,14 @@ GUI的实现基于 Slint(当前), WEBUI的实现基于 Vue/TS(暂时停更)
 ### 预先准备
 
 所需要的软件.
-* Rust
-* Docker ( 很多MCP工具基于Docker )
+
+构建：
+* Rust工具链
+
+MCP工具 ( 不安装不影响使用聊天，但是影响使用MCP工具 ) ：
+* Docker
+* npm
+* uv
 
 ### 安装
 

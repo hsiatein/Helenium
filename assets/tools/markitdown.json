@@ -1,0 +1,19 @@
+{
+    "name": "markitdown",
+    "description": "convert_to_markdown.",
+    "commands": [
+        {
+            "name": "convert_to_markdown",
+            "description": "Convert a resource described by an http:, https:, file: or data: URI to markdown",
+            "args": [
+                {
+                    "name": "uri",
+                    "description": "An http:, https:, file: or data: URI",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        }
+    ]
+}

@@ -1,5 +1,5 @@
 [package]
-name = "service_fs"
+name = "service_tools"
 version = "0.1.0"
 edition = "2024"
 
@@ -13,9 +13,11 @@ inventory = { workspace = true }
 anyhow = {workspace = true}
 tracing = {workspace = true}
 tokio = {workspace = true}
-serde = {workspace = true}
-image = {workspace = true}
-base64 = {workspace = true}
 serde_json = {workspace = true}
-pathdiff = {workspace = true}
+serde = {workspace = true}
+reqwest = {workspace = true}
 uuid = {workspace = true}
+rand = {workspace = true}
+
+[dev-dependencies]
+dotenvy = {workspace = true}

@@ -49,9 +49,9 @@ async fn main() -> Result<()> {
         output.into_iter().map(|tool| tool.into()).collect();
     let description = commands
         .iter()
-        .map(|command| command.description.as_str())
+        .map(|command| command.name.as_str())
         .collect::<Vec<&str>>()
-        .join(" ");
+        .join(", ")+".";
     let manual = ToolManual {
         name,
         description,

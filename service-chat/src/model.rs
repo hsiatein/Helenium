@@ -24,10 +24,11 @@ pub struct HelenyModel {
     client: Client<OpenAIConfig>,
     schema: &'static str,
     endpoint: Endpoint,
+    timeout: u64,
 }
 
 impl HelenyModel {
-    pub fn new(preset: String, api_config: ApiConfig, endpoint: Endpoint) -> Self {
+    pub fn new(preset: String, api_config: ApiConfig, endpoint: Endpoint, timeout:u64) -> Self {
         let config = OpenAIConfig::new()
             .with_api_base(api_config.base_url)
             .with_api_key(api_config.api_key);
@@ -37,6 +38,7 @@ impl HelenyModel {
             client: Client::with_config(config),
             schema: HELENY_SCHEMA,
             endpoint,
+            timeout,
         }
     }
 

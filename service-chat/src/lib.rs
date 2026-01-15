@@ -76,6 +76,7 @@ impl Service for ChatService {
                 .context("没有此 API 配置")?
                 .to_owned(),
             endpoint.create_sender_endpoint(),
+            config.timeout_secs
         );
         // 构造实例
         let instance = Self {
@@ -117,6 +118,7 @@ impl Service for ChatService {
                 let planner = PlannerModel::new(
                     self.config.planner.preset.clone() + &tool_descriptions,
                     api_config,
+                    self.config.timeout_secs
                 );
                 let _ = feedback.send(planner);
                 Ok(())
@@ -128,7 +130,7 @@ impl Service for ChatService {
                     .get(self.config.executor.api)
                     .context("没有此 API 配置")?
                     .to_owned();
-                let executor = ExecutorModel::new(self.config.executor.preset.clone(), api_config);
+                let executor = ExecutorModel::new(self.config.executor.preset.clone(), api_config,self.config.timeout_secs);
                 let _ = feedback.send(executor);
                 Ok(())
             }

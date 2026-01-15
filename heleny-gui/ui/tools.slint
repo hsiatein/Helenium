@@ -12,6 +12,7 @@ export struct ToolAbstractItem {
     available: bool,
     expanded: bool,
     desc_expanded: bool,
+    enable: bool,
 }
 
 component CommandCapsule inherits Rectangle {
@@ -101,6 +102,7 @@ component CommandsPanel inherits Rectangle {
 export component ToolsView inherits Rectangle {
     in property <[ToolAbstractItem]> tools: [];
     callback refresh();
+    callback enable_tool(string, bool);
 
     background: #f0f8ff;
 
@@ -172,11 +174,20 @@ export component ToolsView inherits Rectangle {
                                         height: name.height;
                                         VerticalLayout {
                                             alignment: center;
-                                            Rectangle {
-                                                width: 10px;
-                                                height: 10px;
-                                                border-radius: 5px;
-                                                background: tool.available ? #39d98a : #ff5b5b;
+                                            height: name.height;
+                                            width: 30px;
+                                            TouchArea {
+                                                width: parent.width;
+                                                height: parent.height;
+                                                clicked => { root.enable_tool(tool.name, !tool.enable); }
+                                                Rectangle {
+                                                    width: 10px;
+                                                    height: 10px;
+                                                    border-radius: 5px;
+                                                    background: tool.available
+                                                        ? (tool.enable ? #39d98a : #f4c542)
+                                                        : #ff5b5b;
+                                                }
                                             }
                                         }
                                         name:=NameCapsule { text: tool.name; }

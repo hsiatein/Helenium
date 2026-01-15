@@ -1,0 +1,548 @@
+{
+    "name": "opendia",
+    "description": "page_analyze, page_extract_content, element_click, element_fill, page_navigate, page_wait_for, tab_create, tab_close, tab_list, tab_switch, element_get_state, get_bookmarks, add_bookmark, get_history, get_selected_text, page_scroll, get_page_links, page_style.",
+    "commands": [
+        {
+            "name": "page_analyze",
+            "description": "🔍 BACKGROUND TAB READY: Analyze any tab without switching! Two-phase intelligent page analysis with token efficiency optimization. Use tab_id parameter to analyze background tabs while staying on current page. (Extension required)",
+            "args": [
+                {
+                    "name": "phase",
+                    "description": "Analysis phase: 'discover' for quick scan, 'detailed' for full analysis, 额外信息: enum: [\"discover\",\"detailed\"]",
+                    "type": "string",
+                    "required": false,
+                    "default": "discover"
+                },
+                {
+                    "name": "intent_hint",
+                    "description": "What user wants to do: post_tweet, search, login, etc.",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "page_extract_content",
+            "description": "📄 BACKGROUND TAB READY: Extract content from any tab without switching! Perfect for analyzing multiple research tabs, articles, or pages simultaneously. Use tab_id to target specific background tabs. (Extension required)",
+            "args": [
+                {
+                    "name": "content_type",
+                    "description": "Type of content to extract, 额外信息: enum: [\"article\",\"search_results\",\"posts\"]",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "summarize",
+                    "description": "Return summary instead of full content (saves tokens)",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                }
+            ]
+        },
+        {
+            "name": "element_click",
+            "description": "🖱️ BACKGROUND TAB READY: Click elements in any tab without switching! Perform actions on background tabs while staying on current page. Use tab_id to target specific tabs. (Extension required)",
+            "args": [
+                {
+                    "name": "element_id",
+                    "description": "Element ID from page_analyze",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "click_type",
+                    "description": ", 额外信息: enum: [\"left\",\"right\",\"double\"]",
+                    "type": "string",
+                    "required": false,
+                    "default": "left"
+                }
+            ]
+        },
+        {
+            "name": "element_fill",
+            "description": "✏️ BACKGROUND TAB READY: Fill forms in any tab without switching! Enhanced focus and event simulation for modern web apps with anti-detection bypass for Twitter/X, LinkedIn, Facebook. Use tab_id to fill forms in background tabs. (Extension required)",
+            "args": [
+                {
+                    "name": "element_id",
+                    "description": "Element ID from page_analyze",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "value",
+                    "description": "Text to input",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "clear_first",
+                    "description": "Clear existing content before filling",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                }
+            ]
+        },
+        {
+            "name": "page_navigate",
+            "description": "🧭 Navigate to URLs with wait conditions (Extension required)",
+            "args": [
+                {
+                    "name": "url",
+                    "description": "URL to navigate to",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "wait_for",
+                    "description": "CSS selector to wait for after navigation",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "page_wait_for",
+            "description": "⏳ Wait for elements or conditions (Extension required)",
+            "args": [
+                {
+                    "name": "text",
+                    "description": "Text to wait for (for text_present condition)",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "selector",
+                    "description": "CSS selector (for element_visible condition)",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "condition_type",
+                    "description": "Type of condition to wait for, 额外信息: enum: [\"element_visible\",\"text_present\"]",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "tab_create",
+            "description": "Creates tabs. CRITICAL: For multiple identical tabs, ALWAYS use 'count' parameter! Examples: {url: 'https://x.com', count: 5} creates 5 Twitter tabs. {url: 'https://github.com', count: 10} creates 10 GitHub tabs. Single tab: {url: 'https://example.com'}. Multiple different URLs: {urls: ['url1', 'url2']}.",
+            "args": [
+                {
+                    "name": "count",
+                    "description": "REQUIRED FOR MULTIPLE IDENTICAL TABS: Set this to N to create N copies of the same URL. For '5 Twitter tabs' use count=5 with url='https://x.com'. DO NOT make 5 separate calls!, 额外信息: maximum: 50, minimum: 1",
+                    "type": "number",
+                    "required": false,
+                    "default": 1
+                },
+                {
+                    "name": "urls",
+                    "description": "PREFERRED FOR MULTIPLE URLS: Array of URLs to open ALL AT ONCE in a single batch operation. Pass ALL URLs here instead of making multiple calls! Example: ['https://x.com/post1', 'https://x.com/post2', 'https://google.com'], 额外信息: items: {\"type\":\"string\"}, maxItems: 100",
+                    "type": "array",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "timeout",
+                    "description": "Maximum wait time per tab in milliseconds",
+                    "type": "number",
+                    "required": false,
+                    "default": 10000
+                },
+                {
+                    "name": "active",
+                    "description": "Whether to activate the last created tab (single tab only)",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "url",
+                    "description": "Single URL to open. Can be used with 'count' to create multiple identical tabs",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "wait_for",
+                    "description": "CSS selector to wait for after tab creation (single tab only)",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "batch_settings",
+                    "description": "Performance control settings for batch operations, 额外信息: properties: {\"chunk_size\":{\"default\":5,\"description\":\"Number of tabs to create per batch\",\"maximum\":10,\"minimum\":1,\"type\":\"number\"},\"delay_between_chunks\":{\"default\":1000,\"description\":\"Delay between batches in milliseconds\",\"maximum\":5000,\"minimum\":100,\"type\":\"number\"},\"delay_between_tabs\":{\"default\":200,\"description\":\"Delay between individual tabs in milliseconds\",\"maximum\":1000,\"minimum\":50,\"type\":\"number\"}}",
+                    "type": "object",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "tab_close",
+            "description": "❌ Close specific tab(s) by ID or close current tab (Extension required)",
+            "args": [
+                {
+                    "name": "tab_id",
+                    "description": "Specific tab ID to close (optional, closes current tab if not provided)",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "tab_ids",
+                    "description": "Array of tab IDs to close multiple tabs, 额外信息: items: {\"type\":\"number\"}",
+                    "type": "array",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "tab_list",
+            "description": "📋 TAB DISCOVERY: Get list of all open tabs with IDs for background tab targeting! Shows content script readiness status and tab details. Essential for multi-tab workflows - use tab IDs with other tools to work on background tabs. (Extension required)",
+            "args": [
+                {
+                    "name": "current_window_only",
+                    "description": "Only return tabs from the current window",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "include_details",
+                    "description": "Include additional tab details (title, favicon, etc.)",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                }
+            ]
+        },
+        {
+            "name": "tab_switch",
+            "description": "🔄 Switch to a specific tab by ID (Extension required)",
+            "args": [
+                {
+                    "name": "tab_id",
+                    "description": "Tab ID to switch to",
+                    "type": "number",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "element_get_state",
+            "description": "🔍 Get detailed state information for a specific element (disabled, clickable, etc.) (Extension required)",
+            "args": [
+                {
+                    "name": "element_id",
+                    "description": "Element ID from page_analyze",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_bookmarks",
+            "description": "Get all bookmarks or search for specific bookmarks (Extension required)",
+            "args": [
+                {
+                    "name": "query",
+                    "description": "Search query for bookmarks (optional)",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "add_bookmark",
+            "description": "Add a new bookmark (Extension required)",
+            "args": [
+                {
+                    "name": "parentId",
+                    "description": "ID of the parent folder (optional)",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "url",
+                    "description": "URL of the bookmark",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "title",
+                    "description": "Title of the bookmark",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_history",
+            "description": "🕒 Search browser history with comprehensive filters for finding previous work (Extension required)",
+            "args": [
+                {
+                    "name": "sort_order",
+                    "description": "Sort order, 额外信息: enum: [\"desc\",\"asc\"]",
+                    "type": "string",
+                    "required": false,
+                    "default": "desc"
+                },
+                {
+                    "name": "keywords",
+                    "description": "Search keywords to match in page titles and URLs",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "max_results",
+                    "description": "Maximum number of results to return, 额外信息: maximum: 500",
+                    "type": "number",
+                    "required": false,
+                    "default": 50
+                },
+                {
+                    "name": "start_date",
+                    "description": "Start date for history search (ISO 8601 format), 额外信息: format: \"date-time\"",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "sort_by",
+                    "description": "Sort results by visit time, visit count, or title, 额外信息: enum: [\"visit_time\",\"visit_count\",\"title\"]",
+                    "type": "string",
+                    "required": false,
+                    "default": "visit_time"
+                },
+                {
+                    "name": "end_date",
+                    "description": "End date for history search (ISO 8601 format), 额外信息: format: \"date-time\"",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "domains",
+                    "description": "Filter by specific domains, 额外信息: items: {\"type\":\"string\"}",
+                    "type": "array",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "min_visit_count",
+                    "description": "Minimum visit count threshold",
+                    "type": "number",
+                    "required": false,
+                    "default": 1
+                }
+            ]
+        },
+        {
+            "name": "get_selected_text",
+            "description": "📝 BACKGROUND TAB READY: Get selected text from any tab without switching! Perfect for collecting quotes, citations, or highlighted content from multiple research tabs simultaneously. (Extension required)",
+            "args": [
+                {
+                    "name": "max_length",
+                    "description": "Maximum length of text to return",
+                    "type": "number",
+                    "required": false,
+                    "default": 10000
+                },
+                {
+                    "name": "include_metadata",
+                    "description": "Include metadata about the selection (element info, position, etc.)",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                }
+            ]
+        },
+        {
+            "name": "page_scroll",
+            "description": "📜 BACKGROUND TAB READY: Scroll any tab without switching! Critical for long pages. Navigate through content in background tabs while staying on current page. Use tab_id to target specific tabs. (Extension required)",
+            "args": [
+                {
+                    "name": "pixels",
+                    "description": "Custom pixel amount (when amount is 'custom')",
+                    "type": "number",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "wait_after",
+                    "description": "Milliseconds to wait after scrolling",
+                    "type": "number",
+                    "required": false,
+                    "default": 500
+                },
+                {
+                    "name": "amount",
+                    "description": "Amount to scroll, 额外信息: enum: [\"small\",\"medium\",\"large\",\"page\",\"custom\"]",
+                    "type": "string",
+                    "required": false,
+                    "default": "medium"
+                },
+                {
+                    "name": "smooth",
+                    "description": "Use smooth scrolling animation",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "direction",
+                    "description": "Direction to scroll, 额外信息: enum: [\"up\",\"down\",\"left\",\"right\",\"top\",\"bottom\"]",
+                    "type": "string",
+                    "required": false,
+                    "default": "down"
+                },
+                {
+                    "name": "element_id",
+                    "description": "Scroll to specific element (overrides direction/amount)",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_page_links",
+            "description": "🔗 Get all hyperlinks on the current page with smart filtering (Extension required)",
+            "args": [
+                {
+                    "name": "include_external",
+                    "description": "Include external links (different domains)",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                },
+                {
+                    "name": "domain_filter",
+                    "description": "Filter links to include only specific domain(s)",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "max_results",
+                    "description": "Maximum number of links to return, 额外信息: maximum: 500",
+                    "type": "number",
+                    "required": false,
+                    "default": 100
+                },
+                {
+                    "name": "include_internal",
+                    "description": "Include internal links (same domain)",
+                    "type": "boolean",
+                    "required": false,
+                    "default": true
+                }
+            ]
+        },
+        {
+            "name": "page_style",
+            "description": "🎨 Transform page appearance with themes, colors, fonts, and fun effects! Apply preset themes like 'dark_hacker', 'retro_80s', or create custom styles. Perfect for making boring pages fun or improving readability.",
+            "args": [
+                {
+                    "name": "remember",
+                    "description": "Remember this style for this website",
+                    "type": "boolean",
+                    "required": false,
+                    "default": false
+                },
+                {
+                    "name": "duration",
+                    "description": "Effect duration in seconds",
+                    "type": "number",
+                    "required": false,
+                    "default": 10
+                },
+                {
+                    "name": "text_color",
+                    "description": "Text color",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "mode",
+                    "description": "Styling mode to use, 额外信息: enum: [\"preset\",\"custom\",\"ai_mood\",\"effect\",\"reset\"]",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "effect",
+                    "description": ", 额外信息: enum: [\"matrix_rain\",\"floating_particles\",\"cursor_trail\",\"neon_glow\",\"typing_effect\"]",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "font_size",
+                    "description": "Font size (e.g., '1.2em', '16px')",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "mood",
+                    "description": "Describe desired mood/feeling (when mode=ai_mood)",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "intensity",
+                    "description": ", 额外信息: enum: [\"subtle\",\"medium\",\"strong\"]",
+                    "type": "string",
+                    "required": false,
+                    "default": "medium"
+                },
+                {
+                    "name": "font",
+                    "description": "Font family",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "theme",
+                    "description": "Preset theme name (when mode=preset), 额外信息: enum: [\"dark_hacker\",\"retro_80s\",\"rainbow_party\",\"minimalist_zen\",\"high_contrast\",\"cyberpunk\",\"pastel_dream\",\"newspaper\"]",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "background",
+                    "description": "Background color/gradient",
+                    "type": "string",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        }
+    ]
+}

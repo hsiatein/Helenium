@@ -1,0 +1,933 @@
+{
+    "name": "excel",
+    "description": "apply_formula, validate_formula_syntax, format_range, read_data_from_excel, write_data_to_excel, create_workbook, create_worksheet, create_chart, create_pivot_table, create_table, copy_worksheet, delete_worksheet, rename_worksheet, get_workbook_metadata, merge_cells, unmerge_cells, get_merged_cells, copy_range, delete_range, validate_excel_range, get_data_validation_info, insert_rows, insert_columns, delete_sheet_rows, delete_sheet_columns.",
+    "commands": [
+        {
+            "name": "apply_formula",
+            "description": "\nApply Excel formula to cell.\nExcel formula will write to cell with verification.\n",
+            "args": [
+                {
+                    "name": "formula",
+                    "description": ", 额外信息: title: \"Formula\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "cell",
+                    "description": ", 额外信息: title: \"Cell\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "validate_formula_syntax",
+            "description": "Validate Excel formula syntax without applying it.",
+            "args": [
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "formula",
+                    "description": ", 额外信息: title: \"Formula\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "cell",
+                    "description": ", 额外信息: title: \"Cell\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "format_range",
+            "description": "Apply formatting to a range of cells.",
+            "args": [
+                {
+                    "name": "start_cell",
+                    "description": ", 额外信息: title: \"Start Cell\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "merge_cells",
+                    "description": ", 额外信息: title: \"Merge Cells\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": false
+                },
+                {
+                    "name": "alignment",
+                    "description": ", 额外信息: title: \"Alignment\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "end_cell",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"End Cell\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "protection",
+                    "description": ", 额外信息: anyOf: [{\"additionalProperties\":true,\"type\":\"object\"},{\"type\":\"null\"}], title: \"Protection\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "number_format",
+                    "description": ", 额外信息: title: \"Number Format\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "bold",
+                    "description": ", 额外信息: title: \"Bold\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": false
+                },
+                {
+                    "name": "border_color",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Border Color\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "bg_color",
+                    "description": ", 额外信息: title: \"Bg Color\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "border_style",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Border Style\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "conditional_format",
+                    "description": ", 额外信息: anyOf: [{\"additionalProperties\":true,\"type\":\"object\"},{\"type\":\"null\"}], title: \"Conditional Format\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "font_color",
+                    "description": ", 额外信息: title: \"Font Color\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "italic",
+                    "description": ", 额外信息: title: \"Italic\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": false
+                },
+                {
+                    "name": "underline",
+                    "description": ", 额外信息: title: \"Underline\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": false
+                },
+                {
+                    "name": "wrap_text",
+                    "description": ", 额外信息: title: \"Wrap Text\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": false
+                },
+                {
+                    "name": "font_size",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"integer\"},{\"type\":\"null\"}], title: \"Font Size\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "read_data_from_excel",
+            "description": "\nRead data from Excel worksheet with cell metadata including validation rules.\n\nArgs:\n    filepath: Path to Excel file\n    sheet_name: Name of worksheet\n    start_cell: Starting cell (default A1)\n    end_cell: Ending cell (optional, auto-expands if not provided)\n    preview_only: Whether to return preview only\n\nReturns:  \nJSON string containing structured cell data with validation metadata.\nEach cell includes: address, value, row, column, and validation info (if any).\n",
+            "args": [
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "end_cell",
+                    "description": ", 额外信息: title: \"End Cell\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "preview_only",
+                    "description": ", 额外信息: title: \"Preview Only\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": false
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "start_cell",
+                    "description": ", 额外信息: title: \"Start Cell\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "A1"
+                }
+            ]
+        },
+        {
+            "name": "write_data_to_excel",
+            "description": "\nWrite data to Excel worksheet.\nExcel formula will write to cell without any verification.\n\nPARAMETERS:  \nfilepath: Path to Excel file\nsheet_name: Name of worksheet to write to\ndata: List of lists containing data to write to the worksheet, sublists are assumed to be rows\nstart_cell: Cell to start writing to, default is \"A1\"\n\n",
+            "args": [
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "data",
+                    "description": ", 额外信息: title: \"Data\", items: {\"items\":{},\"type\":\"array\"}",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "start_cell",
+                    "description": ", 额外信息: title: \"Start Cell\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "A1"
+                }
+            ]
+        },
+        {
+            "name": "create_workbook",
+            "description": "Create new Excel workbook.",
+            "args": [
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "create_worksheet",
+            "description": "Create new worksheet in workbook.",
+            "args": [
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "create_chart",
+            "description": "Create chart in worksheet.",
+            "args": [
+                {
+                    "name": "y_axis",
+                    "description": ", 额外信息: title: \"Y Axis\"",
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                {
+                    "name": "target_cell",
+                    "description": ", 额外信息: title: \"Target Cell\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "title",
+                    "description": ", 额外信息: title: \"Title\"",
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                {
+                    "name": "x_axis",
+                    "description": ", 额外信息: title: \"X Axis\"",
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "chart_type",
+                    "description": ", 额外信息: title: \"Chart Type\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "data_range",
+                    "description": ", 额外信息: title: \"Data Range\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "create_pivot_table",
+            "description": "Create pivot table in worksheet.",
+            "args": [
+                {
+                    "name": "values",
+                    "description": ", 额外信息: items: {\"type\":\"string\"}, title: \"Values\"",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "agg_func",
+                    "description": ", 额外信息: title: \"Agg Func\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "mean"
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "data_range",
+                    "description": ", 额外信息: title: \"Data Range\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "columns",
+                    "description": ", 额外信息: anyOf: [{\"items\":{\"type\":\"string\"},\"type\":\"array\"},{\"type\":\"null\"}], title: \"Columns\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "rows",
+                    "description": ", 额外信息: title: \"Rows\", items: {\"type\":\"string\"}",
+                    "type": "array",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "create_table",
+            "description": "Creates a native Excel table from a specified range of data.",
+            "args": [
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "data_range",
+                    "description": ", 额外信息: title: \"Data Range\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "table_name",
+                    "description": ", 额外信息: title: \"Table Name\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "table_style",
+                    "description": ", 额外信息: title: \"Table Style\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "TableStyleMedium9"
+                }
+            ]
+        },
+        {
+            "name": "copy_worksheet",
+            "description": "Copy worksheet within workbook.",
+            "args": [
+                {
+                    "name": "target_sheet",
+                    "description": ", 额外信息: title: \"Target Sheet\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "source_sheet",
+                    "description": ", 额外信息: title: \"Source Sheet\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "delete_worksheet",
+            "description": "Delete worksheet from workbook.",
+            "args": [
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "rename_worksheet",
+            "description": "Rename worksheet in workbook.",
+            "args": [
+                {
+                    "name": "old_name",
+                    "description": ", 额外信息: title: \"Old Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "new_name",
+                    "description": ", 额外信息: title: \"New Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_workbook_metadata",
+            "description": "Get metadata about workbook including sheets, ranges, etc.",
+            "args": [
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "include_ranges",
+                    "description": ", 额外信息: title: \"Include Ranges\"",
+                    "type": "boolean",
+                    "required": false,
+                    "default": false
+                }
+            ]
+        },
+        {
+            "name": "merge_cells",
+            "description": "Merge a range of cells.",
+            "args": [
+                {
+                    "name": "start_cell",
+                    "description": ", 额外信息: title: \"Start Cell\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "end_cell",
+                    "description": ", 额外信息: title: \"End Cell\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "unmerge_cells",
+            "description": "Unmerge a range of cells.",
+            "args": [
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "start_cell",
+                    "description": ", 额外信息: title: \"Start Cell\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "end_cell",
+                    "description": ", 额外信息: title: \"End Cell\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_merged_cells",
+            "description": "Get merged cells in a worksheet.",
+            "args": [
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "copy_range",
+            "description": "Copy a range of cells to another location.",
+            "args": [
+                {
+                    "name": "source_end",
+                    "description": ", 额外信息: title: \"Source End\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "source_start",
+                    "description": ", 额外信息: title: \"Source Start\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "target_sheet",
+                    "description": ", 额外信息: anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}], title: \"Target Sheet\"",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "target_start",
+                    "description": ", 额外信息: title: \"Target Start\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "delete_range",
+            "description": "Delete a range of cells and shift remaining cells.",
+            "args": [
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "shift_direction",
+                    "description": ", 额外信息: title: \"Shift Direction\"",
+                    "type": "string",
+                    "required": false,
+                    "default": "up"
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "start_cell",
+                    "description": ", 额外信息: title: \"Start Cell\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "end_cell",
+                    "description": ", 额外信息: title: \"End Cell\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "validate_excel_range",
+            "description": "Validate if a range exists and is properly formatted.",
+            "args": [
+                {
+                    "name": "start_cell",
+                    "description": ", 额外信息: title: \"Start Cell\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "end_cell",
+                    "description": ", 额外信息: title: \"End Cell\", anyOf: [{\"type\":\"string\"},{\"type\":\"null\"}]",
+                    "type": "",
+                    "required": false,
+                    "default": null
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "get_data_validation_info",
+            "description": "\nGet all data validation rules in a worksheet.\n\nThis tool helps identify which cell ranges have validation rules\nand what types of validation are applied.\n\nArgs:\n    filepath: Path to Excel file\n    sheet_name: Name of worksheet\n    \nReturns:\n    JSON string containing all validation rules in the worksheet\n",
+            "args": [
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "insert_rows",
+            "description": "Insert one or more rows starting at the specified row.",
+            "args": [
+                {
+                    "name": "start_row",
+                    "description": ", 额外信息: title: \"Start Row\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "count",
+                    "description": ", 额外信息: title: \"Count\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 1
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "insert_columns",
+            "description": "Insert one or more columns starting at the specified column.",
+            "args": [
+                {
+                    "name": "count",
+                    "description": ", 额外信息: title: \"Count\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 1
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "start_col",
+                    "description": ", 额外信息: title: \"Start Col\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        },
+        {
+            "name": "delete_sheet_rows",
+            "description": "Delete one or more rows starting at the specified row.",
+            "args": [
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "start_row",
+                    "description": ", 额外信息: title: \"Start Row\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "count",
+                    "description": ", 额外信息: title: \"Count\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 1
+                }
+            ]
+        },
+        {
+            "name": "delete_sheet_columns",
+            "description": "Delete one or more columns starting at the specified column.",
+            "args": [
+                {
+                    "name": "count",
+                    "description": ", 额外信息: title: \"Count\"",
+                    "type": "integer",
+                    "required": false,
+                    "default": 1
+                },
+                {
+                    "name": "sheet_name",
+                    "description": ", 额外信息: title: \"Sheet Name\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "start_col",
+                    "description": ", 额外信息: title: \"Start Col\"",
+                    "type": "integer",
+                    "required": true,
+                    "default": null
+                },
+                {
+                    "name": "filepath",
+                    "description": ", 额外信息: title: \"Filepath\"",
+                    "type": "string",
+                    "required": true,
+                    "default": null
+                }
+            ]
+        }
+    ]
+}
