@@ -67,7 +67,12 @@ impl HelenyModel {
         // 获取响应
         let response = self._chat(messages).await?;
         let heleny_reply: HelenyReply =
-            serde_json::from_str(&response).context("解析 Response 为 HelenyReply 失败")?;
+            match serde_json::from_str(&response) {
+                Ok(resp)=>resp,
+                Err(e)=>{
+                    return Err(anyhow::anyhow!("解析 {} 为 HelenyReply失败: {}",response,e));
+                }
+            };
         // Post 回复
         let HelenyReply { content, need_help } = heleny_reply;
         let entry = MemoryEntry::new(ChatRole::Assistant, MemoryContent::Text(content));

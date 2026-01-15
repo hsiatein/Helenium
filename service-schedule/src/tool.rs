@@ -72,9 +72,9 @@ impl HelenyTool for ScheduleTool {
                 Ok("新建 Once 日程任务完成".into())
             }
             "interval" => {
-                let every: String = get_tool_arg(&mut args, "every")?;
+                let every: u64 = get_tool_arg(&mut args, "every")?;
                 let description: String = get_tool_arg(&mut args, "description")?;
-                let task = ScheduledTask::from_interval(description, self.offset, &every)?;
+                let task = ScheduledTask::from_interval(description, self.offset, every)?;
                 request
                     .request_consent(format!("申请新建日程任务: {:?}", task))
                     .await?;

@@ -17,6 +17,7 @@ use heleny_service::get_tool_descriptions;
 use heleny_service::read_via_fs_service;
 use tokio::time::Instant;
 use tracing::info;
+use tracing::warn;
 
 use crate::config::ChatConfig;
 use crate::model::HelenyModel;
@@ -46,7 +47,7 @@ impl Service for ChatService {
         for api in &mut config.api {
             if api.api_key.is_empty() {
                 api.api_key =
-                    std::env::var(&api.api_key_env_var).context("读取 API KEY 环境变量失败")?;
+                    std::env::var(&api.api_key_env_var).context("读取 API KEY 环境变量失败").unwrap_or("".into());
             }
         }
         // 读取预设
@@ -68,13 +69,17 @@ impl Service for ChatService {
         }
         info!("Heleny 预设读取完成");
         // 构造 Heleny
-        let heleny = HelenyModel::new(
-            config.heleny.preset.clone(),
-            config
+        let api=config
                 .api
                 .get(config.heleny.api)
                 .context("没有此 API 配置")?
-                .to_owned(),
+                .to_owned();
+        if api.api_key.is_empty() {
+            warn!("注意, Heleny 使用的 API 没有 API_KEY");
+        }
+        let heleny = HelenyModel::new(
+            config.heleny.preset.clone(),
+            api,
             endpoint.create_sender_endpoint(),
             config.timeout_secs
         );

@@ -1,6 +1,6 @@
 {
     "name": "comfyui",
-    "description": "使用comfyui进行图像生成并发送给用户。默认值为Heleny的默认外貌设定，当用户提出想看Heleny的图时应使用此工具。只允许控制衣服饰品，人物动作。",
+    "description": "使用comfyui进行图像生成并发送给用户。默认值为Heleny的默认外貌设定，当用户提出想看Heleny的照片，图像等等时应使用此工具。只允许控制衣服饰品，人物动作。",
     "commands": [
         {
             "name": "generate",

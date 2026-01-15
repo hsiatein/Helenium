@@ -40,6 +40,11 @@
                 "base_url": "https://api.x.ai/v1",
                 "model": "grok-4-1-fast-reasoning",
                 "api_key_env_var": "GROK_API_KEY"
+            },
+            {
+                "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                "model": "qwen-plus",
+                "api_key_env_var": "QWEN_API_KEY"
             }
         ],
         "heleny": {

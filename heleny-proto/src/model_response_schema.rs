@@ -1,3 +1,5 @@
+use std::any;
+use std::any::Any;
 use std::collections::HashMap;
 
 use anyhow::Result;
@@ -34,8 +36,8 @@ pub fn get_tool_arg<T: DeserializeOwned>(
     let Some(arg) = args.remove(name) else {
         return Err(anyhow::anyhow!("没有找到此参数名: {}", name));
     };
-    let Ok(arg) = serde_json::from_value(arg) else {
-        return Err(anyhow::anyhow!("解析成目标类型失败"));
+    let Ok(arg) = serde_json::from_value(arg.clone()) else {
+        return Err(anyhow::anyhow!("{arg} 解析成目标类型 {} 失败",any::type_name::<T>()));
     };
     Ok(arg)
 }

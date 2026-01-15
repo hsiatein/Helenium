@@ -99,9 +99,9 @@ MCP工具 ( 不安装不影响使用聊天，但是影响使用MCP工具 ) ：
    ```
 3. 新建.env文件, 在里面设置HELENIUM_CONFIG环境变量
    ```
-   touch ./.env
-   # HELENIUM_CONFIG=./Config.json
-   # LAUNCH_HELENIUM_BACKEND=true
+   HELENIUM_CONFIG=./Config.json
+   LAUNCH_HELENIUM_BACKEND=true
+   XXX_API_KEY=xxx...
    ```
    
 4. LAUNCH_HELENIUM_BACKEND=true时，只需要运行GUI，GUI会自动拉起服务端
@@ -121,6 +121,14 @@ MCP工具 ( 不安装不影响使用聊天，但是影响使用MCP工具 ) ：
 
 <!-- USAGE EXAMPLES -->
 ## 用法
+
+UI 服务默认开在4080端口，可以在config.json->WebuiService->port修改
+
+config.json->ChatService->api是可用的api的数组，其中api密钥填环境变量名，具体值由环境变量值给出
+
+config.json->ChatService->heleny/planner/executor->api是api数组的索引，表示使用哪一个api
+
+
 
 可以创建assets/presets/persona.txt文件，写入人设。
 

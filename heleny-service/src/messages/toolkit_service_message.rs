@@ -66,7 +66,7 @@ impl Toolkit {
             args,
         } = intent;
         let (Some(tool_name), Some(command)) = (tool, command) else {
-            return "未指定工具或命令".to_string();
+            return "你没有提供 command 字段! 注意, 你要把工具名写在tool字段, 命令名写在command字段, 参数写在args字段, 绝对不能把调用放在一个字段里! 你不能在tool字段里嵌套json放command和args字段!!!".to_string();
         };
         match self.tools.get_mut(&tool_name) {
             Some(tool) => {

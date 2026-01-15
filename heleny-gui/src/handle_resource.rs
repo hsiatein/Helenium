@@ -35,7 +35,7 @@ impl FrontendHandler {
                 self.handle_schedules(schedules).await
             }
             ResourcePayload::ToolAbstracts { abstracts } => {
-                debug!("ToolAbstracts: {:?}", abstracts);
+                // debug!("ToolAbstracts: {:?}", abstracts);
                 self.handle_tool_abstracts(abstracts).await
             }
         }

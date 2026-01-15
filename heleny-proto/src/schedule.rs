@@ -54,10 +54,7 @@ impl TriggerTime {
         }
     }
 
-    pub fn from_interval(interval_str: &str, offset: &FixedOffset) -> Result<TriggerTime> {
-        let interval_minutes: u64 = interval_str
-            .parse()
-            .context("Interval 字段格式错误，应为正整数")?;
+    pub fn from_interval(interval_minutes: u64, offset: &FixedOffset) -> Result<TriggerTime> {
         if interval_minutes == 0 {
             anyhow::bail!("Interval 必须 >= 1 分钟");
         }
@@ -329,7 +326,7 @@ impl ScheduledTask {
     pub fn from_interval(
         description: String,
         offset: i32,
-        interval_str: &str,
+        interval_str: u64,
     ) -> Result<ScheduledTask> {
         let triggers = vec![TriggerTime::from_interval(
             interval_str,
@@ -432,14 +429,14 @@ mod tests {
     #[test]
     fn from_interval_validates_input() {
         let offset = FixedOffset::east_opt(0).unwrap();
-        let trigger = TriggerTime::from_interval("5", &offset).unwrap();
+        let trigger = TriggerTime::from_interval(5, &offset).unwrap();
         match trigger {
             TriggerTime::Interval {
                 interval_minutes, ..
             } => assert_eq!(interval_minutes, 5),
             _ => panic!("expected Interval"),
         }
-        assert!(TriggerTime::from_interval("0", &offset).is_err());
+        assert!(TriggerTime::from_interval(0, &offset).is_err());
     }
 
     #[test]
