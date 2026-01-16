@@ -10,7 +10,9 @@ use axum::extract::State;
 use axum::extract::WebSocketUpgrade;
 use axum::extract::ws::Message;
 use axum::extract::ws::WebSocket;
+use axum::http::HeaderValue;
 use axum::http::StatusCode;
+use axum::http::header::CACHE_CONTROL;
 use axum::response::IntoResponse;
 use axum::response::Response;
 use axum::routing::any;
@@ -29,9 +31,12 @@ use heleny_service::WebuiServiceMessage;
 use heleny_service::get_from_config_service;
 use message::SessionMessage;
 use std::collections::HashMap;
+use std::time::{SystemTime, UNIX_EPOCH};
+use tower::ServiceBuilder;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
+use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::services::ServeDir;
 use tower_http::services::ServeFile;
 use tracing::debug;
@@ -66,6 +71,12 @@ impl Service for WebuiService {
         // 开启 Web 服务
         let serve_dir = ServeDir::new("heleny-webui/dist")
             .not_found_service(ServeFile::new("heleny-webui/dist/index.html"));
+        let serve_dir = ServiceBuilder::new()
+            .layer(SetResponseHeaderLayer::overriding(
+                CACHE_CONTROL,
+                HeaderValue::from_static("no-store, must-revalidate"),
+            ))
+            .service(serve_dir);
         let register = Register::new(endpoint.create_sub_endpoint()?, config.session_buffer);
         let router = Router::new()
             .fallback_service(serve_dir)
@@ -80,7 +91,11 @@ impl Service for WebuiService {
                 error!("Axum 服务错误: {}", e);
             };
         });
-        open::that(format!("http://127.0.0.1:{}", config.port))?;
+        let cache_bust = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis();
+        open::that(format!("http://127.0.0.1:{}/?v={}", config.port, cache_bust))?;
         // 新建实例
         let instance = Self {
             endpoint,

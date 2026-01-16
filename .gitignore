@@ -14,10 +14,10 @@ lerna-debug.log*
 heleny-webui/node_modules/*
 node_modules/*
 .DS_Store
-dist
 dist-ssr
 coverage
 *.local
+dist
 
 # Editor directories and files
 .vscode/*

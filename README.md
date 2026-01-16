@@ -56,7 +56,7 @@
 
 所有服务可以有自己的依赖, 其中所有服务都默认依赖内核服务, 并被内核服务管理生命周期. 
 
-GUI的实现基于 Slint(当前), WEBUI的实现基于 Vue/TS(暂时停更)
+GUI的实现基于 Slint, WEBUI的实现基于 Vue/TS
 
 ### AI使用情况
 
@@ -82,8 +82,9 @@ GUI的实现基于 Slint(当前), WEBUI的实现基于 Vue/TS(暂时停更)
 构建：
 * Rust工具链
 * cmake ( 大概可能是gui中的 Slint 库编译要用 )
+* npm ( 构建 WebUI 时使用 )
 
-MCP工具 ( 不安装不影响使用聊天，但是影响使用MCP工具 ) ：
+MCP工具 ( 不安装影响使用MCP工具，只能使用 Helenium 自带工具 ) ：
 * Docker
 * npm
 * uv
@@ -95,10 +96,12 @@ MCP工具 ( 不安装不影响使用聊天，但是影响使用MCP工具 ) ：
    git clone https://github.com/hsiatein/Helenium.git
    cd Helenium
    ```
+
 2. 构建
    ```sh
    cargo build --release
    ```
+
 3. 在项目根目录新建.env文件, 在里面设置HELENIUM_CONFIG环境变量
    ```
    HELENIUM_CONFIG=./Config.json
@@ -115,6 +118,12 @@ MCP工具 ( 不安装不影响使用聊天，但是影响使用MCP工具 ) ：
    ```sh
    ./target/release/heleny_server
    ./target/release/heleny_gui
+   ```
+
+6. 如果想使用 WebUI，还需要编译 Vue 文件
+   ```sh
+   cd heleny-webui/
+   npm run build
    ```
 
 <p align="right">(<a href="#readme-top">回到顶部</a>)</p>

@@ -98,17 +98,18 @@ socket.onmessage = (event: MessageEvent) => {
 
       if (data.UpdateResource.payload?.Schedules) {
         const schedulePayload = data.UpdateResource.payload.Schedules;
-        const schedules = schedulePayload?.schedules ?? {};
+        const schedules = (schedulePayload?.schedules ?? {}) as Record<string, any>;
         const entries = Object.entries(schedules).map(([id, schedule]) => {
-          const nextTrigger = schedule?.next_trigger
-            ? formatDateTime(schedule.next_trigger)
+          const scheduleData = schedule ?? {};
+          const nextTrigger = scheduleData.next_trigger
+            ? formatDateTime(scheduleData.next_trigger)
             : '没有下次运行';
-          const triggers = Array.isArray(schedule?.triggers)
-            ? schedule.triggers.map(formatTrigger)
+          const triggers = Array.isArray(scheduleData.triggers)
+            ? scheduleData.triggers.map(formatTrigger)
             : [];
           return {
             id,
-            description: schedule?.description ?? '',
+            description: scheduleData.description ?? '',
             next_trigger: nextTrigger,
             triggers,
           };

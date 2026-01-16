@@ -18,7 +18,7 @@ chrono = {version = "0.4.42",features = ["serde"]}
 ed25519-dalek = {version = "2.2.0",features = ["rand_core","pem"]}
 rand = "0.8.5"
 axum = {version = "0.8.8",features = ["ws"]}
-tower-http = { version = "0.6.8", features = ["fs"] }
+tower-http = { version = "0.6.8", features = ["fs","set-header"] }
 open = "5.3.3"
 async-openai = {version = "0.31.1",features = ["_api","responses","chat-completion"]}
 tokio-stream = "0.1.17"
@@ -32,3 +32,4 @@ pathdiff = "0.2.3"
 itertools = "0.14.0"
 bollard = "0.20.0"
 reqwest = { version = "0.13.1", features = ["json"] }
+tower = "0.5.3"
