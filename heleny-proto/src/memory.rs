@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-
 use anyhow::Result;
 use async_openai::types::chat::ChatCompletionRequestAssistantMessageArgs;
 use async_openai::types::chat::ChatCompletionRequestMessage;
@@ -10,7 +9,7 @@ use chrono::Local;
 use serde::Deserialize;
 use serde::Serialize;
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq,Copy)]
 pub enum ChatRole {
     System,
     Assistant,
@@ -41,6 +40,18 @@ pub enum MemoryContent {
     Image(PathBuf),
 }
 
+impl From<String> for MemoryContent {
+    fn from(value: String) -> Self {
+        MemoryContent::Text(value)
+    }
+}
+
+impl From<PathBuf> for MemoryContent {
+    fn from(value: PathBuf) -> Self {
+        MemoryContent::Image(value)
+    }
+}
+
 impl MemoryContent {
     pub fn to_str(&self) -> &str {
         match &self {
@@ -51,42 +62,29 @@ impl MemoryContent {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DisplayMessage {
+pub struct MemoryEntry {
     pub id: i64,
     pub role: ChatRole,
     pub time: DateTime<Local>,
     pub content: MemoryContent,
 }
 
-impl DisplayMessage {
-    pub fn new(id: i64, memory_entry: MemoryEntry) -> Self {
+impl MemoryEntry {
+    pub fn new(id: i64, role: ChatRole,time: DateTime<Local>,content: MemoryContent) -> Self {
         Self {
             id,
-            role: memory_entry.role,
-            time: memory_entry.time,
-            content: memory_entry.content,
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct MemoryEntry {
-    pub role: ChatRole,
-    pub time: DateTime<Local>,
-    pub content: MemoryContent,
-}
-
-impl MemoryEntry {
-    pub fn new(role: ChatRole, content: MemoryContent) -> Self {
-        Self {
             role,
-            time: Local::now(),
+            time,
             content,
         }
     }
-    pub fn to_chat_message(&self) -> Result<ChatCompletionRequestMessage> {
-        let content = self.time.to_string() + ":" + &self.content.to_str();
-        let msg = match self.role {
+}
+
+impl TryFrom<&MemoryEntry> for ChatCompletionRequestMessage {
+    type Error = anyhow::Error;
+    fn try_from(value: &MemoryEntry) -> std::result::Result<Self, Self::Error> {
+        let content = value.time.to_string() + ":" + value.content.to_str();
+        let msg = match value.role {
             ChatRole::System => ChatCompletionRequestSystemMessageArgs::default()
                 .content(content)
                 .build()?
@@ -102,4 +100,24 @@ impl MemoryEntry {
         };
         Ok(msg)
     }
+}
+
+pub fn build_async_openai_msg(role: ChatRole, content: &str)->Result<ChatCompletionRequestMessage>{
+    let time= Local::now();
+    let content = time.to_string() + ":" + content;
+    let msg = match role {
+        ChatRole::System => ChatCompletionRequestSystemMessageArgs::default()
+            .content(content)
+            .build()?
+            .into(),
+        ChatRole::User => ChatCompletionRequestUserMessageArgs::default()
+            .content(content)
+            .build()?
+            .into(),
+        ChatRole::Assistant => ChatCompletionRequestAssistantMessageArgs::default()
+            .content(content)
+            .build()?
+            .into(),
+    };
+    Ok(msg)
 }

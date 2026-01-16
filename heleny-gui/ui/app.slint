@@ -114,6 +114,7 @@ export component AppWindow inherits Window {
     in-out property <bool> kernel_shutdown:false;
     callback send(string);
     callback load_more_history([MessageItem]);
+    callback delete_message(int);
     callback shutdown();
     callback make_decision(string,bool);
     callback cancel_task(string);
@@ -242,6 +243,7 @@ export component AppWindow inherits Window {
                 chat_model: root.chat_model;
                 send(msg) => {root.send(msg)};
                 load_more_history => {root.load_more_history(root.chat_model)};
+                delete_message(id) => { root.delete_message(id); }
             }
             ScheduleView {
                 visible: root.active-tab==1;

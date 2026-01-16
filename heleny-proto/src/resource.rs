@@ -11,7 +11,7 @@ use crate::KernelHealth;
 use crate::ScheduledTask;
 use crate::TaskAbstract;
 use crate::ToolAbstract;
-use crate::memory::DisplayMessage;
+use crate::memory::MemoryEntry;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Resource {
@@ -41,7 +41,7 @@ pub enum ResourcePayload {
     TotalBusTraffic(VecDeque<(DateTime<Local>, usize)>),
     DisplayMessages {
         new: bool,
-        messages: Vec<DisplayMessage>,
+        messages: Vec<MemoryEntry>,
     },
     Image {
         id: i64,

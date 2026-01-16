@@ -80,7 +80,7 @@ impl Service for WebuiService {
                 error!("Axum 服务错误: {}", e);
             };
         });
-        // open::that(format!("http://127.0.0.1:{}", config.port))?;
+        open::that(format!("http://127.0.0.1:{}", config.port))?;
         // 新建实例
         let instance = Self {
             endpoint,

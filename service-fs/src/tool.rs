@@ -8,8 +8,6 @@ use heleny_proto::FS_SERVICE;
 use heleny_proto::HelenyTool;
 use heleny_proto::HelenyToolFactory;
 use heleny_proto::MEMORY_SERVICE;
-use heleny_proto::MemoryContent;
-use heleny_proto::MemoryEntry;
 use heleny_proto::get_tool_arg;
 use heleny_service::FsServiceMessage;
 use heleny_service::MemoryServiceMessage;
@@ -114,9 +112,8 @@ impl HelenyTool for FsTool {
                         return Err(anyhow::anyhow!("路径正则化失败: {}", e));
                     }
                 };
-                let entry = MemoryEntry::new(ChatRole::Assistant, MemoryContent::Image(path));
                 self.endpoint
-                    .send(MEMORY_SERVICE, MemoryServiceMessage::Post { entry })
+                    .send(MEMORY_SERVICE, MemoryServiceMessage::Post { role: ChatRole::Assistant, content: path.into() })
                     .await?;
                 Ok("发送完成".into())
             }

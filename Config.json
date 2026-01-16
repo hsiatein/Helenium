@@ -24,7 +24,7 @@
         "session_buffer": 32
     },
     "ChatService": {
-        "timeout_secs":20,
+        "timeout_secs":180,
         "api": [
             {
                 "base_url": "https://api.x.ai/v1",
@@ -45,6 +45,16 @@
                 "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
                 "model": "qwen-plus",
                 "api_key_env_var": "QWEN_API_KEY"
+            },
+            {
+                "base_url": "https://api.x.ai/v1",
+                "model": "grok-3",
+                "api_key_env_var": "GROK_API_KEY"
+            },
+            {
+                "base_url": "http://127.0.0.1:1234/v1",
+                "model": "core_24b_v.1-i1",
+                "api_key_env_var": "GROK_API_KEY"
             }
         ],
         "heleny": {
@@ -62,7 +72,7 @@
         }
     },
     "MemoryService": {
-        "short_term_length": 20,
+        "short_term_length": 40,
         "storage_dir": "./storage",
         "display_length": 20
     },

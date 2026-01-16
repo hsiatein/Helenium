@@ -97,6 +97,16 @@ pub fn set_callback(ui: &AppWindow, write_tx: &mpsc::Sender<FrontendCommand>) {
         send(&write_tx_clone, FrontendCommand::EnableTool { name:name.to_string(), enable });
     });
 
+    let write_tx_clone = write_tx.clone();
+    let ui_weak = ui.as_weak();
+    ui.on_delete_message(move |id|{
+        send(&write_tx_clone, FrontendCommand::DeleteMemory { id: id as i64 });
+        let _=ui_weak.upgrade_in_event_loop(move |ui|{
+            let msgs:VecModel<MessageItem>=ui.get_chat_model().iter().filter(|msg| msg.id!=id).collect();
+            ui.set_chat_model(ModelRc::new(msgs));
+        });
+    });
+
 }
 
 fn send(write_tx_clone: &mpsc::Sender<FrontendCommand>, cmd: FrontendCommand) {

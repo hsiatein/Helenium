@@ -16,10 +16,12 @@ export struct MessageItem {
 }
 
 component HelenyMessage inherits HorizontalBox {
+    in property <int> id;
     in property <string> kind;
     in property <string> content;
     in property <string> time;
     in property <image> image;
+    callback delete_message(int);
     alignment: LayoutAlignment.start;
     Rectangle {
         border-radius: 30px;
@@ -85,14 +87,56 @@ component HelenyMessage inherits HorizontalBox {
             }
         }
     }
+    VerticalBox {
+        alignment: center;
+        Rectangle {
+            border-radius: 20px;
+            clip: true;
+            width: 40px;
+            height: 40px;
+            Image {
+                source: @image-url("./icons/delete_24dp_5985E1_FILL0_wght400_GRAD0_opsz24.png");
+                width: 40px;
+            }
+            TouchArea {
+                width: parent.width;
+                height: parent.height;
+                clicked => {
+                    root.delete_message(root.id);
+                }
+            }
+        }
+    }
 }
 
 component UserMessage inherits HorizontalBox {
+    in property <int> id;
     in property <string> kind;
     in property <string> content;
     in property <string> time;
     in property <image> image;
+    callback delete_message(int);
     alignment: LayoutAlignment.end;
+    VerticalBox {
+        alignment: center;
+        Rectangle {
+            border-radius: 20px;
+            clip: true;
+            width: 40px;
+            height: 40px;
+            Image {
+                source: @image-url("./icons/delete_24dp_5985E1_FILL0_wght400_GRAD0_opsz24.png");
+                width: 40px;
+            }
+            TouchArea {
+                width: parent.width;
+                height: parent.height;
+                clicked => {
+                    root.delete_message(root.id);
+                }
+            }
+        }
+    }
     VerticalBox {
         padding: 5px;
         spacing: 5px;
@@ -161,6 +205,7 @@ export component ChatView inherits Rectangle {
     in property <[MessageItem]> chat_model: [];
     callback send(string);
     callback load_more_history();
+    callback delete_message(int);
 
     property <length> current_viewport_y: chat_list.viewport-y;
     property <length> previous_content_height;
@@ -208,16 +253,20 @@ export component ChatView inherits Rectangle {
                     padding: 0px;
                     spacing: 0px;
                     if (data.is_me) : UserMessage{
+                        id: data.id;
                         content: data.text;
                         time: data.time;
                         kind: data.kind;
                         image: data.image;
+                        delete_message(id) => { root.delete_message(id); }
                     }
                     if (!data.is_me) : HelenyMessage{
+                        id: data.id;
                         content: data.text;
                         time: data.time;
                         kind: data.kind;
                         image: data.image;
+                        delete_message(id) => { root.delete_message(id); }
                     }
 
                 }

@@ -1,14 +1,15 @@
 use std::collections::VecDeque;
+use std::i64;
 use std::path::PathBuf;
 
 use anyhow::Context;
 use anyhow::Result;
 use async_trait::async_trait;
+use chrono::Local;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::AnyMessage;
 use heleny_proto::DISPLAY_MESSAGES;
-use heleny_proto::DisplayMessage;
 use heleny_proto::MemoryEntry;
 use heleny_proto::Resource;
 use heleny_proto::ResourcePayload;
@@ -59,14 +60,14 @@ impl Service for MemoryService {
         });
         publish_resource(&endpoint, DISPLAY_MESSAGES, rx).await?;
         // 新建实例
-        let mut short_term = VecDeque::with_capacity(config.short_term_length);
+        let mut short_term = VecDeque::with_capacity(config.short_term_length as usize);
         let _short_term = memory_db
-            .get_chat_messages(config.short_term_length as i64)
+            .get_display_messages(i64::MAX,config.short_term_length as i64)
             .await?;
         short_term.extend(_short_term);
         debug!(
             "短期记忆: {:?}，长度: {}",
-            short_term, config.short_term_length as i64
+            short_term, config.short_term_length
         );
         let instance = Self {
             endpoint,
@@ -84,13 +85,14 @@ impl Service for MemoryService {
         msg: MemoryServiceMessage,
     ) -> Result<()> {
         match msg {
-            MemoryServiceMessage::Post { entry } => {
-                if self.short_term.len() >= self.config.short_term_length {
+            MemoryServiceMessage::Post { role, content } => {
+                let time=Local::now();
+                let id = self.memory_db.save_entry(role,time,content.clone()).await?;
+                if self.short_term.len() as i64 >= self.config.short_term_length {
                     self.short_term.pop_front();
                 }
-                self.short_term.push_back(entry.clone());
-                let id = self.memory_db.save_entry(entry.clone()).await?;
-                let display_message = DisplayMessage::new(id, entry);
+                let display_message = MemoryEntry::new(id,role,time,content);
+                self.short_term.push_back(display_message.clone());
                 self.publisher
                     .send(ResourcePayload::DisplayMessages {
                         new: true,
@@ -101,7 +103,7 @@ impl Service for MemoryService {
             MemoryServiceMessage::GetChatMemories { feedback } => {
                 let mut chat_memories = Vec::new();
                 for entry in &self.short_term {
-                    chat_memories.push(entry.to_chat_message()?);
+                    chat_memories.push(entry.try_into()?);
                 }
                 let _ = feedback.send(chat_memories);
                 Ok(())
@@ -112,9 +114,14 @@ impl Service for MemoryService {
             } => {
                 let result = self
                     .memory_db
-                    .get_display_messages(id_upper_bound, self.config.display_length as i64)
+                    .get_display_messages(id_upper_bound, self.config.display_length)
                     .await?;
                 let _ = feedback.send(result);
+                Ok(())
+            }
+            MemoryServiceMessage::Delete { id }=>{
+                self.short_term.retain(|msg| msg.id != id);
+                self.memory_db.delete_entry(id).await?;
                 Ok(())
             }
         }

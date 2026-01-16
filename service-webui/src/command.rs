@@ -6,6 +6,7 @@ use heleny_proto::FrontendMessage;
 use heleny_proto::HEALTH;
 use heleny_proto::KERNEL_NAME;
 use heleny_proto::MCP_SERVICE;
+use heleny_proto::MEMORY_SERVICE;
 use heleny_proto::Resource;
 use heleny_proto::SCHEDULE;
 use heleny_proto::SCHEDULE_SERVICE;
@@ -17,6 +18,7 @@ use heleny_proto::UserDecision;
 use heleny_service::ChatServiceMessage;
 use heleny_service::KernelMessage;
 use heleny_service::McpServiceMessage;
+use heleny_service::MemoryServiceMessage;
 use heleny_service::ScheduleServiceMessage;
 use heleny_service::TaskServiceMessage;
 use heleny_service::ToolkitServiceMessage;
@@ -126,6 +128,9 @@ impl WebuiService {
             }
             FrontendCommand::EnableTool { name, enable }=>{
                 self.endpoint.send(TOOLKIT_SERVICE, ToolkitServiceMessage::EnableTool { name, enable }).await
+            }
+            FrontendCommand::DeleteMemory { id }=>{
+                self.endpoint.send(MEMORY_SERVICE, MemoryServiceMessage::Delete { id }).await
             }
         }
     }

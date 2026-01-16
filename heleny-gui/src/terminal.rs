@@ -1,3 +1,5 @@
+use anyhow::Context;
+use anyhow::Result;
 use chrono::DateTime;
 use chrono::Local;
 use chrono::TimeZone;
@@ -26,15 +28,15 @@ pub fn generate_svg_path(
     data: &VecDeque<(DateTime<Local>, usize)>,
     width: f32,
     height: f32,
-) -> (String, String, String, String, String) {
+) -> Result<(String, String, String, String, String)> {
     if data.is_empty() {
-        return (
+        return Ok((
             String::new(),
             "0".into(),
             "0".into(),
             "00:00:00".into(),
             "00:00:00".into(),
-        );
+        ));
     }
 
     // 1. Sort by timestamp
@@ -70,20 +72,20 @@ pub fn generate_svg_path(
     }
 
     if points.is_empty() {
-        return (
+        return Ok((
             String::new(),
             "0".into(),
             "0".into(),
             "00:00:00".into(),
             "00:00:00".into(),
-        );
+        ));
     }
 
     // debug!("BusTraffic Graph: {} points after dedup (raw {})", points.len(), data.len());
 
     // 3. Calculate Range
-    let min_time = points.first().unwrap().0;
-    let max_time = points.last().unwrap().0;
+    let min_time = points.first().context("时间序列没有元素")?.0;
+    let max_time = points.last().context("时间序列没有元素")?.0;
     let time_range = (max_time - min_time).max(1) as f32;
 
     let max_traffic = points.iter().map(|(_, v)| *v).max().unwrap_or(0);
@@ -105,19 +107,19 @@ pub fn generate_svg_path(
         let y = height * (1.0 - (v_float - min_val) / val_range);
 
         if i == 0 {
-            write!(path, "M {:.1} {:.1}", x, y).unwrap();
+            write!(path, "M {:.1} {:.1}", x, y)?;
         } else {
-            write!(path, " L {:.1} {:.1}", x, y).unwrap();
+            write!(path, " L {:.1} {:.1}", x, y)?;
         }
     }
 
-    let min_time_dt = Local.timestamp_millis_opt(min_time).unwrap();
-    let max_time_dt = Local.timestamp_millis_opt(max_time).unwrap();
+    let min_time_dt = Local.timestamp_millis_opt(min_time).single().context("没有单一时间")?;
+    let max_time_dt = Local.timestamp_millis_opt(max_time).single().context("没有单一时间")?;
     let x_start = min_time_dt.format("%H:%M:%S").to_string();
     let x_end = max_time_dt.format("%H:%M:%S").to_string();
     // Use the rounded ceiling for the labels to keep the scale clean.
     let y_max = format!("{}", max_val as usize);
     let y_mid = format!("{}", mid_val.round() as usize);
 
-    (path, y_max, y_mid, x_start, x_end)
+    Ok((path, y_max, y_mid, x_start, x_end))
 }

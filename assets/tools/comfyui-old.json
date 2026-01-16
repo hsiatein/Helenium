@@ -1,5 +1,5 @@
 {
-    "name": "comfyui",
+    "name": "comfyui-old",
     "description": "使用comfyui进行图像生成并发送给用户。默认值为Heleny的默认外貌设定，当用户提出想看Heleny的图时应使用此工具。",
     "commands": [
         {

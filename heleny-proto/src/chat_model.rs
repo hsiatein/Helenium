@@ -15,9 +15,8 @@ use tokio::time::timeout;
 use crate::ApiConfig;
 use crate::RequiredTools;
 use crate::ToolIntent;
+use crate::build_async_openai_msg;
 use crate::memory::ChatRole;
-use crate::memory::MemoryContent;
-use crate::memory::MemoryEntry;
 
 #[heleny_macros::chat_model]
 #[derive(Debug, Clone)]
@@ -44,8 +43,7 @@ impl PlannerModel {
     }
 
     pub async fn get_tools_list(&self, message: &str) -> Result<RequiredTools> {
-        let entry = MemoryEntry::new(ChatRole::User, MemoryContent::Text(message.to_string()));
-        let message = entry.to_chat_message()?;
+        let message: ChatCompletionRequestMessage = build_async_openai_msg(ChatRole::User, message)?;
         let response = self._chat(vec![message]).await?;
         serde_json::from_str(&response).context(format!(
             "解析 Planner 回复为 RequiredTools 失败, 回复内容: {}",
@@ -84,7 +82,7 @@ impl ExecutorModel {
         self.preset.push_str(append);
     }
 
-    pub async fn get_intent<T: Into<String>>(&mut self, message: T) -> Result<ToolIntent> {
+    pub async fn get_intent(&mut self, message: &str) -> Result<ToolIntent> {
         let checkpoint = self.memory.len();
         let intent = self._get_intent(message).await;
         if intent.is_err() {
@@ -93,17 +91,15 @@ impl ExecutorModel {
         intent
     }
 
-    async fn _get_intent<T: Into<String>>(&mut self, message: T) -> Result<ToolIntent> {
-        let message = MemoryEntry::new(ChatRole::System, MemoryContent::Text(message.into()))
-            .to_chat_message()?;
+    async fn _get_intent(&mut self, message: &str) -> Result<ToolIntent> {
+        let message: ChatCompletionRequestMessage = build_async_openai_msg(ChatRole::System,message)?;
         self.memory.push(message);
         let response = self._chat(self.memory.to_owned()).await?;
         let intent = serde_json::from_str(&response).context(format!(
             "解析 Executor 回复为 ToolIntent 失败, 回复内容: {}",
             response
         ))?;
-        let message = MemoryEntry::new(ChatRole::Assistant, MemoryContent::Text(response))
-            .to_chat_message()?;
+        let message: ChatCompletionRequestMessage = build_async_openai_msg(ChatRole::Assistant, &response)?;
         self.memory.push(message);
         Ok(intent)
     }

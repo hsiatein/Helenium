@@ -3,7 +3,7 @@ use std::{collections::HashMap, time::Duration};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
-use heleny_proto::{CanRequestConsent, ChatRole, FS_SERVICE, HelenyFile, HelenyTool, HelenyToolFactory, MEMORY_SERVICE, MemoryContent, MemoryEntry, get_tool_arg};
+use heleny_proto::{CanRequestConsent, ChatRole, FS_SERVICE, HelenyFile, HelenyTool, HelenyToolFactory, MEMORY_SERVICE, get_tool_arg};
 use heleny_service::{FsServiceMessage, MemoryServiceMessage};
 use reqwest::{Client, RequestBuilder};
 use serde::{Deserialize, Serialize};
@@ -95,9 +95,8 @@ impl HelenyTool for ComfyuiTool {
         let (tx,rx)=oneshot::channel();
         self.endpoint.send(FS_SERVICE, FsServiceMessage::TempFile { file: HelenyFile::Image(bytes), file_ext: "png".into(), feedback: tx }).await?;
         let path=rx.await?;
-        let entry = MemoryEntry::new(ChatRole::Assistant, MemoryContent::Image(path));
         self.endpoint
-            .send(MEMORY_SERVICE, MemoryServiceMessage::Post { entry })
+            .send(MEMORY_SERVICE, MemoryServiceMessage::Post { role: ChatRole::Assistant, content: path.into() })
             .await?;
         Ok("图片生成完成".into())
     }

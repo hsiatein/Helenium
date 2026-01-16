@@ -3,7 +3,7 @@ use crate::MessageItem;
 use anyhow::Context;
 use anyhow::Result;
 use heleny_proto::ChatRole;
-use heleny_proto::DisplayMessage;
+use heleny_proto::MemoryEntry;
 use heleny_proto::FrontendCommand;
 use heleny_proto::MemoryContent;
 use slint::Image;
@@ -14,7 +14,7 @@ impl FrontendHandler {
     pub async fn handle_display_messages(
         &self,
         new: bool,
-        messages: Vec<DisplayMessage>,
+        messages: Vec<MemoryEntry>,
     ) -> Result<()> {
         for message in &messages {
             if let MemoryContent::Image(path) = &message.content {
@@ -35,7 +35,7 @@ impl FrontendHandler {
                 let mut messages: Vec<MessageItem> = messages
                     .into_iter()
                     .filter_map(|msg| {
-                        let DisplayMessage {
+                        let MemoryEntry {
                             id,
                             role,
                             time,

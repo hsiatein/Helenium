@@ -32,6 +32,9 @@ pub enum FrontendCommand {
     EnableTool {
         name:String,
         enable:bool,
+    },
+    DeleteMemory {
+        id: i64,
     }
 }
 

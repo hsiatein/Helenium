@@ -63,10 +63,11 @@ GUI的实现基于 Slint(当前), WEBUI的实现基于 Vue/TS(暂时停更)
 本项目测试大多数使用AI生成, 在测试以外使用AI生成的还有:
 1. heleny-utils\src\lib.rs::init_tracing函数 (6-31行).
 2. heleny-macros\src\lib.rs::base_service宏 (1-63行).
-3. 大部分 WebUI 代码, ( *.vue, *.ts ).
-4. *.slint文件大量使用了AI.
+3. 大部分 WebUI 代码 ( *.vue, *.ts ).
+4. *.slint文件.
 5. heleny-gui/src/terminal.rs的svg生成 (7-123行).
-6. schedule 中 chrono 的用法大量参考 AI. 
+6. schedule 中 chrono 的用法. 
+7. SQL相关.
 
 <p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 
@@ -80,6 +81,7 @@ GUI的实现基于 Slint(当前), WEBUI的实现基于 Vue/TS(暂时停更)
 
 构建：
 * Rust工具链
+* cmake ( 大概可能是gui中的 Slint 库编译要用 )
 
 MCP工具 ( 不安装不影响使用聊天，但是影响使用MCP工具 ) ：
 * Docker
@@ -97,7 +99,7 @@ MCP工具 ( 不安装不影响使用聊天，但是影响使用MCP工具 ) ：
    ```sh
    cargo build --release
    ```
-3. 新建.env文件, 在里面设置HELENIUM_CONFIG环境变量
+3. 在项目根目录新建.env文件, 在里面设置HELENIUM_CONFIG环境变量
    ```
    HELENIUM_CONFIG=./Config.json
    LAUNCH_HELENIUM_BACKEND=true

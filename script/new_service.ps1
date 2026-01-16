@@ -1,0 +1,1 @@
+./target/debug/new_service.exe "docker"

@@ -2,9 +2,8 @@ use anyhow::Result;
 use chrono::DateTime;
 use chrono::Local;
 use heleny_proto::ChatRole;
-use heleny_proto::DisplayMessage;
-use heleny_proto::MemoryContent;
 use heleny_proto::MemoryEntry;
+use heleny_proto::MemoryContent;
 use sqlx::Pool;
 use sqlx::Row;
 use sqlx::Sqlite;
@@ -38,14 +37,22 @@ impl MemoryDb {
         Ok(Self { pool })
     }
 
-    pub async fn save_entry(&self, entry: MemoryEntry) -> anyhow::Result<i64> {
+    pub async fn save_entry(&self, role: ChatRole,time: DateTime<Local>,content: MemoryContent) -> anyhow::Result<i64> {
         self.save(
-            entry.role.to_str(),
-            entry.time,
-            &serde_json::to_string(&entry.content)?,
+            role.to_str(),
+            time,
+            &serde_json::to_string(&content)?,
             None,
         )
         .await
+    }
+
+    pub async fn delete_entry(&self, id: i64) -> anyhow::Result<()> {
+        sqlx::query("DELETE FROM memories WHERE id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
     }
 
     pub async fn save(
@@ -68,46 +75,11 @@ impl MemoryDb {
         Ok(result.last_insert_rowid())
     }
 
-    /// 旧->新
-    pub async fn get_chat_messages(&self, n: i64) -> anyhow::Result<Vec<MemoryEntry>> {
-        // 1. 执行查询
-        // 使用 DESC 排序获取物理上最后存入的 n 条
-        let rows = sqlx::query("SELECT role, time, content FROM memories ORDER BY id DESC LIMIT ?")
-            .bind(n)
-            .fetch_all(&self.pool)
-            .await?;
-
-        // 2. 解析数据
-        let mut entries = Vec::new();
-        for row in rows {
-            // 从数据库读取原始数据
-            let role_str: String = row.get("role");
-            let time: DateTime<Local> = row.get("time");
-            let content_json: String = row.get("content");
-
-            // 将数据库里的 JSON 字符串解析回 MemoryContent 枚举
-            let content: MemoryContent = serde_json::from_str(&content_json)
-                .map_err(|e| anyhow::anyhow!("解析内存 JSON 失败: {}", e))?;
-
-            // 还原 ChatRole (假设你实现了从 String 到 Enum 的转换，或者简单匹配)
-            let role = ChatRole::from(&role_str);
-
-            entries.push(MemoryEntry {
-                role,
-                time,
-                content,
-            });
-        }
-        entries.reverse();
-
-        Ok(entries)
-    }
-
     pub async fn get_display_messages(
         &self,
         id_upper_bound: i64,
         n: i64,
-    ) -> anyhow::Result<Vec<DisplayMessage>> {
+    ) -> anyhow::Result<Vec<MemoryEntry>> {
         // 1. 执行查询
         // 筛选 id 小于上限的记录，按 id 倒序排列取前 n 条
         let rows = sqlx::query(
@@ -135,7 +107,7 @@ impl MemoryDb {
             // 转换 Role
             let role = ChatRole::from(&role_str);
 
-            entries.push(DisplayMessage {
+            entries.push(MemoryEntry {
                 id,
                 role,
                 time,

@@ -11,7 +11,7 @@ impl FrontendHandler {
         &self,
         data: VecDeque<(DateTime<Local>, usize)>,
     ) -> Result<()> {
-        let (svg, y_max, y_mid, x_start, x_end) = generate_svg_path(&data, 600., 240.);
+        let (svg, y_max, y_mid, x_start, x_end) = generate_svg_path(&data, 600., 240.)?;
         self.ui_weak
             .upgrade_in_event_loop(move |ui| {
                 ui.set_bus_stats_chart(svg.into());
