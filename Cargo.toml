@@ -1,11 +1,11 @@
 [workspace]
-members = [ "heleny-bus", "heleny-gui", "heleny-kernel", "heleny-macros", "heleny-proto", "heleny-server", "heleny-service", "heleny-utils", "script", "service-auth", "service-chat", "service-config", "service-docker", "service-fs", "service-hub", "service-mcp", "service-memory", "service-process", "service-schedule", "service-stats", "service-task", "service-test", "service-toolkit", "service-tools", "service-user", "service-webui", "tests"]
+members = [ "heleny-bus", "heleny-gui", "heleny-kernel", "heleny-macros", "heleny-proto", "heleny-server", "heleny-service", "heleny-utils", "script", "service-auth", "service-chat", "service-config", "service-docker", "service-embed", "service-fs", "service-hub", "service-mcp", "service-memory", "service-process", "service-schedule", "service-stats", "service-task", "service-test", "service-toolkit", "service-tools", "service-user", "service-webui", "tests"]
 resolver = "3"
 
 [workspace.dependencies]
 serde = {version = "1.0.228", features = ["derive"]}
 serde_json = {version = "1.0.147"}
-tokio = {version = "1.48.0", features = ["macros", "time","rt-multi-thread","sync","fs","process"]}
+tokio = {version = "1.48.0", features = ["macros", "time","rt-multi-thread","sync","fs","process","io-util"]}
 dotenvy = "0.15.7"
 inventory = "0.3.21"
 async-trait = "0.1.89"
@@ -20,7 +20,6 @@ rand = "0.8.5"
 axum = {version = "0.8.8",features = ["ws"]}
 tower-http = { version = "0.6.8", features = ["fs","set-header"] }
 open = "5.3.3"
-async-openai = {version = "0.31.1",features = ["_api","responses","chat-completion"]}
 tokio-stream = "0.1.17"
 sqlx = {version = "0.8.6",features = ["sqlite","runtime-tokio","chrono"]}
 tokio-tungstenite = "0.28.0"
@@ -33,3 +32,4 @@ itertools = "0.14.0"
 bollard = "0.20.0"
 reqwest = { version = "0.13.1", features = ["json"] }
 tower = "0.5.3"
+rkyv = "0.8.14"

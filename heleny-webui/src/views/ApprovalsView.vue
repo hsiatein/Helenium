@@ -7,10 +7,22 @@
       </div>
       <div v-for="req in store.approvals" :key="req.request_id" class="approval-card">
         <div class="approval-body">
-          <div class="approval-row">任务ID: {{ req.task_id }}</div>
-          <div class="approval-row">任务描述: {{ req.task_description }}</div>
-          <div class="approval-row">原因: {{ req.reason }}</div>
-          <div class="approval-row">请求描述: {{ req.descripion }}</div>
+          <div class="approval-id-row">
+            <div class="approval-id-circle">ID</div>
+            <div class="approval-id">{{ req.task_id }}</div>
+          </div>
+          <div class="approval-section">
+            <span class="approval-pill">任务描述</span>
+            <div class="approval-content">{{ req.task_description }}</div>
+          </div>
+          <div class="approval-section">
+            <span class="approval-pill">原因</span>
+            <div class="approval-content">{{ req.reason }}</div>
+          </div>
+          <div class="approval-section">
+            <span class="approval-pill">请求描述</span>
+            <div class="approval-content">{{ req.descripion }}</div>
+          </div>
           <div class="approval-actions">
             <button class="action-button approve" @click="approve(req.request_id)">
               同意
@@ -88,7 +100,61 @@ const reject = (id: string) => {
   gap: 8px;
 }
 
+.approval-id-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.approval-id-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: #7fb5ff;
+  color: #ffffff;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.approval-id {
+  flex: 1;
+  color: #3f4c67;
+  font-size: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .approval-row {
+  font-size: 16px;
+  color: #1c1c1c;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.approval-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.approval-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 15px;
+  background: #e8f1ff;
+  border: 1px solid #c6dcff;
+  font-size: 13px;
+  color: #1c1c1c;
+  width: fit-content;
+}
+
+.approval-content {
   font-size: 16px;
   color: #1c1c1c;
   line-height: 1.4;

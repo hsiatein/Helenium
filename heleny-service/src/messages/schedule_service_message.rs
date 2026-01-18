@@ -15,4 +15,5 @@ pub enum ScheduleServiceMessage {
     CancelTask {
         id: Uuid,
     },
+    Reload,
 }

@@ -59,7 +59,7 @@ impl Service for ConfigService {
             Err(e) => return Err(anyhow::anyhow!("读取配置文件失败: {}", e)),
         };
         let config_value = serde_json::Value::from_str(&config_string)?;
-        let config_value = config_value.as_object().context("无法作为 obj")?.clone();
+        let mut config_value = config_value.as_object().context("无法作为 obj")?.clone();
         debug!("config_value: {:?}", config_value);
         let save_after = config_value
             .get(Self::name())
@@ -68,7 +68,7 @@ impl Service for ConfigService {
             .context("读取 save_after 字段失败")?
             .as_f64()
             .context("save_after 字段值不是浮点数")?;
-
+        let exported_vars: HashMap<String, Value>=serde_json::from_value(config_value.remove("Common").context("无 Common 字段")?).context("解析  Common 为导出变量失败")?;
         Ok(Box::new(Self {
             endpoint,
             config_path,
@@ -77,8 +77,8 @@ impl Service for ConfigService {
             save_after,
             is_writing: None,
             is_reading: None,
-            exported_vars: HashMap::new(),
-            is_waiting_update:Vec::new(),
+            exported_vars,
+            is_waiting_update: Vec::new(),
         }))
     }
     async fn handle(

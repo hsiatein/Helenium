@@ -82,6 +82,7 @@ watch(
 
 const shutdown = () => {
   sendCommand('Shutdown')
+  window.close()
 }
 </script>
 

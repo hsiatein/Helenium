@@ -1,4 +1,3 @@
-use async_openai::types::chat::ChatCompletionRequestMessage;
 use heleny_proto::ChatRole;
 use heleny_proto::MemoryEntry;
 use heleny_proto::MemoryContent;
@@ -14,10 +13,18 @@ pub enum MemoryServiceMessage {
         id_upper_bound: i64,
         feedback: oneshot::Sender<Vec<MemoryEntry>>,
     },
-    GetChatMemories {
-        feedback: oneshot::Sender<Vec<ChatCompletionRequestMessage>>,
+    GetMemoryEntries {
+        feedback: oneshot::Sender<Vec<MemoryEntry>>,
+    },
+    GetSimilarMemoryEntries {
+        content: String,
+        num: usize,
+        feedback: oneshot::Sender<Vec<MemoryEntry>>,
     },
     Delete {
         id: i64
+    },
+    SetEmbedAvailable {
+        available:bool
     }
 }

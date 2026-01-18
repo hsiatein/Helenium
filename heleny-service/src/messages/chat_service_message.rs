@@ -1,3 +1,4 @@
+use heleny_proto::Embed;
 use heleny_proto::ExecutorModel;
 use heleny_proto::PlannerModel;
 use tokio::sync::oneshot;
@@ -16,4 +17,11 @@ pub enum ChatServiceMessage {
     GetExecutor {
         feedback: oneshot::Sender<ExecutorModel>,
     },
+    GetEmbedModel {
+        base_url:String,
+        model:String,
+        api_key:String,
+        feedback: oneshot::Sender<Box<dyn Embed>>
+    },
+    Reload,
 }

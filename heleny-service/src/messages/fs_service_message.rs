@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf};
 
 use heleny_proto::HelenyFile;
 use tokio::sync::oneshot;
@@ -31,5 +31,13 @@ pub enum FsServiceMessage {
         file: HelenyFile,
         file_ext: String,
         feedback: oneshot::Sender<PathBuf>,
+    },
+    WriteBytes {
+        path: PathBuf,
+        data: Vec<u8>,
+    },
+    ReadBytes {
+        path: PathBuf,
+        feedback: oneshot::Sender<Vec<u8>>,
     }
 }

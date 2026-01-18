@@ -30,6 +30,8 @@ type FrontendCommand =
   | 'GetConsentRequestions'
   | 'GetToolAbstrats'
   | 'ReloadTools'
+  | 'ReloadSchedule'
+  | 'ReloadChat'
   | 'Shutdown';
 
 export const sendCommand = (command: FrontendCommand) => {

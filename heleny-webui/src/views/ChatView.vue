@@ -29,11 +29,23 @@
               {{ msg.content.Text }}
             </div>
             <div v-else class="message-image">
-              <img v-if="imageSrc(msg)" :src="imageSrc(msg)" alt="image" />
+              <button
+                v-if="imageSrc(msg)"
+                class="image-button"
+                @click="openImage(imageSrc(msg))"
+              >
+                <img :src="imageSrc(msg)" alt="image" />
+              </button>
             </div>
           </div>
         </div>
       </div>
+    </div>
+    <div v-if="activeImage" class="image-lightbox" @click.self="closeImage">
+      <button class="lightbox-close" @click="closeImage" aria-label="Close image">
+        ×
+      </button>
+      <img class="lightbox-image" :src="activeImage" alt="full image" />
     </div>
     <div class="chat-input">
       <div class="input-wrap">
@@ -55,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, watch, onMounted } from 'vue';
+import { ref, nextTick, watch, onMounted, onBeforeUnmount } from 'vue';
 import { sendCommand } from '../main';
 import { store, type ChatMessage } from '../store';
 
@@ -67,6 +79,8 @@ const isInitialLoadDone = ref(false);
 
 let observer: IntersectionObserver | null = null;
 const topMessageElement = ref<HTMLElement | null>(null);
+const activeImage = ref<string | null>(null);
+let onKeydown: ((event: KeyboardEvent) => void) | null = null;
 
 const setTopMessageRef = (el: HTMLElement, index: number) => {
   if (index === 0) {
@@ -105,6 +119,12 @@ watch(topMessageElement, (newEl, oldEl) => {
 
 onMounted(() => {
   initObserver();
+  onKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      closeImage();
+    }
+  };
+  window.addEventListener('keydown', onKeydown);
 
   if (store.messages.length > 0) {
     nextTick(() => {
@@ -116,6 +136,12 @@ onMounted(() => {
         if (firstMsg) previousFirstMsgId.value = firstMsg.id;
       }
     });
+  }
+});
+
+onBeforeUnmount(() => {
+  if (onKeydown) {
+    window.removeEventListener('keydown', onKeydown);
   }
 });
 
@@ -202,6 +228,15 @@ const imageSrc = (msg: ChatMessage) => {
   if (lower.endsWith('.webp')) mime = 'image/webp';
 
   return `data:${mime};base64,${base64}`;
+};
+
+const openImage = (src: string) => {
+  if (!src) return;
+  activeImage.value = src;
+};
+
+const closeImage = () => {
+  activeImage.value = null;
 };
 
 const sendMessage = () => {
@@ -326,6 +361,65 @@ const deleteMessage = (id: number) => {
   max-height: 400px;
   object-fit: contain;
   display: block;
+}
+
+.image-button {
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: zoom-in;
+  display: inline-flex;
+}
+
+.image-button img {
+  border-radius: 10px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.image-button:hover img {
+  transform: scale(1.01);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 16, 24, 0.85);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 32px;
+  box-sizing: border-box;
+}
+
+.lightbox-image {
+  max-width: min(92vw, 1200px);
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  cursor: zoom-out;
+}
+
+.lightbox-close {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .icon-button {

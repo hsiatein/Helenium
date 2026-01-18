@@ -102,6 +102,7 @@ pub fn set_callback(ui: &AppWindow, write_tx: &mpsc::Sender<FrontendCommand>) {
     ui.on_delete_message(move |id|{
         send(&write_tx_clone, FrontendCommand::DeleteMemory { id: id as i64 });
         let _=ui_weak.upgrade_in_event_loop(move |ui|{
+            ui.invoke_focus_input();
             let msgs:VecModel<MessageItem>=ui.get_chat_model().iter().filter(|msg| msg.id!=id).collect();
             ui.set_chat_model(ModelRc::new(msgs));
         });

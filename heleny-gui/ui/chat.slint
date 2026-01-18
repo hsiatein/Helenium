@@ -238,6 +238,10 @@ export component ChatView inherits Rectangle {
             chat_list.viewport-y = -chat_list.viewport-height + chat_list.height;
         }
     }
+
+    public function focus_input() {
+        input.focus();
+    }
     
     VerticalBox {
         width: 100%;
@@ -305,6 +309,7 @@ export component ChatView inherits Rectangle {
                             return reject;
                         }
                     }
+                    
                 }
         
                 VerticalLayout {

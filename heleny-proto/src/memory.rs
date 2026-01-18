@@ -1,9 +1,4 @@
 use std::path::PathBuf;
-use anyhow::Result;
-use async_openai::types::chat::ChatCompletionRequestAssistantMessageArgs;
-use async_openai::types::chat::ChatCompletionRequestMessage;
-use async_openai::types::chat::ChatCompletionRequestSystemMessageArgs;
-use async_openai::types::chat::ChatCompletionRequestUserMessageArgs;
 use chrono::DateTime;
 use chrono::Local;
 use serde::Deserialize;
@@ -46,6 +41,12 @@ impl From<String> for MemoryContent {
     }
 }
 
+impl From<&str> for MemoryContent {
+    fn from(value: &str) -> Self {
+        MemoryContent::Text(value.to_string())
+    }
+}
+
 impl From<PathBuf> for MemoryContent {
     fn from(value: PathBuf) -> Self {
         MemoryContent::Image(value)
@@ -78,46 +79,12 @@ impl MemoryEntry {
             content,
         }
     }
-}
-
-impl TryFrom<&MemoryEntry> for ChatCompletionRequestMessage {
-    type Error = anyhow::Error;
-    fn try_from(value: &MemoryEntry) -> std::result::Result<Self, Self::Error> {
-        let content = value.time.to_string() + ":" + value.content.to_str();
-        let msg = match value.role {
-            ChatRole::System => ChatCompletionRequestSystemMessageArgs::default()
-                .content(content)
-                .build()?
-                .into(),
-            ChatRole::User => ChatCompletionRequestUserMessageArgs::default()
-                .content(content)
-                .build()?
-                .into(),
-            ChatRole::Assistant => ChatCompletionRequestAssistantMessageArgs::default()
-                .content(content)
-                .build()?
-                .into(),
-        };
-        Ok(msg)
+    pub fn temp<T:Into<MemoryContent>>(role: ChatRole, content: T) -> Self {
+        Self {
+            id:0,
+            role,
+            time:Local::now(),
+            content:content.into(),
+        }
     }
-}
-
-pub fn build_async_openai_msg(role: ChatRole, content: &str)->Result<ChatCompletionRequestMessage>{
-    let time= Local::now();
-    let content = time.to_string() + ":" + content;
-    let msg = match role {
-        ChatRole::System => ChatCompletionRequestSystemMessageArgs::default()
-            .content(content)
-            .build()?
-            .into(),
-        ChatRole::User => ChatCompletionRequestUserMessageArgs::default()
-            .content(content)
-            .build()?
-            .into(),
-        ChatRole::Assistant => ChatCompletionRequestAssistantMessageArgs::default()
-            .content(content)
-            .build()?
-            .into(),
-    };
-    Ok(msg)
 }

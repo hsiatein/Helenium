@@ -9,6 +9,8 @@ use sqlx::Row;
 use sqlx::Sqlite;
 use sqlx::SqlitePool;
 use sqlx::sqlite::SqliteConnectOptions;
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::path::Path;
 
 static INIT_SQL: &'static str = r#"
@@ -118,6 +120,93 @@ impl MemoryDb {
         // 3. 翻转顺序
         // 数据库取出的是 [99, 98, 97...]，前端展示需要 [97, 98, 99...]
         entries.reverse();
+
+        Ok(entries)
+    }
+
+    pub async fn get_entries_by_ids(
+        &self,
+        ids: &HashSet<i64>,
+    ) -> anyhow::Result<Vec<MemoryEntry>> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let mut placeholders = String::new();
+        for i in 0..ids.len() {
+            if i > 0 {
+                placeholders.push_str(", ");
+            }
+            placeholders.push('?');
+        }
+
+        let query = format!(
+            "SELECT id, role, time, content FROM memories WHERE id IN ({}) ORDER BY id ASC",
+            placeholders
+        );
+        let mut stmt = sqlx::query(&query);
+        for id in ids {
+            stmt = stmt.bind(id);
+        }
+
+        let rows = stmt.fetch_all(&self.pool).await?;
+        let mut entries = Vec::with_capacity(rows.len());
+        for row in rows {
+            let id: i64 = row.get("id");
+            let role_str: String = row.get("role");
+            let time: DateTime<Local> = row.get("time");
+            let content_json: String = row.get("content");
+
+            let content: MemoryContent = serde_json::from_str(&content_json)
+                .map_err(|e| anyhow::anyhow!("解析成 MemoryContent 失败: {}", e))?;
+            let role = ChatRole::from(&role_str);
+
+            entries.push(MemoryEntry {
+                id,
+                role,
+                time,
+                content,
+            });
+        }
+
+        Ok(entries)
+    }
+
+    pub async fn get_content_not_in_ids(
+        &self,
+        ids: &HashSet<i64>,
+    ) -> anyhow::Result<HashMap<i64,String>> {
+        let mut query = String::from("SELECT id, role, time, content FROM memories");
+        if !ids.is_empty() {
+            let mut placeholders = String::new();
+            for i in 0..ids.len() {
+                if i > 0 {
+                    placeholders.push_str(", ");
+                }
+                placeholders.push('?');
+            }
+            query.push_str(&format!(" WHERE id NOT IN ({})", placeholders));
+        }
+        query.push_str(" ORDER BY id ASC");
+
+        let mut stmt = sqlx::query(&query);
+        for id in ids {
+            stmt = stmt.bind(id);
+        }
+
+        let rows = stmt.fetch_all(&self.pool).await?;
+        let mut entries = HashMap::with_capacity(rows.len());
+        for row in rows {
+            let id: i64 = row.get("id");
+            let content_json: String = row.get("content");
+
+            let content: MemoryContent = serde_json::from_str(&content_json)
+                .map_err(|e| anyhow::anyhow!("解析成 MemoryContent 失败: {}", e))?;
+            if let MemoryContent::Text(content)=content {
+                entries.insert(id,content);
+            }
+            
+        }
 
         Ok(entries)
     }

@@ -132,6 +132,12 @@ impl WebuiService {
             FrontendCommand::DeleteMemory { id }=>{
                 self.endpoint.send(MEMORY_SERVICE, MemoryServiceMessage::Delete { id }).await
             }
+            FrontendCommand::ReloadSchedule =>{
+                self.endpoint.send(SCHEDULE_SERVICE, ScheduleServiceMessage::Reload).await
+            }
+            FrontendCommand::ReloadChat=>{
+                self.endpoint.send(CHAT_SERVICE, ChatServiceMessage::Reload).await
+            }
         }
     }
 }

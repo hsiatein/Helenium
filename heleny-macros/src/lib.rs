@@ -65,33 +65,3 @@ pub fn base_service(args: TokenStream, input: TokenStream) -> TokenStream {
 
     TokenStream::from(expanded)
 }
-
-#[proc_macro_attribute]
-pub fn chat_model(_args: TokenStream, input: TokenStream) -> TokenStream {
-    let item_struct = parse_macro_input!(input as ItemStruct);
-    let name = &item_struct.ident;
-
-    let expanded = quote! {
-        #item_struct
-
-        impl ChatModel for #name {
-            fn schema(&self) -> &'static str {
-                self.schema
-            }
-            fn client(&self) -> &Client<OpenAIConfig> {
-                &self.client
-            }
-            fn model(&self) -> String {
-                self.model.clone()
-            }
-            fn preset(&self) -> String {
-                self.preset.clone()
-            }
-            fn timeout_secs(&self) -> u64 {
-                self.timeout
-            }
-        }
-    };
-
-    TokenStream::from(expanded)
-}

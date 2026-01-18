@@ -35,7 +35,9 @@ pub enum FrontendCommand {
     },
     DeleteMemory {
         id: i64,
-    }
+    },
+    ReloadSchedule,
+    ReloadChat,
 }
 
 impl FrontendCommand {

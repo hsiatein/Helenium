@@ -11,3 +11,6 @@ pub static TASK_SERVICE: &'static str = "TaskService";
 pub static WEBUI_SERVICE: &'static str = "WebuiService";
 pub static SCHEDULE_SERVICE: &'static str = "ScheduleService";
 pub static MCP_SERVICE: &'static str = "McpService";
+pub static EMBED_SERVICE: &'static str = "EmbedService";
+
+pub static CONFIG_STORAGE_DIR: &'static str = "storage_dir";

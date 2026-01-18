@@ -35,6 +35,19 @@ pub async fn get_from_config_service<T: DeserializeOwned>(endpoint: &Endpoint) -
     serde_json::from_value(config).context("获取到 ConfigService 的资源, 但是解析失败")
 }
 
+pub async fn import_from_config_service<T: DeserializeOwned,U: Into<String>>(endpoint: &Endpoint,name: U) -> Result<T> {
+    let (tx, rx) = oneshot::channel();
+    endpoint
+        .send(CONFIG_SERVICE, ConfigServiceMessage::Import { key: name.into(), feedback: tx })
+        .await
+        .context("导入 ConfigService 的变量发送失败")?;
+    let config = timeout(Duration::from_secs(10), rx)
+        .await
+        .context("导入 ConfigService 的变量超时")?
+        .context("导入 ConfigService 的变量失败")?;
+    serde_json::from_value(config).context("导入成功 ConfigService 的变量, 但是解析失败")
+}
+
 pub async fn update_config_service(endpoint: &Endpoint) -> Result<()> {
     let (tx, rx) = oneshot::channel();
     endpoint

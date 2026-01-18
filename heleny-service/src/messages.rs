@@ -44,3 +44,5 @@ pub use process_service_message::*;
 
 mod tools_service_message;
 pub use tools_service_message::*;
+mod embed_service_message;
+pub use embed_service_message::*;

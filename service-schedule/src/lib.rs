@@ -115,6 +115,17 @@ impl Service for ScheduleService {
                     Ok(())
                 }
             }
+            ScheduleServiceMessage::Reload=>{
+                let schedule_str = read_via_fs_service(&self.endpoint, &self.schedule_path).await?;
+                let mut schedule: HashMap<Uuid, ScheduledTask> = serde_json::from_str(&schedule_str)?;
+                schedule
+                    .values_mut()
+                    .for_each(|task| task.update_next_trigger());
+                self.scheduled_tasks=schedule;
+                self.find_next_trigger();
+                self.push_schedule_resource();
+                Ok(())
+            }
         }
     }
     async fn stop(&mut self) {
@@ -157,11 +168,7 @@ impl Service for ScheduleService {
 impl ScheduleService {
     /// 持久化 schedule
     async fn persist(&self) -> Result<()> {
-        if let Err(e) = self.schedule_tx.send(ResourcePayload::Schedules {
-            schedules: self.scheduled_tasks.clone(),
-        }) {
-            warn!("推送 Schedule 资源失败: {}", e);
-        };
+        self.push_schedule_resource();
         let content = serde_json::to_string(&self.scheduled_tasks)?;
         let (tx, rx) = oneshot::channel();
         self.endpoint
@@ -176,6 +183,13 @@ impl ScheduleService {
             .await?;
         rx.await.context("写入 schedule.json 失败")?;
         Ok(())
+    }
+    fn push_schedule_resource(&self){
+        if let Err(e) = self.schedule_tx.send(ResourcePayload::Schedules {
+            schedules: self.scheduled_tasks.clone(),
+        }) {
+            warn!("推送 Schedule 资源失败: {}", e);
+        };
     }
     /// 不会更新每个任务的下次时间，清除给不出下次时间的任务，开一个任务提醒服务
     fn find_next_trigger(&mut self) {

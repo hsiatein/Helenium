@@ -15,7 +15,10 @@ tracing = {workspace = true}
 tokio = {workspace = true}
 serde_json = {workspace = true}
 serde = {workspace = true}
-async-openai = {workspace = true}
+async-openai = {version = "0.31.1",features = ["_api","responses","chat-completion","embedding"]}
+genai = "0.5.0"
+reqwest = {workspace = true}
+gemini-rust = "1.6.1"
 
 [dev-dependencies]
 dotenvy = {workspace = true}

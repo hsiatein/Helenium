@@ -10,15 +10,19 @@ use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::AnyMessage;
 use heleny_proto::DISPLAY_MESSAGES;
+use heleny_proto::EMBED_SERVICE;
+use heleny_proto::MemoryContent;
 use heleny_proto::MemoryEntry;
 use heleny_proto::Resource;
 use heleny_proto::ResourcePayload;
 use heleny_proto::ServiceRole;
+use heleny_service::EmbedServiceMessage;
 use heleny_service::MemoryServiceMessage;
 use heleny_service::Service;
 use heleny_service::get_from_config_service;
 use heleny_service::publish_resource;
 use tokio::fs;
+use tokio::sync::oneshot;
 use tokio::sync::watch;
 use tokio::time::Instant;
 use tracing::debug;
@@ -37,6 +41,7 @@ pub struct MemoryService {
     short_term: VecDeque<MemoryEntry>,
     memory_db: MemoryDb,
     publisher: watch::Sender<ResourcePayload>,
+    embed_available: bool,
 }
 
 #[derive(Debug)]
@@ -75,6 +80,7 @@ impl Service for MemoryService {
             short_term,
             memory_db,
             publisher: tx,
+            embed_available: false,
         };
         Ok(Box::new(instance))
     }
@@ -89,7 +95,10 @@ impl Service for MemoryService {
                 let time=Local::now();
                 let id = self.memory_db.save_entry(role,time,content.clone()).await?;
                 if self.short_term.len() as i64 >= self.config.short_term_length {
-                    self.short_term.pop_front();
+                    let entry=self.short_term.pop_front();
+                    if let Some(entry) = entry && self.embed_available && let MemoryContent::Text(content) =entry.content {
+                        let _=self.endpoint.send(EMBED_SERVICE, EmbedServiceMessage::Embed { id, content }).await;
+                    }
                 }
                 let display_message = MemoryEntry::new(id,role,time,content);
                 self.short_term.push_back(display_message.clone());
@@ -98,15 +107,7 @@ impl Service for MemoryService {
                         new: true,
                         messages: vec![display_message],
                     })
-                    .context("更新 DisplayMessages 失败")
-            }
-            MemoryServiceMessage::GetChatMemories { feedback } => {
-                let mut chat_memories = Vec::new();
-                for entry in &self.short_term {
-                    chat_memories.push(entry.try_into()?);
-                }
-                let _ = feedback.send(chat_memories);
-                Ok(())
+                    .context("更新 DisplayMessages 失败")?;
             }
             MemoryServiceMessage::Get {
                 id_upper_bound,
@@ -117,14 +118,41 @@ impl Service for MemoryService {
                     .get_display_messages(id_upper_bound, self.config.display_length)
                     .await?;
                 let _ = feedback.send(result);
-                Ok(())
             }
             MemoryServiceMessage::Delete { id }=>{
                 self.short_term.retain(|msg| msg.id != id);
                 self.memory_db.delete_entry(id).await?;
-                Ok(())
+                if self.embed_available {
+                    self.endpoint.send(EMBED_SERVICE, EmbedServiceMessage::Delete { id }).await?;
+                }
+            }
+            MemoryServiceMessage::GetMemoryEntries { feedback }=>{
+                let _=feedback.send(self.short_term.iter().cloned().collect());
+            }
+            MemoryServiceMessage::SetEmbedAvailable { available }=>{
+                self.embed_available=available;
+                if !available {
+                    return Ok(());
+                }
+                let (tx,rx)=oneshot::channel();
+                self.endpoint.send(EMBED_SERVICE, EmbedServiceMessage::GetAllID { feedback: tx }).await?;
+                let ids=rx.await?;
+                let batch=self.memory_db.get_content_not_in_ids(&ids).await?;
+                self.endpoint.send(EMBED_SERVICE, EmbedServiceMessage::EmbedBatch { batch }).await?;
+            }
+            MemoryServiceMessage::GetSimilarMemoryEntries { content, num, feedback }=>{
+                if !self.embed_available {
+                    return Ok(());
+                }
+                let (tx,rx)=oneshot::channel();
+                self.endpoint.send(EMBED_SERVICE, EmbedServiceMessage::Search { content, num, feedback: tx }).await?;
+                let ids=rx.await?;
+                let mut entries=self.memory_db.get_entries_by_ids(&ids).await?;
+                entries.sort_by_key(|entry| entry.id);
+                let _=feedback.send(entries);
             }
         }
+        Ok(())
     }
     async fn stop(&mut self) {
         self.memory_db.close().await;

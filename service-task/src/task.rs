@@ -87,6 +87,7 @@ impl Task {
                 }
             };
             if intent.tool.is_none() && intent.command.is_none() {
+                self.log(intent.reason).await;
                 return Ok(());
             }
             if let Ok(intent) = serde_json::to_string(&intent) {
@@ -114,19 +115,28 @@ impl Task {
                 return Err(anyhow::anyhow!(context));
             }
         };
-        let tools_list = match planner.get_tools_list(&self.task_description).await {
-            Ok(tools_list) => {
-                self.log(format!("成功获取所需工具列表: {:?}", tools_list))
-                    .await;
-                tools_list
-            }
-            Err(e) => {
-                let context = format!("获取所需工具列表失败: {}", e);
-                self.log(&context).await;
-                return Err(anyhow::anyhow!(context));
-            }
-        };
-        let Some(tool_names) = tools_list.tools else {
+        let mut tools_list=None;
+        for i in 0..3 {
+            tools_list = match planner.get_tools_list(&self.task_description).await {
+                Ok(tools_list) => {
+                    self.log(format!("成功获取所需工具列表: {:?}", tools_list))
+                        .await;
+                    Some(tools_list)
+                }
+                Err(e) => {
+                    let context = format!("获取所需工具列表失败: {}", e);
+                    self.log(&context).await;
+                    if i <2 {
+                        continue;
+                    }
+                    else {
+                        return Err(anyhow::anyhow!(context));
+                    }
+                }
+            };
+            break;
+        }
+        let Some(tool_names) = tools_list.expect("这里理应获取了工具列表").tools else {
             let context = "工具无法满足任务需求, 无法继续";
             self.log(context).await;
             return Err(anyhow::anyhow!(context));

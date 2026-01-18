@@ -155,6 +155,18 @@ impl Service for FsService {
                 let _=feedback.send(path);
                 Ok(())
             }
+            FsServiceMessage::WriteBytes { path, data }=>{
+                if let Some(parent) = path.parent() {
+                    tokio::fs::create_dir_all(parent).await?;
+                }
+                write(&path, data).await?;
+                Ok(())
+            }
+            FsServiceMessage::ReadBytes { path, feedback }=>{
+                let data=fs::read(path).await?;
+                let _ = feedback.send(data);
+                Ok(())
+            }
         }
     }
     async fn stop(&mut self) {}

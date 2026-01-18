@@ -1,6 +1,7 @@
 {
-    "Kernel": {
-        "user_name": "Mugi"
+    "Common": {
+        "user_name": "Mugi",
+        "storage_dir": "./storage"
     },
     "ConfigService": {
         "save_after": 10.0
@@ -24,7 +25,6 @@
         "session_buffer": 32
     },
     "ChatService": {
-        "timeout_secs":180,
         "api": [
             {
                 "base_url": "https://api.x.ai/v1",
@@ -47,32 +47,42 @@
                 "api_key_env_var": "QWEN_API_KEY"
             },
             {
-                "base_url": "https://api.x.ai/v1",
-                "model": "grok-3",
-                "api_key_env_var": "GROK_API_KEY"
+                "base_url": "https://open.bigmodel.cn/api/paas/v4/",
+                "model": "glm-4.6",
+                "api_key_env_var": "GLM_API_KEY"
             },
             {
                 "base_url": "http://127.0.0.1:1234/v1",
                 "model": "core_24b_v.1-i1",
-                "api_key_env_var": "GROK_API_KEY"
+                "api_key_env_var": "nothing"
             }
         ],
         "heleny": {
-            "api": 0,
+            "api": 2,
+            "timeout_secs":20,
             "preset_path": "assets/presets/heleny.txt",
-            "persona_path": "assets/presets/persona.txt"
+            "persona_path": "assets/presets/persona.txt",
+            "rag_num": 10
         },
         "planner": {
-            "api": 2,
+            "api": 4,
+            "timeout_secs":60,
             "preset_path": "assets/presets/planner.txt"
         },
         "executor": {
-            "api": 2,
+            "api": 4,
+            "timeout_secs":60,
             "preset_path": "assets/presets/executor.txt"
         }
     },
+    "EmbedService":{
+        "base_url": "http://127.0.0.1:1234/v1",
+        "model": "text-embedding-bge-m3",
+        "api_key_env_var": "nothing",
+        "dimensions": 768
+    },
     "MemoryService": {
-        "short_term_length": 40,
+        "short_term_length": 20,
         "storage_dir": "./storage",
         "display_length": 20
     },

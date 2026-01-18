@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="schedule-view">
     <div class="schedule-title">日程管理</div>
     <div class="schedule-list">
@@ -30,6 +30,9 @@
         </div>
       </div>
     </div>
+    <button class="refresh-button" @click="refreshSchedule">
+      <img src="/icons/refresh_40dp_1F1F1F_FILL0_wght400_GRAD0_opsz40.png" alt="refresh" />
+    </button>
   </div>
 </template>
 
@@ -39,6 +42,10 @@ import { store } from '../store';
 
 const cancelSchedule = (id: string) => {
   sendCommand({ CancelSchedule: { id } });
+};
+
+const refreshSchedule = () => {
+  sendCommand('ReloadSchedule');
 };
 </script>
 
@@ -192,5 +199,26 @@ const cancelSchedule = (id: string) => {
   font-size: 13px;
   color: #1c1c1c;
   width: fit-content;
+}
+
+.refresh-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 26px;
+  background: #e8f1ff;
+  border: 1px solid #c6dcff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.refresh-button img {
+  width: 28px;
+  height: 28px;
 }
 </style>

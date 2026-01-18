@@ -23,3 +23,4 @@ extern crate service_mcp;
 extern crate service_process;
 
 extern crate service_tools;
+extern crate service_embed;

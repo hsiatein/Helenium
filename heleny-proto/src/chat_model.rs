@@ -1,85 +1,86 @@
+use std::fmt::Debug;
 use std::time::Duration;
 
 use anyhow::Context;
 use anyhow::Result;
-use async_openai::Client;
-use async_openai::config::OpenAIConfig;
-use async_openai::types::chat::ChatCompletionRequestMessage;
-use async_openai::types::chat::ChatCompletionRequestSystemMessageArgs;
-use async_openai::types::chat::CreateChatCompletionRequestArgs;
-use async_openai::types::chat::ResponseFormat;
-use async_openai::types::chat::ResponseFormatJsonSchema;
+use anyhow::anyhow;
 use async_trait::async_trait;
+use rkyv::Archive;
+use rkyv::Deserialize;
+use rkyv::Serialize;
 use tokio::time::timeout;
 
-use crate::ApiConfig;
+use crate::MemoryEntry;
 use crate::RequiredTools;
 use crate::ToolIntent;
-use crate::build_async_openai_msg;
 use crate::memory::ChatRole;
 
-#[heleny_macros::chat_model]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct PlannerModel {
-    preset: String,
-    model: String,
-    client: Client<OpenAIConfig>,
-    schema: &'static str,
-    timeout: u64,
+    preset: MemoryEntry,
+    timeout: Duration,
+    chat_model: Box<dyn Chat>
+}
+
+pub fn trim_response(response: &String)->Result<&str> {
+    let start = match response.find('{') {
+        Some(index)=>index,
+        None=> {
+            return Err(anyhow!("没有 {{ : {response}"));
+        }
+    };
+    let end = match response.rfind('}') {
+        Some(index)=>index,
+        None=> {
+            return Err(anyhow!("没有 }} : {response}"));
+        }
+    };
+    if start >= end {
+        return Err(anyhow::anyhow!("{{, }}位置不合法"));
+    }
+    Ok(&response[start..=end])
 }
 
 impl PlannerModel {
-    pub fn new(preset: String, api_config: ApiConfig, timeout: u64) -> Self {
-        let config = OpenAIConfig::new()
-            .with_api_base(api_config.base_url)
-            .with_api_key(api_config.api_key);
+    pub fn new(preset: String, timeout: u64,chat_model: Box<dyn Chat>) -> Self {
         Self {
-            preset,
-            model: api_config.model,
-            client: Client::with_config(config),
-            schema: PLANNER_SCHEMA,
-            timeout,
+            preset:MemoryEntry::temp(ChatRole::System, preset),
+            timeout:Duration::from_secs(timeout),
+            chat_model,
         }
     }
 
     pub async fn get_tools_list(&self, message: &str) -> Result<RequiredTools> {
-        let message: ChatCompletionRequestMessage = build_async_openai_msg(ChatRole::User, message)?;
-        let response = self._chat(vec![message]).await?;
-        serde_json::from_str(&response).context(format!(
+        let entry=MemoryEntry::temp( ChatRole::User, message);
+        let response=match timeout(self.timeout, self.chat_model.chat(&[&self.preset,&entry])).await.context("获取 tools_list 超时")?{
+            Ok(resp)=>resp,
+            Err(e)=> return Err(anyhow!("获取 response 失败: {e}"))
+        };
+        serde_json::from_str(trim_response(&response)?).context(format!(
             "解析 Planner 回复为 RequiredTools 失败, 回复内容: {}",
             response
         ))
     }
 }
 
-#[heleny_macros::chat_model]
 #[derive(Debug)]
 pub struct ExecutorModel {
-    preset: String,
-    model: String,
-    client: Client<OpenAIConfig>,
-    schema: &'static str,
-    memory: Vec<ChatCompletionRequestMessage>,
-    timeout: u64,
+    memory: Vec<MemoryEntry>,
+    timeout: Duration,
+    chat_model: Box<dyn Chat>
 }
 
 impl ExecutorModel {
-    pub fn new(preset: String, api_config: ApiConfig, timeout: u64) -> Self {
-        let config = OpenAIConfig::new()
-            .with_api_base(api_config.base_url)
-            .with_api_key(api_config.api_key);
+    pub fn new(preset: &str, timeout: u64,chat_model: Box<dyn Chat>) -> Self {
         Self {
-            preset,
-            model: api_config.model,
-            client: Client::with_config(config),
-            schema: EXECUTOR_SCHEMA,
-            memory: Vec::new(),
-            timeout,
+            memory: vec![MemoryEntry::temp(ChatRole::System, preset)],
+            timeout:Duration::from_secs(timeout),
+            chat_model,
         }
     }
 
     pub fn add_preset(&mut self, append: &str) {
-        self.preset.push_str(append);
+        self.memory.push(MemoryEntry::temp(ChatRole::System, append));
     }
 
     pub async fn get_intent(&mut self, message: &str) -> Result<ToolIntent> {
@@ -92,14 +93,23 @@ impl ExecutorModel {
     }
 
     async fn _get_intent(&mut self, message: &str) -> Result<ToolIntent> {
-        let message: ChatCompletionRequestMessage = build_async_openai_msg(ChatRole::System,message)?;
+        let role= if self.memory.len() <3 {
+            ChatRole::User
+        }else {
+            ChatRole::System
+        };
+        let message = MemoryEntry::temp(role,message);
         self.memory.push(message);
-        let response = self._chat(self.memory.to_owned()).await?;
-        let intent = serde_json::from_str(&response).context(format!(
+        let messages=self.memory.iter().collect::<Vec<_>>();
+        let response = match timeout(self.timeout, self.chat_model.chat(&messages)).await.context("获取 tools_intent 超时")? {
+            Ok(resp)=>resp,
+            Err(e)=> return Err(anyhow!("获取 tools_intent 失败: {e}"))
+        };
+        let intent = serde_json::from_str(trim_response(&response)?).context(format!(
             "解析 Executor 回复为 ToolIntent 失败, 回复内容: {}",
             response
         ))?;
-        let message: ChatCompletionRequestMessage = build_async_openai_msg(ChatRole::Assistant, &response)?;
+        let message = MemoryEntry::temp(ChatRole::Assistant,response);
         self.memory.push(message);
         Ok(intent)
     }
@@ -112,50 +122,42 @@ impl ExecutorModel {
 }
 
 #[async_trait]
-pub trait ChatModel {
-    fn schema(&self) -> &'static str;
-    fn client(&self) -> &Client<OpenAIConfig>;
-    fn model(&self) -> String;
-    fn preset(&self) -> String;
-    fn timeout_secs(&self) -> u64;
-    async fn _chat(&self, messages: Vec<ChatCompletionRequestMessage>) -> Result<String> {
-        let preset = ChatCompletionRequestSystemMessageArgs::default()
-            .content(self.preset().clone())
-            .build()
-            .context("预设提示词失败")?;
-        let mut preset_messages = vec![preset.into()];
-        preset_messages.extend(messages);
-        let request = CreateChatCompletionRequestArgs::default()
-            .model(self.model())
-            .messages(preset_messages)
-            .n(1)
-            .response_format(ResponseFormat::JsonSchema {
-                json_schema: ResponseFormatJsonSchema {
-                    schema: Some(serde_json::from_str(self.schema()).context("解析成 Value 失败")?),
-                    description: None,
-                    name: "math_reasoning".into(),
-                    strict: Some(true),
-                },
-            })
-            .build()
-            .context("构造请求失败")?;
-        
-        let response = timeout(Duration::from_secs(self.timeout_secs()), self
-            .client()
-            .chat()
-            .create(request))
-            .await
-            .context("获取回复超时")?
-            .context("获取回复失败")?;
-        let content = response
-            .choices
-            .first()
-            .context("回复数量为空")?
-            .message
-            .content
-            .to_owned()
-            .context("回复内容为空")?;
-        Ok(content)
+pub trait Chat:Debug+Sync+Send {
+    async fn chat(&self,messages: &[&MemoryEntry])->Result<String>;
+}
+
+#[async_trait]
+pub trait Embed:Debug+Sync+Send {
+    async fn embed(&self,dimensions: u32, messages: Vec<String>)->Result<Vec<Embedding>>;
+}
+
+#[derive(Archive, Serialize, Deserialize, Debug, PartialEq)]
+pub struct Embedding {
+    pub vector: Vec<f32>,
+}
+
+impl Embedding {
+    pub fn new(vec:Vec<f32>) -> Self {
+        let mut ins=Self {vector: vec};
+        ins.normalize();
+        ins
+    }
+    fn normalize(&mut self){
+        let norm=self.norm();
+        if norm== 0.0 {
+            return;
+        }
+        self.vector=self.vector.iter().map(|v| v/norm).collect();
+    }
+
+    fn norm(&self)->f32 {
+        self.vector.iter().map(|v| v*v ).sum::<f32>().sqrt()
+    }
+}
+
+impl AsRef<[f32]> for Embedding {
+    fn as_ref(&self) -> &[f32] {
+        &self.vector
     }
 }
 

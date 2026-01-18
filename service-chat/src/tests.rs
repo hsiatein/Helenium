@@ -1,3 +1,6 @@
+use std::env;
+
+use anyhow::Result;
 use async_openai::Client;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::chat::ChatCompletionRequestMessage;
@@ -7,7 +10,12 @@ use async_openai::types::chat::ChatCompletionResponseStream;
 use async_openai::types::chat::CreateChatCompletionRequestArgs;
 use async_openai::types::chat::ResponseFormat;
 use async_openai::types::chat::ResponseFormatJsonSchema;
+use async_openai::types::embeddings::CreateEmbeddingRequest;
+use async_openai::types::embeddings::EmbeddingInput;
 use async_openai::types::responses::CreateResponseArgs;
+use gemini_rust::Gemini;
+use genai::chat::ChatOptions;
+use genai::embed::EmbedOptions;
 use tokio_stream::StreamExt;
 
 #[tokio::test]
@@ -240,4 +248,98 @@ async fn test_gemini_api() {
             panic!("获取回复失败");
         }
     }
+}
+
+
+use genai::chat::{ChatMessage, ChatRequest};
+use genai::Client as GenaiClient;
+
+const MODEL_GEMINI: &str = "gemini-2.5-flash";
+const MODEL_CORE: &str = "core_24b_v.1-i1";
+
+const MODEL_AND_KEY_ENV_NAME_LIST: &[(&str, &str)] = &[
+	(MODEL_GEMINI, "GEMINI_API_KEY"),
+    (MODEL_CORE, "")
+];
+
+#[tokio::test]
+async fn test_genai_gemini() -> Result<(), Box<dyn std::error::Error>> {
+	let question = "你是谁?";
+
+	let chat_req = ChatRequest::new(vec![
+		// -- Messages (de/activate to see the differences)
+		ChatMessage::system("在一个句子回答"),
+		ChatMessage::user(question),
+	]);
+
+	let client = GenaiClient::default();
+
+	for (model, env_name) in MODEL_AND_KEY_ENV_NAME_LIST {
+		// Skip if the environment name is not set
+		if !env_name.is_empty() && std::env::var(env_name).is_err() {
+			println!("===== Skipping model: {model} (env var not set: {env_name})");
+			continue;
+		}
+
+		let adapter_kind = client.resolve_service_target(model).await?.model.adapter_kind;
+
+		println!("\n===== MODEL: {model} ({adapter_kind}) =====");
+
+		println!("\n--- Question:\n{question}");
+
+		println!("\n--- Answer:");
+        let option=ChatOptions::default();
+		let chat_res = client.exec_chat(model, chat_req, Some(&option)).await?;
+        
+		println!("{}", chat_res.first_text().unwrap_or("NO ANSWER"));
+        break;
+	}
+
+	Ok(())
+}
+
+#[tokio::test]
+async fn test_gemini() -> Result<(), Box<dyn std::error::Error>> {
+    // Get API key from environment variable
+    let api_key = env::var("GEMINI_API_KEY").expect("GEMINI_API_KEY environment variable not set");
+
+    // Create a Gemini client with default settings (Gemini 2.5 Flash)
+    let client = Gemini::new(api_key)?;
+
+    println!("basic content generation example starting");
+
+    // Example 3: Multiple messages (conversation)
+    let conversation_response = client
+        .generate_content()
+        .with_user_message("I'm learning to code.")
+        .with_model_message("That's great! What programming language are you interested in?")
+        .with_user_message("I want to learn Rust. Where should I start?")
+        .execute()
+        .await?;
+
+    println!(
+        "conversation response received {}",conversation_response.text()
+    );
+
+    println!("\n✅ Basic content generation examples completed successfully!");
+    Ok(())
+}
+
+
+use async_openai::Embeddings;
+#[tokio::test]
+async fn test_embedding()->Result<()> {
+    // Create client
+    dotenvy::dotenv().ok();
+    let config = OpenAIConfig::new()
+        .with_api_base("http://127.0.0.1:1234/v1");
+    let client = Client::with_config(config);
+
+    let mut request=CreateEmbeddingRequest::default();
+    request.model="text-embedding-bge-m3".into();
+    request.input=EmbeddingInput::String("赫蕾妮".into());
+    let embedding=Embeddings::new(&client).create(request).await?;
+
+    println!("{:?}, len = {}", embedding, embedding.data.first().unwrap().embedding.len());
+    Ok(())
 }
