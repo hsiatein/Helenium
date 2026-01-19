@@ -17,3 +17,4 @@ ed25519-dalek = {workspace = true}
 chrono = {workspace = true}
 uuid = {workspace = true}
 image = {workspace = true}
+rand = {workspace = true}

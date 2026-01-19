@@ -21,6 +21,7 @@ pub enum FrontendCommand {
     Shutdown,
     Close,
     GetImage { id: i64, path: PathBuf },
+    GetOriginImage { id: i64, path: PathBuf },
     MakeDecision { req_id: Uuid, approval: bool },
     GetConsentRequestions,
     CancelTask { id: Uuid },
@@ -38,6 +39,10 @@ pub enum FrontendCommand {
     },
     ReloadSchedule,
     ReloadChat,
+    SendFile {
+        file_name: String,
+        data_base64: String,
+    },
 }
 
 impl FrontendCommand {

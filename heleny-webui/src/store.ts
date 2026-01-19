@@ -7,6 +7,7 @@ export interface ChatMessage {
   content: {
     Text?: string;
     Image?: string;
+    File?: string;
   }
 }
 

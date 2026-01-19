@@ -6,6 +6,7 @@ use chrono::Utc;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::AnyMessage;
+use heleny_proto::CONFIG_STORAGE_DIR;
 use heleny_proto::FS_SERVICE;
 use heleny_proto::Resource;
 use heleny_proto::ResourcePayload;
@@ -19,6 +20,7 @@ use heleny_service::ScheduleServiceMessage;
 use heleny_service::Service;
 use heleny_service::TaskServiceMessage;
 use heleny_service::get_from_config_service;
+use heleny_service::import_from_config_service;
 use heleny_service::publish_resource;
 use heleny_service::read_via_fs_service;
 use heleny_service::register_tool_factory;
@@ -58,8 +60,9 @@ enum WorkerMessage {
 impl Service for ScheduleService {
     type MessageType = ScheduleServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>> {
+        let storage_dir:PathBuf=import_from_config_service(&endpoint, CONFIG_STORAGE_DIR).await?;
         let config: ScheduleConfig = get_from_config_service(&endpoint).await?;
-        let schedule_path = PathBuf::from(config.schedule_dir).join("schedule.json");
+        let schedule_path = storage_dir.join("schedule.json");
         let offset = FixedOffset::east_opt(config.offset).context("获取 offset 失败")?;
         let schedule_str = read_via_fs_service(&endpoint, &schedule_path).await;
         let mut schedule: HashMap<Uuid, ScheduledTask> = match schedule_str {

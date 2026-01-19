@@ -60,12 +60,14 @@ impl HelenyModel {
                             Some(entry)
                         }
                         MemoryContent::Image(_)=>None,
+                        MemoryContent::File(_)=>None,
                     }
                 }).collect::<Vec<_>>());
             };
         }
         if let Some(rag_messages) = &rag_messages {
             messages.extend(rag_messages.iter().collect::<Vec<_>>());
+            debug!("本次聊天长期记忆消息: {:?}",rag_messages);
         }
         // 获取短期记忆
         let (tx, rx) = oneshot::channel();
@@ -81,7 +83,6 @@ impl HelenyModel {
         for _ in 0..10 {
             messages.push(&entry);
         }
-        debug!("本次聊天消息: {:?}",messages);
         // 获取响应
         let response = self.chat_model.chat(&messages).await?;
         let heleny_reply: HelenyReply =

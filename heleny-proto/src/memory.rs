@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::PathBuf;
 use chrono::DateTime;
 use chrono::Local;
@@ -33,6 +34,7 @@ impl ChatRole {
 pub enum MemoryContent {
     Text(String),
     Image(PathBuf),
+    File(PathBuf),
 }
 
 impl From<String> for MemoryContent {
@@ -49,7 +51,12 @@ impl From<&str> for MemoryContent {
 
 impl From<PathBuf> for MemoryContent {
     fn from(value: PathBuf) -> Self {
-        MemoryContent::Image(value)
+        let image_ext=HashSet::from(["png", "jpg", "jpeg", "svg", "webp"]);
+        if let Some(os_str)=value.extension() && let Some(str)=os_str.to_str() && image_ext.contains(str) {
+            MemoryContent::Image(value)
+        } else {
+            MemoryContent::File(value)
+        }   
     }
 }
 
@@ -57,7 +64,8 @@ impl MemoryContent {
     pub fn to_str(&self) -> &str {
         match &self {
             MemoryContent::Text(content) => content,
-            MemoryContent::Image(_) => "发送的一张图片.",
+            MemoryContent::Image(_) => "一张图片.",
+            MemoryContent::File(file) => file.to_str().unwrap_or("一个文件."),
         }
     }
 }

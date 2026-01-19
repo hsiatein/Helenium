@@ -9,6 +9,7 @@ use chrono::Local;
 use heleny_bus::endpoint::Endpoint;
 use heleny_macros::base_service;
 use heleny_proto::AnyMessage;
+use heleny_proto::CONFIG_STORAGE_DIR;
 use heleny_proto::DISPLAY_MESSAGES;
 use heleny_proto::EMBED_SERVICE;
 use heleny_proto::MemoryContent;
@@ -20,6 +21,7 @@ use heleny_service::EmbedServiceMessage;
 use heleny_service::MemoryServiceMessage;
 use heleny_service::Service;
 use heleny_service::get_from_config_service;
+use heleny_service::import_from_config_service;
 use heleny_service::publish_resource;
 use tokio::fs;
 use tokio::sync::oneshot;
@@ -34,7 +36,7 @@ use crate::memory_db::MemoryDb;
 mod config;
 mod memory_db;
 
-#[base_service(deps=["ConfigService","HubService"])]
+#[base_service(deps=["ConfigService","HubService","FsService"])]
 pub struct MemoryService {
     endpoint: Endpoint,
     config: MemoryConfig,
@@ -51,10 +53,10 @@ enum _WorkerMessage {}
 impl Service for MemoryService {
     type MessageType = MemoryServiceMessage;
     async fn new(endpoint: Endpoint) -> Result<Box<Self>> {
+        let storage_dir:PathBuf=import_from_config_service(&endpoint, CONFIG_STORAGE_DIR).await?;
         let config: MemoryConfig = get_from_config_service(&endpoint).await?;
-        let dir = PathBuf::from(&config.storage_dir);
-        fs::create_dir_all(&dir).await.context("创建储存目录失败")?;
-        let storage_path = dir.join("memory.db");
+        fs::create_dir_all(&storage_dir).await.context("创建储存目录失败")?;
+        let storage_path = storage_dir.join("memory.db");
         // 新建 MemoryDb
         let memory_db = MemoryDb::new(&storage_path).await?;
         info!("已连接 Memory DB");

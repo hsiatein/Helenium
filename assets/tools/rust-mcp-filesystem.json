@@ -1,6 +1,6 @@
 {
   "name": "rust-mcp-filesystem",
-  "description": "read_text_file, create_directory, directory_tree, edit_file, get_file_info, list_allowed_directories, list_directory, move_file, read_multiple_text_files, search_files, write_file, zip_files, unzip_file, zip_directory, search_files_content, list_directory_with_sizes, read_media_file, read_multiple_media_files, head_file, tail_file, read_file_lines, find_empty_directories, calculate_directory_size, find_duplicate_files.",
+  "description": "基于rust的文件系统沙盒，智能体在此拥有更高文件读写权限，目录映射关系为用户的临时目录.temp对应此沙盒的/local-directory。read_text_file, create_directory, directory_tree, edit_file, get_file_info, list_allowed_directories, list_directory, move_file, read_multiple_text_files, search_files, write_file, zip_files, unzip_file, zip_directory, search_files_content, list_directory_with_sizes, read_media_file, read_multiple_media_files, head_file, tail_file, read_file_lines, find_empty_directories, calculate_directory_size, find_duplicate_files.",
   "commands": [
     {
       "name": "read_text_file",

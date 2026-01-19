@@ -28,27 +28,44 @@
             <div v-if="isText(msg)" class="message-text">
               {{ msg.content.Text }}
             </div>
-            <div v-else class="message-image">
+            <div v-else-if="isImage(msg)" class="message-image">
               <button
                 v-if="imageSrc(msg)"
                 class="image-button"
-                @click="openImage(imageSrc(msg))"
+                @click="openImage(msg)"
               >
                 <img :src="imageSrc(msg)" alt="image" />
               </button>
+            </div>
+            <div v-else-if="isFile(msg)" class="message-file">
+              <button class="file-button" @click="copyFilePath(msg)">
+                <img
+                  src="/icons/file_present_160dp_5985E1_FILL0_wght400_GRAD0_opsz48.png"
+                  alt="file"
+                />
+              </button>
+              <div v-if="copiedFileId === msg.id" class="file-copied">
+                已复制路径
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div v-if="activeImage" class="image-lightbox" @click.self="closeImage">
+    <div v-if="activeImageSrc" class="image-lightbox" @click.self="closeImage">
       <button class="lightbox-close" @click="closeImage" aria-label="Close image">
         ×
       </button>
-      <img class="lightbox-image" :src="activeImage" alt="full image" />
+      <img class="lightbox-image" :src="activeImageSrc" alt="full image" />
     </div>
     <div class="chat-input">
       <div class="input-wrap">
+        <input
+          ref="fileInput"
+          class="file-input"
+          type="file"
+          @change="handleFileChange"
+        />
         <textarea
           v-model="message"
           class="input-area"
@@ -57,6 +74,10 @@
         />
       </div>
       <div class="send-wrap">
+        <button class="attach-button" @click="triggerFilePicker">
+          <img src="/icons/send_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png" alt="attach" />
+          <span>文件</span>
+        </button>
         <button class="send-button" @click="sendMessage">
           <img src="/icons/send_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png" alt="send" />
           <span>发送</span>
@@ -67,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, nextTick, watch, onMounted, onBeforeUnmount, computed } from 'vue';
 import { sendCommand } from '../main';
 import { store, type ChatMessage } from '../store';
 
@@ -76,11 +97,22 @@ const contentRef = ref<HTMLElement | null>(null);
 const lastRequestedIdMin = ref<number | null>(null);
 const previousFirstMsgId = ref<number | null>(null);
 const isInitialLoadDone = ref(false);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 let observer: IntersectionObserver | null = null;
 const topMessageElement = ref<HTMLElement | null>(null);
-const activeImage = ref<string | null>(null);
+const activeImageId = ref<number | null>(null);
+const activeImagePath = ref<string>('');
+const copiedFileId = ref<number | null>(null);
+let copiedTimer: number | null = null;
 let onKeydown: ((event: KeyboardEvent) => void) | null = null;
+
+const activeImageSrc = computed(() => {
+  if (activeImageId.value === null) return '';
+  const base64 = store.images[activeImageId.value];
+  if (!base64 || !activeImagePath.value) return '';
+  return buildImageSrc(base64, activeImagePath.value);
+});
 
 const setTopMessageRef = (el: HTMLElement, index: number) => {
   if (index === 0) {
@@ -192,6 +224,8 @@ watch(() => store.messages.length, () => {
 const isUser = (msg: ChatMessage) => msg.role === 'User';
 
 const isText = (msg: ChatMessage) => !!msg.content?.Text;
+const isImage = (msg: ChatMessage) => !!msg.content?.Image;
+const isFile = (msg: ChatMessage) => !!msg.content?.File;
 
 const headerText = (msg: ChatMessage) => {
   const timeText = formatTime(msg.time);
@@ -216,11 +250,7 @@ const formatTime = (raw: string) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
-const imageSrc = (msg: ChatMessage) => {
-  const base64 = store.images[msg.id];
-  const path = msg.content?.Image || '';
-  if (!base64) return '';
-
+const buildImageSrc = (base64: string, path: string) => {
   const lower = path.toLowerCase();
   let mime = 'image/png';
   if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) mime = 'image/jpeg';
@@ -230,13 +260,47 @@ const imageSrc = (msg: ChatMessage) => {
   return `data:${mime};base64,${base64}`;
 };
 
-const openImage = (src: string) => {
-  if (!src) return;
-  activeImage.value = src;
+const imageSrc = (msg: ChatMessage) => {
+  const base64 = store.images[msg.id];
+  const path = msg.content?.Image || '';
+  if (!base64) return '';
+  return buildImageSrc(base64, path);
+};
+
+const openImage = (msg: ChatMessage) => {
+  const path = msg.content?.Image;
+  if (!path) return;
+  sendCommand({ GetOriginImage: { id: msg.id, path } });
+  activeImageId.value = msg.id;
+  activeImagePath.value = path;
 };
 
 const closeImage = () => {
-  activeImage.value = null;
+  activeImageId.value = null;
+  activeImagePath.value = '';
+};
+
+const copyFilePath = async (msg: ChatMessage) => {
+  const path = msg.content?.File;
+  if (!path) return;
+  const normalizedPath = path.replace(/^\\\\\?\\/, '');
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(normalizedPath);
+    } else {
+      window.prompt('Copy file path:', normalizedPath);
+    }
+  } catch {
+    window.prompt('Copy file path:', normalizedPath);
+  }
+  copiedFileId.value = msg.id;
+  if (copiedTimer !== null) {
+    window.clearTimeout(copiedTimer);
+  }
+  copiedTimer = window.setTimeout(() => {
+    copiedFileId.value = null;
+    copiedTimer = null;
+  }, 1500);
 };
 
 const sendMessage = () => {
@@ -244,6 +308,29 @@ const sendMessage = () => {
   if (msg.length === 0) return;
   sendCommand({ UserInput: msg });
   message.value = '';
+};
+
+const triggerFilePicker = () => {
+  fileInput.value?.click();
+};
+
+const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary);
+};
+
+const handleFileChange = async (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+  const buffer = await file.arrayBuffer();
+  const dataBase64 = arrayBufferToBase64(buffer);
+  sendCommand({ SendFile: { file_name: file.name, data_base64: dataBase64 } });
+  input.value = '';
 };
 
 const handleKeydown = (event: KeyboardEvent) => {
@@ -381,6 +468,38 @@ const deleteMessage = (id: number) => {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
+.message-file {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-button {
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-button img {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  display: block;
+}
+
+.file-copied {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #1f1f1f;
+  background: #e6f0ff;
+  border-radius: 10px;
+  padding: 4px 10px;
+}
+
 .image-lightbox {
   position: fixed;
   inset: 0;
@@ -504,6 +623,7 @@ const deleteMessage = (id: number) => {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
 }
 
 .send-button {
@@ -524,6 +644,30 @@ const deleteMessage = (id: number) => {
 .send-button img {
   width: 24px;
   height: 24px;
+}
+
+.attach-button {
+  width: 100%;
+  height: 60%;
+  border: none;
+  border-radius: 12px;
+  background: #cfe2ff;
+  color: #000000;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.attach-button img {
+  width: 20px;
+  height: 20px;
+}
+
+.file-input {
+  display: none;
 }
 
 @media (max-width: 900px) {

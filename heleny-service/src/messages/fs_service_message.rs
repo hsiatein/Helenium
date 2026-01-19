@@ -1,7 +1,6 @@
-use std::{path::PathBuf};
-
-use heleny_proto::HelenyFile;
+use std::{path::PathBuf, time::SystemTime};
 use tokio::sync::oneshot;
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub enum FsServiceMessage {
@@ -23,13 +22,18 @@ pub enum FsServiceMessage {
         path: PathBuf,
         feedback: oneshot::Sender<()>,
     },
+    GetOriginImage {
+        path: PathBuf,
+        feedback: oneshot::Sender<Vec<u8>>,
+    },
     GetImage {
         path: PathBuf,
         feedback: oneshot::Sender<Vec<u8>>,
     },
     TempFile {
-        file: HelenyFile,
-        file_ext: String,
+        dir_name: String,
+        file_name: String,
+        data: Vec<u8>,
         feedback: oneshot::Sender<PathBuf>,
     },
     WriteBytes {
@@ -39,5 +43,11 @@ pub enum FsServiceMessage {
     ReadBytes {
         path: PathBuf,
         feedback: oneshot::Sender<Vec<u8>>,
+    },
+    NewThumbnail {
+        id:Uuid,
+        origin_path: PathBuf,
+        last_modified: SystemTime,
+        thumbnail:Vec<u8>,
     }
 }

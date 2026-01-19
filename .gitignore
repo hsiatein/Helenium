@@ -51,3 +51,5 @@ todo.md
 .vscode
 publish.sh
 heleny-gui.exe
+**.tar
+**.zip

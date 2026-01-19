@@ -72,7 +72,7 @@ impl Service for EmbedService {
         };
         info!("读取到 {} 条 embedding 信息",filter.embeddings.len());
         // hnsw
-        let hnsw=Hnsw::new(16, 100000, 16, 200, DistCosine {});
+        let hnsw=Hnsw::new(24, 100000, 16, 400, DistCosine {});
         hnsw.parallel_insert_slice(&filter.embeddings.iter().map(|(id,vec)| (vec.as_ref(),(*id) as usize)).collect::<Vec<_>>());
         // 实例化
         endpoint.send(MEMORY_SERVICE, MemoryServiceMessage::SetEmbedAvailable { available: true }).await?;

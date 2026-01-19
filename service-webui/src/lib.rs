@@ -239,7 +239,6 @@ async fn handle_ws_msg(
 ) -> Result<()> {
     let msg = msg.into_text()?;
     let msg = String::from_utf8_lossy(msg.as_bytes()).to_string();
-    debug!("前端消息: {}", msg);
     if msg.is_empty() {
         return Ok(());
     }

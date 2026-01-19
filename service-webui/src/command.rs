@@ -1,6 +1,7 @@
 use crate::WebuiService;
 use anyhow::Result;
 use heleny_proto::CHAT_SERVICE;
+use heleny_proto::ChatRole;
 use heleny_proto::FrontendCommand;
 use heleny_proto::FrontendMessage;
 use heleny_proto::HEALTH;
@@ -24,6 +25,8 @@ use heleny_service::TaskServiceMessage;
 use heleny_service::ToolkitServiceMessage;
 use heleny_service::UserServiceMessage;
 use heleny_service::get_resource;
+use heleny_service::send_file;
+use base64::prelude::*;
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
@@ -60,6 +63,9 @@ impl WebuiService {
             }
             FrontendCommand::GetImage { id, path } => {
                 self.handle_get_image(session, id, path).await
+            }
+            FrontendCommand::GetOriginImage { id, path } => {
+                self.handle_get_origin_image(session, id, path).await
             }
             FrontendCommand::GetConsentRequestions => {
                 let (tx, rx) = oneshot::channel();
@@ -137,6 +143,10 @@ impl WebuiService {
             }
             FrontendCommand::ReloadChat=>{
                 self.endpoint.send(CHAT_SERVICE, ChatServiceMessage::Reload).await
+            }
+            FrontendCommand::SendFile { file_name, data_base64 }=>{
+                let data = BASE64_STANDARD.decode(data_base64).unwrap_or_default();
+                send_file(&self.endpoint, ChatRole::User, "webui", &file_name, data).await
             }
         }
     }

@@ -11,12 +11,13 @@ use heleny_proto::Resource;
 use heleny_proto::ServiceHandle;
 use heleny_proto::ServiceRole;
 use heleny_proto::SignedMessage;
+use rand::Rng;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use tokio::time::Instant;
 use tokio::time::Interval;
 use tokio::time::MissedTickBehavior;
-use tokio::time::interval;
+use tokio::time::interval_at;
 use tracing::Instrument;
 use tracing::error;
 use tracing::info_span;
@@ -60,7 +61,7 @@ pub trait Service: 'static + HasEndpoint + HasName + Send {
                     }
                 };
                 let (from_bus, from_sub_endpoint) = service.endpoint_mut().get_rx()?;
-                let mut tick_interval = interval(Duration::from_secs(1));
+                let mut tick_interval = interval_at(Instant::now().checked_add(Duration::from_millis(rand::thread_rng().gen_range(100..900))).context("获取间隔失败")?,Duration::from_secs(1));
                 tick_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
                 service.send_ready().await; // 通知 KernelService 自己初始化完成
                 service

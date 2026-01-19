@@ -13,6 +13,17 @@ use tokio::sync::oneshot;
 use uuid::Uuid;
 
 impl WebuiService {
+    pub async fn handle_get_origin_image(&mut self, session: Uuid, id: i64, path: PathBuf) -> Result<()> {
+        let (tx, rx) = oneshot::channel();
+        self.endpoint
+            .send(
+                FS_SERVICE,
+                FsServiceMessage::GetOriginImage { path, feedback: tx },
+            )
+            .await?;
+        self.send_image(rx, session, id).await;
+        Ok(())
+    }
     pub async fn handle_get_image(&mut self, session: Uuid, id: i64, path: PathBuf) -> Result<()> {
         let (tx, rx) = oneshot::channel();
         self.endpoint
@@ -21,12 +32,21 @@ impl WebuiService {
                 FsServiceMessage::GetImage { path, feedback: tx },
             )
             .await?;
+        self.send_image(rx, session, id).await;
+        Ok(())
+    }
+
+    pub async fn send_image(&self,rx: oneshot::Receiver<Vec<u8>>,session: Uuid, id: i64){
         let sub = self.endpoint.create_sender_endpoint();
         tokio::spawn(async move {
             let Ok(image) = rx.await else {
                 return;
             };
-            let base64 = BASE64_STANDARD.encode(image);
+            let Ok(base64) = tokio::task::spawn_blocking({
+                move || BASE64_STANDARD.encode(image)
+            }).await else {
+                return ;
+            };
             let _ = sub
                 .send(
                     WEBUI_SERVICE,
@@ -40,6 +60,5 @@ impl WebuiService {
                 )
                 .await;
         });
-        Ok(())
     }
 }

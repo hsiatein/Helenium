@@ -3,12 +3,11 @@ use std::{collections::HashMap, time::Duration};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use heleny_bus::endpoint::Endpoint;
-use heleny_proto::{CanRequestConsent, ChatRole, FS_SERVICE, HelenyFile, HelenyTool, HelenyToolFactory, MEMORY_SERVICE, get_tool_arg};
-use heleny_service::{FsServiceMessage, MemoryServiceMessage};
+use heleny_proto::{CanRequestConsent, ChatRole, HelenyTool, HelenyToolFactory, get_tool_arg};
+use heleny_service::{send_file};
 use reqwest::{Client, RequestBuilder};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use tokio::{sync::oneshot};
 use uuid::Uuid;
 use rand::Rng;
 
@@ -85,19 +84,15 @@ impl HelenyTool for ComfyuiTool {
             }
             tokio::time::sleep(Duration::from_secs(1)).await;
         }
-        let download_url =self.comfyui_url.clone()+"/view?filename="+&input_prompt.file_name+".png&type=output";
+        let image_name=format!("{}.png",&input_prompt.file_name);
+        let download_url =self.comfyui_url.clone()+"/view?filename="+&image_name+"&type=output";
         let bytes:Vec<u8> = self.auth(client.get(download_url))
             .send()
             .await?
             .error_for_status()?
             .bytes()
             .await?.into();
-        let (tx,rx)=oneshot::channel();
-        self.endpoint.send(FS_SERVICE, FsServiceMessage::TempFile { file: HelenyFile::Image(bytes), file_ext: "png".into(), feedback: tx }).await?;
-        let path=rx.await?;
-        self.endpoint
-            .send(MEMORY_SERVICE, MemoryServiceMessage::Post { role: ChatRole::Assistant, content: path.into() })
-            .await?;
+        send_file(&self.endpoint, ChatRole::Assistant, "comfyui", &image_name, bytes).await?;
         Ok("图片生成完成".into())
     }
 }

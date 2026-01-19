@@ -8,7 +8,9 @@
     },
     "FsService": {
         "exchange_dir": "./.exchange",
-        "temp_dir": "./.temp"
+        "temp_dir": "./.temp",
+        "archive": true,
+        "archive_path": "./storage.tar"
     },
     "AuthService": {
         "pub_keys": [
@@ -58,7 +60,7 @@
             }
         ],
         "heleny": {
-            "api": 2,
+            "api": 0,
             "timeout_secs":20,
             "preset_path": "assets/presets/heleny.txt",
             "persona_path": "assets/presets/persona.txt",
@@ -83,7 +85,6 @@
     },
     "MemoryService": {
         "short_term_length": 20,
-        "storage_dir": "./storage",
         "display_length": 20
     },
     "ToolkitService": {
@@ -102,7 +103,6 @@
         "max_working_loop": 100
     },
     "ScheduleService": {
-        "schedule_dir": "./storage",
         "offset": 28800
     },
     "McpService": {
@@ -173,7 +173,7 @@
                     "-i",
                     "--rm",
                     "-v",
-                    "./.temp/filesystem:/local-directory",
+                    "./.temp:/local-directory",
                     "mcp/filesystem",
                     "/local-directory"
                 ]
@@ -275,7 +275,7 @@
                     "-e",
                     "ALLOW_WRITE",
                     "-v",
-                    "./.temp/rust-mcp-filesystem:/local-directory",
+                    "./.temp:/local-directory",
                     "mcp/rust-mcp-filesystem",
                     "/local-directory"
                 ],

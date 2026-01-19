@@ -58,6 +58,14 @@ impl FrontendHandler {
                                 image: ui.get_default_image(),
                                 time: time.format("%Y-%m-%d %H:%M:%S").to_string().into(),
                             }),
+                            MemoryContent::File(file)=>Some(MessageItem {
+                                id: id as i32,
+                                is_me: role != ChatRole::Assistant,
+                                kind: "text".into(),
+                                text: format!("{:?}",file).into(),
+                                image: Image::default(),
+                                time: time.format("%Y-%m-%d %H:%M:%S").to_string().into(),
+                            })
                         }
                     })
                     .collect();

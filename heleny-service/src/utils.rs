@@ -5,15 +5,18 @@ use crate::ConfigServiceMessage;
 use crate::FsServiceMessage;
 use crate::HubServiceMessage;
 use crate::KernelServiceMessage;
+use crate::MemoryServiceMessage;
 use crate::ToolkitServiceMessage;
 use anyhow::Context;
 use anyhow::Result;
 use heleny_bus::endpoint::Endpoint;
 use heleny_proto::CONFIG_SERVICE;
+use heleny_proto::ChatRole;
 use heleny_proto::FS_SERVICE;
 use heleny_proto::HUB_SERVICE;
 use heleny_proto::HelenyToolFactory;
 use heleny_proto::KERNEL_SERVICE;
+use heleny_proto::MEMORY_SERVICE;
 use heleny_proto::ResourcePayload;
 use heleny_proto::TOOLKIT_SERVICE;
 use serde::de::DeserializeOwned;
@@ -199,5 +202,14 @@ pub async fn unsubscribe_resource<T: Into<String>>(
                 resource_name: resource_name.into(),
             },
         )
+        .await
+}
+
+pub async fn send_file<T:Into<String>>(endpoint: &Endpoint, role: ChatRole, dir_name:T, file_name: T, data: Vec<u8>)->Result<()>{
+    let (tx,rx)=oneshot::channel();
+    endpoint.send(FS_SERVICE, FsServiceMessage::TempFile { dir_name:dir_name.into(), file_name:file_name.into(), data, feedback: tx }).await?;
+    let path=rx.await?;
+    endpoint
+        .send(MEMORY_SERVICE, MemoryServiceMessage::Post { role, content: path.into() })
         .await
 }

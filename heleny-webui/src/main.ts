@@ -19,6 +19,8 @@ type FrontendCommand =
   | { UserInput: string }
   | { GetHistory: number }
   | { GetImage: { id: number; path: string } }
+  | { GetOriginImage: { id: number; path: string } }
+  | { SendFile: { file_name: string; data_base64: string } }
   | { DeleteMemory: { id: number } }
   | { CancelTask: { id: string } }
   | { ToggleTaskLogs: { id: string; expanded: boolean } }

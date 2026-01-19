@@ -1,6 +1,6 @@
 {
   "name": "filesystem",
-  "description": "这是在docker沙盒内的文件系统，智能体在此拥有更高文件读写权限。Local filesystem access with configurable allowed paths.",
+  "description": "这是在docker沙盒内的文件系统，智能体在此拥有更高文件读写权限，目录映射关系为用户的临时目录.temp对应此沙盒的/local-directory。Local filesystem access with configurable allowed paths.",
   "commands": [
     {
       "name": "read_file",
